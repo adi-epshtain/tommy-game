@@ -22,7 +22,11 @@ function startGame() {
 
 function submitAnswer() {
   const ans = document.getElementById("answer").value;
-  fetch(`/answer/${playerName}/${ans}`, { method: "POST" })
+  fetch(`/answer/${playerName}`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ answer: parseInt(ans) })
+  })
     .then(r => r.json())
     .then(data => {
       if (data.redirect) {

@@ -1,16 +1,10 @@
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import Request, HTTPException
 from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
-from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 from starlette.responses import JSONResponse
-from app import Game
 
-app = FastAPI()
-templates = Jinja2Templates(directory="templates")
-
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-games = {}
+from app import app, templates, games
+from models.game import Game
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -28,12 +22,16 @@ def start_game(player_name: str):
     return {"question": question}
 
 
-@app.post("/answer/{player_name}/{answer}")
-def submit_answer(player_name: str, answer: int):
+class AnswerRequest(BaseModel):
+    answer: int
+
+
+@app.post("/answer/{player_name}")
+def submit_answer(player_name: str, req: AnswerRequest):
     if player_name not in games:
         raise HTTPException(status_code=404, detail="Player not found")
     game = games[player_name]
-    is_correct: bool = game.submit_answer(answer)
+    is_correct: bool = game.submit_answer(req.answer)
 
     if games[player_name].player.score == game.winning_score:
         return JSONResponse({"redirect": f"/end/{player_name}"})
@@ -48,6 +46,7 @@ def submit_answer(player_name: str, answer: int):
 @app.get("/end/{player_name}", response_class=HTMLResponse)
 def end_game(request: Request, player_name: str):
     score = games[player_name].player.score
+    games[player_name].reset()
     return templates.TemplateResponse("end.html", {"request": request,
                                                    "score": score,
                                                    "player_name": player_name})
