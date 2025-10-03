@@ -28,10 +28,21 @@ function submitAnswer() {
       if (data.redirect) {
         window.location.href = data.redirect;
       } else {
-        document.getElementById("result").innerText = data.result;
+        document.getElementById("score").innerText = "ניקוד: " + data.score;
+        document.getElementById("stage").innerText = "רמה: " + data.stage;
+        document.getElementById("result").innerText = data.is_correct  ? "✅ נכון!" : "❌ לא נכון!";
         document.getElementById("question").innerText = data.question;
         document.getElementById("answer").value = "";
         document.getElementById("answer").focus();
+
+         // עדכון רשימת השאלות שלא ידע
+            const wrongList = document.getElementById("wrong-questions");
+            wrongList.innerHTML = "";
+            data.wrong_questions.forEach(q => {
+                const li = document.createElement("li");
+                li.innerText = q;
+                wrongList.appendChild(li);
+            });
       }
     });
 }

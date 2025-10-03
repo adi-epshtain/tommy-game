@@ -19,12 +19,16 @@
   <div id="game" style="display:none;">
     <h2 id="greeting"></h2>
     <h2 id="question"></h2>
+    <div id="stage">רמה: 1</div>
 
     <form onsubmit="submitAnswer(); return false;">
-      <input type="number" id="answer" placeholder="התשובה שלך">
+      <input type="number" id="answer" placeholder="התשובה שלך" required >
       <button type="submit">שלח</button>
     </form>
     <div id="result"></div>
+    <div id="score">ניקוד: 0</div>
+    <h4>השאלות שלא ידע לענות עליהן:</h4>
+    <div id="wrong-questions" dir="ltr"></div>
   </div>
 
   <script src="/static/script.js"></script>
