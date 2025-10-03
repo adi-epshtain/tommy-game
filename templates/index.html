@@ -3,44 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>חשבון עם דינו</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin-top: 50px;
-      background: linear-gradient(135deg, #d1f7d6, #a1e3f9); /* אותו רקע כמו בדף הסיום */
-      direction: rtl;
-    }
-    h1 { font-size: 48px; color: #2c7a7b; }
-    h2 { font-size: 32px; margin-top: 20px; color: #285e61; }
-    input, button {
-      font-size: 18px;
-      padding: 8px 16px;
-      margin: 5px;
-      border-radius: 12px;
-      border: 1px solid #2c7a7b;
-    }
-    button {
-      background: #38b2ac;
-      color: white;
-      cursor: pointer;
-      box-shadow: 0 0 10px rgba(0,0,0,0.2);
-    }
-    button:hover { background: #2c7a7b; }
-    #result { font-size: 22px; margin-top: 20px; color: #2c7a7b; }
-    #question { direction: ltr; text-align: center; font-size: 28px; color: #285e61; }
-    .btn {
-      display: inline-block;
-      margin-top: 20px;
-      padding: 12px 24px;
-      background: #38b2ac;
-      color: white;
-      font-size: 18px;
-      border-radius: 12px;
-      text-decoration: none;
-    }
-    .btn:hover { background: #2c7a7b; }
-  </style>
+  <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
   <h1>ברוך הבא למשחק של דינו!</h1>
@@ -48,9 +11,9 @@
   <div id="nameInput">
     <h2>הכנס שם:</h2>
     <form onsubmit="startGame(); return false;">
-  <input type="text" id="playerName" placeholder="השם שלך" autofocus>
-  <button type="submit">התחל</button>
-</form>
+      <input type="text" id="playerName" placeholder="השם שלך" autofocus>
+      <button type="submit">התחל</button>
+    </form>
   </div>
 
   <div id="game" style="display:none;">
@@ -64,41 +27,6 @@
     <div id="result"></div>
   </div>
 
-  <script>
-    let playerName = "";
-
-    function startGame() {
-      playerName = document.getElementById("playerName").value;
-      if (!playerName) return alert("הכנס שם קודם!");
-
-      fetch(`/start/${playerName}`)
-        .then(r => r.json())
-        .then(data => {
-          // ברכה אישית
-          document.getElementById("greeting").innerText = `שלום ${playerName}`;
-          // השאלה הראשונה
-          document.getElementById("question").innerText = data.question;
-          // הסתרת שדה הכנסת השם
-          document.getElementById("nameInput").style.display = "none";
-          // הצגת המשחק
-          document.getElementById("game").style.display = "block";
-        });
-    }
-
-    function submitAnswer() {
-      const ans = document.getElementById("answer").value;
-      fetch(`/answer/${playerName}/${ans}`, { method: "POST" })
-        .then(r => r.json())
-        .then(data => {
-          if (data.redirect) {
-            window.location.href = data.redirect;
-          } else {
-            document.getElementById("result").innerText = data.result;
-            document.getElementById("question").innerText = data.question;
-            document.getElementById("answer").value = "";
-          }
-        });
-    }
-  </script>
+  <script src="/static/script.js"></script>
 </body>
 </html>

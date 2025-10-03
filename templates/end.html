@@ -3,39 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <title>סיום המשחק</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin-top: 50px;
-      background: linear-gradient(135deg, #d1f7d6, #a1e3f9);
-      direction: rtl;
-    }
-    h1 { font-size: 48px; color: #2c7a7b; }
-    h2 { font-size: 32px; margin-top: 20px; color: #285e61; }
-    img {
-      margin-top: 30px;
-      width: 250px;
-      border-radius: 20px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.3);
-    }
-    .btn {
-      display: inline-block;
-      margin-top: 40px;
-      padding: 12px 24px;
-      background: #38b2ac;
-      color: white;
-      font-size: 18px;
-      border-radius: 12px;
-      text-decoration: none;
-    }
-    .btn:hover { background: #2c7a7b; }
-  </style>
+  <link rel="stylesheet" href="/static/style.css">
 </head>
-<body>
+<body class="end-page">
   <h1>כל הכבוד {{ player_name }}!</h1>
   <h2>הניקוד שלך: {{ score }}</h2>
-  <img src="/static/dino.png" alt="דינוזאור חמוד">
+  <img src="/static/dino.png" alt="דינוזאור חמוד" class="dino-img">
   <br>
   <a href="/" class="btn">שחק שוב</a>
 </body>

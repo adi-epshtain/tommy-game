@@ -1,0 +1,79 @@
+/* === עיצוב בסיסי לכל הדפים === */
+body {
+  font-family: Arial, sans-serif;
+  text-align: center;
+  margin-top: 50px;
+  background: linear-gradient(135deg, #d1f7d6, #a1e3f9);
+  direction: rtl;
+}
+
+h1 {
+  font-size: 48px;
+  color: #2c7a7b;
+}
+
+h2 {
+  font-size: 32px;
+  margin-top: 20px;
+  color: #285e61;
+}
+
+/* === שדות טקסט וכפתורים === */
+input, button {
+  font-size: 18px;
+  padding: 8px 16px;
+  margin: 5px;
+  border-radius: 12px;
+  border: 1px solid #2c7a7b;
+}
+
+button {
+  background: #38b2ac;
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}
+
+button:hover {
+  background: #2c7a7b;
+}
+
+/* === כפתור אחיד לכל מקום (כולל "שחק שוב") === */
+.btn {
+  display: inline-block;
+  margin-top: 20px;
+  padding: 12px 24px;
+  background: #38b2ac;
+  color: white;
+  font-size: 18px;
+  border-radius: 12px;
+  text-decoration: none;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}
+
+.btn:hover {
+  background: #2c7a7b;
+}
+
+/* === תצוגת תוצאה (במשחק) === */
+#result {
+  font-size: 22px;
+  margin-top: 20px;
+  color: #2c7a7b;
+}
+
+/* === השאלה בחידון (יישור LTR למספרים) === */
+#question {
+  direction: ltr;
+  text-align: center;
+  font-size: 28px;
+  color: #285e61;
+}
+
+/* === עיצוב מיוחד לדף הסיום === */
+.end-page img.dino-img {
+  margin-top: 30px;
+  width: 250px;
+  border-radius: 20px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.3);
+}
