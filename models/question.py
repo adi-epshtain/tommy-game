@@ -22,7 +22,7 @@ class Question:
         self.answer = self.func(self.x, self.y)
         self.text = f"{self.x} {self.operation} {self.y} ="
 
-    def check_answer(self, res: int) -> bool:
+    async def check_answer(self, res: int) -> bool:
         if res is None:
             raise HTTPException(status_code=400,
                                 detail="Please insert an answer")

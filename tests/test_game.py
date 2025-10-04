@@ -1,5 +1,3 @@
-import pytest
-
 from models.game import Game
 
 
