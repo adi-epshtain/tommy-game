@@ -29,7 +29,7 @@ def update_session_score(session: Session, session_id: int, new_score: int) -> O
     return player_session
 
 
-def end_session(session: Session, session_id: int, ended_at: Optional[datetime] = None) -> Optional[PlayerSession]:
+async def end_session(session: Session, session_id: int, ended_at: Optional[datetime] = None) -> Optional[PlayerSession]:
     player_session = session.query(PlayerSession).filter(PlayerSession.id == session_id).first()
     if not player_session:
         return None
