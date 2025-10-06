@@ -1,5 +1,5 @@
-from models.player import Player
-from models.question import Question
+from player import Player
+from question import Question
 
 
 class Game:
