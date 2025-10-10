@@ -4,9 +4,19 @@ const MATH_GAME = "Math Game";
 
 function startGame() {
   playerName = document.getElementById("playerName").value;
+  playerAge = document.getElementById("playerAge").value;
   if (!playerName) return alert("הכנס שם קודם!");
 
-  fetch(`/start/${playerName}`)
+  fetch(`/start`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      player_name: playerName,
+      player_age: parseInt(playerAge),
+    }),
+  })
     .then(r => r.json())
     .then(data => {
       document.getElementById("greeting").innerText = `שלום ${playerName}`;
@@ -15,7 +25,11 @@ function startGame() {
       document.getElementById("game").style.display = "block";
       document.getElementById("answer").focus();
 
-       currentQuestionId = data.question_id;
+      currentQuestionId = data.question_id;
+    })
+    .catch(err => {
+      console.error("שגיאה בעת התחלת המשחק:", err);
+      alert("אירעה שגיאה בהתחלת המשחק");
     });
 }
 

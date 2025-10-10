@@ -14,7 +14,7 @@ def add_math_game_if_not_exists(session: Session,
     game = get_game_by_name(session, game_name)
     if not game:
 
-        game = create_game(session, name=game_name, description=description)
+        game = await create_game(session, name=game_name, description=description)
         print(f"Game '{game_name}' created.")
     else:
         print(f"Game '{game_name}' already exists.")

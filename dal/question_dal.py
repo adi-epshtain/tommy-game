@@ -1,11 +1,11 @@
-from sqlalchemy import func
+from sqlalchemy import func, select
 
 from models import Question
 from sqlalchemy.orm import Session
 from typing import Optional, List, Dict
 
 
-def create_question(
+async def create_question(
     session: Session,
     game_id: int,
     text: str,
@@ -26,12 +26,15 @@ def create_question(
     return new_question
 
 
-def get_question_by_id(session: Session, question_id: int) -> Optional[Question]:
+async def get_question_by_id(session: Session, question_id: int) -> Optional[Question]:
     return session.query(Question).filter(Question.id == question_id).first()
 
 
-def list_questions_by_game(session: Session, game_id: int) -> List[Question]:
-    return session.query(Question).filter(Question.game_id == game_id).all()
+async def list_questions_by_game(session: Session, game_id: int) -> List[Question]:
+    questions = session.scalars(
+        select(Question).where(Question.game_id == game_id)
+    )
+    return list(questions)
 
 
 async def get_random_question_by_game(session: Session, game_id: int) -> Question | None:
@@ -40,7 +43,7 @@ async def get_random_question_by_game(session: Session, game_id: int) -> Questio
     return question if question else None
 
 
-def delete_question(session: Session, question_id: int) -> Optional[Question]:
+async def delete_question(session: Session, question_id: int) -> Optional[Question]:
     question = session.query(Question).filter(Question.id == question_id).first()
     if question:
         session.delete(question)

@@ -1,10 +1,10 @@
 from models import PlayerSession, Question
 from sqlalchemy.orm import Session
-from typing import Optional, List
+from typing import Optional
 from datetime import datetime
 
 
-def create_player_session(session: Session, player_id: int, game_id: int) -> PlayerSession:
+async def create_player_session(session: Session, player_id: int, game_id: int) -> PlayerSession:
     new_session = PlayerSession(player_id=player_id, game_id=game_id)
     session.add(new_session)
     session.commit()
@@ -12,16 +12,21 @@ def create_player_session(session: Session, player_id: int, game_id: int) -> Pla
     return new_session
 
 
-def get_session_by_id(session: Session, session_id: int) -> Optional[PlayerSession]:
-    return session.query(PlayerSession).filter(PlayerSession.id == session_id).first()
+async def get_session_by_player_id(session: Session, player_id: int) -> Optional[PlayerSession]:
+    player_session = session.query(PlayerSession).filter(
+        PlayerSession.player_id == player_id,
+        PlayerSession.ended_at.is_(None)
+    ).first()
+
+    return player_session
 
 
-def list_sessions_by_player(session: Session, player_id: int) -> List[PlayerSession]:
-    return session.query(PlayerSession).filter(PlayerSession.player_id == player_id).all()
-
-
-def update_session_score(session: Session, session_id: int, new_score: int) -> Optional[PlayerSession]:
-    player_session = session.query(PlayerSession).filter(PlayerSession.id == session_id).first()
+async def update_session_score(session: Session, session_id: int, new_score: int) -> Optional[PlayerSession]:
+    player_session: Optional[PlayerSession] = (
+        session.query(PlayerSession)
+        .filter(PlayerSession.id == session_id)
+        .first()
+    )
     if not player_session:
         return None
     player_session.score = new_score
@@ -30,7 +35,11 @@ def update_session_score(session: Session, session_id: int, new_score: int) -> O
 
 
 async def end_session(session: Session, session_id: int, ended_at: Optional[datetime] = None) -> Optional[PlayerSession]:
-    player_session = session.query(PlayerSession).filter(PlayerSession.id == session_id).first()
+    player_session: Optional[PlayerSession] = (
+        session.query(PlayerSession)
+        .filter(PlayerSession.id == session_id)
+        .first()
+    )
     if not player_session:
         return None
     player_session.ended_at = ended_at if ended_at else datetime.utcnow()
@@ -38,8 +47,8 @@ async def end_session(session: Session, session_id: int, ended_at: Optional[date
     return player_session
 
 
-def update_player_session(session: Session, question: Question,
-                          player_session: PlayerSession, answer: int) -> bool:
+async def update_player_session(session: Session, question: Question,
+                                player_session: PlayerSession, answer: int) -> bool:
     is_correct = question.correct_answer == answer
     if is_correct:
         player_session.score += 1
