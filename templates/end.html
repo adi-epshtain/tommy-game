@@ -8,6 +8,21 @@
 <body class="end-page">
   <h1>כל הכבוד {{ player_name }}!</h1>
   <h2>הניקוד שלך: {{ score }}</h2>
+  <hr>
+<h2>🏆 לוח התוצאות</h2>
+
+<table style="margin:auto; border-collapse: collapse; width: 50%;">
+  <tr><th>מקום</th><th>שם</th><th>ניקוד</th></tr>
+   {% for p in top_players %}
+    <tr>
+      <td>{{ loop.index }}</td>
+      <td>{{ p.name }}</td>
+      <td>{{ p.score }}</td>
+    </tr>
+  {% endfor %}
+</table>
+
+<br>
   <img src="/static/dino.png" alt="דינוזאור חמוד" class="dino-img">
   <br>
   <a href="/" class="btn">שחק שוב</a>

@@ -1,17 +1,14 @@
 from typing import List
 import json
-
 from dal.game_dal import get_game_by_name
-from database import SessionLocal
 from models import Question
 from sqlalchemy.orm import Session
 from dal.game_dal import create_game
 
 
-def add_math_game_if_not_exists(session: Session,
-                                game_name: str,
-                                description: str):
-    game = get_game_by_name(session, game_name)
+async def add_math_game_if_not_exists(session: Session, game_name: str,
+                                      description: str):
+    game = await get_game_by_name(session, game_name)
     if not game:
 
         game = await create_game(session, name=game_name, description=description)
@@ -21,9 +18,9 @@ def add_math_game_if_not_exists(session: Session,
     return game
 
 
-def insert_math_stock_questions(session: Session, filename: str,
+async def insert_math_stock_questions(session: Session, filename: str,
                                 game_name: str="Math Game"):
-    game = get_game_by_name(session, game_name)
+    game = await get_game_by_name(session, game_name)
     if not game:
         raise ValueError(f"Game '{game_name}'"
                          f" does not exist. Please create it first.")
@@ -58,21 +55,3 @@ def insert_math_stock_questions(session: Session, filename: str,
         session.rollback()
         print(f"An error occurred: {e}")
 
-
-def main():
-    session: Session = SessionLocal()
-    math_questions_file = r"..\resources\math_stock_questions.jsonl"
-    try:
-        add_math_game_if_not_exists(session,
-                                    game_name="Math Game",
-                                    description="Default")
-        insert_math_stock_questions(session,
-                                    filename=math_questions_file)
-    except Exception as e:
-        print(f"Error: {e}")
-    finally:
-        session.close()
-
-
-if __name__ == "__main__":
-    main()

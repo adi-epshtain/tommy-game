@@ -4,7 +4,10 @@ from models import Base
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
 
-DATABASE_URL = "postgresql://postgres:postgres@localhost:5432/tommy_game_db"
+DB_NAME = "tommy_game_db"
+DB_USER = "postgres"
+DB_PASSWORD = "postgres"
+DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@localhost:5432/{DB_NAME}"
 
 database = Database(DATABASE_URL)
 

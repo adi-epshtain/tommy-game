@@ -1,6 +1,8 @@
-from models import PlayerSession, Question
+from dataclasses import dataclass
+
+from models import PlayerSession, Question, Player
 from sqlalchemy.orm import Session
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 
@@ -13,11 +15,13 @@ async def create_player_session(session: Session, player_id: int, game_id: int) 
 
 
 async def get_session_by_player_id(session: Session, player_id: int) -> Optional[PlayerSession]:
-    player_session = session.query(PlayerSession).filter(
-        PlayerSession.player_id == player_id,
-        PlayerSession.ended_at.is_(None)
-    ).first()
-
+    player_session: Optional[PlayerSession] = (
+        session.query(PlayerSession)
+        .filter(PlayerSession.player_id == player_id)
+        .order_by(
+            PlayerSession.id.desc())
+        .first()
+    )
     return player_session
 
 
@@ -34,7 +38,7 @@ async def update_session_score(session: Session, session_id: int, new_score: int
     return player_session
 
 
-async def end_session(session: Session, session_id: int, ended_at: Optional[datetime] = None) -> Optional[PlayerSession]:
+async def end_session(session: Session, session_id: int) -> Optional[PlayerSession]:
     player_session: Optional[PlayerSession] = (
         session.query(PlayerSession)
         .filter(PlayerSession.id == session_id)
@@ -42,14 +46,14 @@ async def end_session(session: Session, session_id: int, ended_at: Optional[date
     )
     if not player_session:
         return None
-    player_session.ended_at = ended_at if ended_at else datetime.utcnow()
+    player_session.ended_at = datetime.utcnow()
     session.commit()
     return player_session
 
 
 async def update_player_session(session: Session, question: Question,
                                 player_session: PlayerSession, answer: int) -> bool:
-    is_correct = question.correct_answer == answer
+    is_correct: bool = question.correct_answer == answer
     if is_correct:
         player_session.score += 1
     else:
@@ -59,3 +63,20 @@ async def update_player_session(session: Session, question: Question,
         player_session.stage += 1
     session.commit()
     return is_correct
+
+
+@dataclass
+class PlayerScore:
+    name: str
+    score: int
+
+
+async def get_top_players(db: Session, limit: int = 10) -> List[PlayerScore]:
+    top_players: List[tuple[str, int]] = (
+        db.query(Player.name, PlayerSession.score)
+        .join(Player, Player.id == PlayerSession.player_id)  # type: ignore
+        .order_by(PlayerSession.score.desc())
+        .limit(limit)
+        .all()
+    )
+    return [PlayerScore(name=row[0], score=row[1]) for row in top_players]

@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from fastapi import Request, HTTPException
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
@@ -11,10 +11,13 @@ from dal.game_dal import get_game_by_name, create_game
 from dal.player_answer_dal import get_wrong_questions, update_player_answer
 from dal.player_dal import get_player_by_name, create_player
 from dal.player_session_dal import create_player_session, \
-    update_player_session, end_session, get_session_by_player_id
+    update_player_session, end_session, get_session_by_player_id, \
+    get_top_players, PlayerScore
 from dal.question_dal import get_random_question_by_game, get_question_by_id
 from database import get_db
 from models import PlayerSession, Question, Player, Game
+from scripts.init_math_game import add_math_game_if_not_exists, \
+    insert_math_stock_questions
 
 
 class GameName(Enum):
@@ -45,7 +48,20 @@ async def start_game(req: StartRequest, db: Session = Depends(get_db)):
     player_session: PlayerSession = await create_player_session(db, player_id=player.id,
                                                                 game_id=game.id)
 
-    question: Question = await get_random_question_by_game(db, game.id)
+    question: Question = await get_random_question_by_game(db, game.id, player_session.id)
+    if not question:
+        try:
+            math_questions_file = r".\resources\math_stock_questions.jsonl"
+            await add_math_game_if_not_exists(db,
+                                              game_name="Math Game",
+                                              description="Default")
+            await insert_math_stock_questions(db,
+                                              filename=math_questions_file)
+        except Exception as e:
+            print(f"Error: {e}")
+
+        question: Question = await get_random_question_by_game(db, game.id,
+                                                               player_session.id)
 
     return {
         "session_id": player_session.id,
@@ -89,9 +105,10 @@ async def submit_answer(req: AnswerRequest, db: Session = Depends(get_db)):
 
     game: Game = await get_game_by_name(db, req.game_name)
     if player_session.score >= game.winning_score:
+        await end_session(db, player_session.id)
         return JSONResponse({"redirect": f"/end/{req.player_name}"})
 
-    new_question: Question = await get_random_question_by_game(db, game.id)
+    new_question: Question = await get_random_question_by_game(db, game.id, player_session.id)
     return JSONResponse({"is_correct": is_correct,
                          "score": player_session.score,
                          "question": new_question.text,
@@ -112,8 +129,9 @@ async def end_game(request: Request, player_name: str, db: Session = Depends(get
     if not player_session:
         raise HTTPException(status_code=404,
                             detail="No active session found for player")
-    await end_session(db, player_session.id)
 
+    top_players: List[PlayerScore] = await get_top_players(db, limit=5)
     return templates.TemplateResponse("end.html", {"request": request,
                                                    "score": player_session.score,
-                                                   "player_name": player_name})
+                                                   "player_name": player_name,
+                                                   "top_players": top_players})
