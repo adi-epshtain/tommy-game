@@ -21,22 +21,3 @@ async def list_games(session: Session) -> List[Game]:
     result = session.scalars(select(Game))
     return list(result)
 
-
-# async def update_game(session: Session, game_id: int, name: Optional[str] = None, description: Optional[str] = None) -> Optional[Game]:
-#     game = session.query(Game).filter(Game.id == game_id).first()
-#     if not game:
-#         return None
-#     if name is not None:
-#         game.name = name
-#     if description is not None:
-#         game.description = description
-#     session.commit()
-#     return game
-#
-#
-# async def delete_game(session: Session, game_id: int) -> Optional[Game]:
-#     game = session.query(Game).filter(Game.id == game_id).first()
-#     if game:
-#         session.delete(game)
-#         session.commit()
-#     return game

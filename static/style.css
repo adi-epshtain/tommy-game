@@ -38,7 +38,7 @@ button:hover {
   background: #2c7a7b;
 }
 
-/* === כפתור אחיד לכל מקום (כולל "שחק שוב") === */
+
 .btn {
   display: inline-block;
   margin-top: 20px;

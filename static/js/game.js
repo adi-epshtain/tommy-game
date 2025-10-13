@@ -1,31 +1,8 @@
-let playerName = "";
+export const MATH_GAME = "Math Game";
+
 let currentQuestionId = null;
-const MATH_GAME = "Math Game";
 
-async function loginUser() {
-  const name = document.getElementById("name").value;
-  const password = document.getElementById("password").value;
-
-  const response = await fetch("/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json"},
-    body: JSON.stringify({ name, password })
-  });
-
-  if (!response.ok) {
-    alert("שם משתמש או סיסמה שגויים");
-    return;
-  }
-
-  const data = await response.json();
-  // 👇 כאן שומרים את ה־token בדפדפן
-  localStorage.setItem("token", data.access_token);
-
-  // ✅ מעבירים את המשתמש לעמוד הראשי של המשחק
-  window.location.href = "/";
-}
-
-async function startGame(playerName, playerAge = 5) {
+export async function startGame(playerName, playerAge = 5) {
   if (!playerName) return alert("שם השחקן לא ידוע");
   fetch(`/start`, {
     method: "POST",
@@ -33,9 +10,7 @@ async function startGame(playerName, playerAge = 5) {
       "Content-Type": "application/json",
       "Authorization": "Bearer " + localStorage.getItem("token")
     },
-    body: JSON.stringify({
-      player_age: parseInt(playerAge),
-    }),
+    body: JSON.stringify({ player_age: parseInt(playerAge) }),
   })
   .then(r => r.json())
   .then(data => {
@@ -43,7 +18,6 @@ async function startGame(playerName, playerAge = 5) {
     document.getElementById("question").innerText = data.question;
     document.getElementById("game").style.display = "block";
     document.getElementById("answer").focus();
-
     currentQuestionId = data.question_id;
   })
   .catch(err => {
@@ -52,9 +26,7 @@ async function startGame(playerName, playerAge = 5) {
   });
 }
 
-
-
-function submitAnswer() {
+export function submitAnswer() {
   const answer = document.getElementById("answer").value;
   fetch(`/answer`, {
     method: "POST",
@@ -71,7 +43,7 @@ function submitAnswer() {
     .then(r => r.json())
     .then(data => {
       if (data.redirect) {
-        showGameEnd(); // קורא לפונקציה שמבצעת fetch לנתוני סוף
+        showGameEnd();
       } else {
         document.getElementById("score").innerText = "ניקוד: " + data.score;
         document.getElementById("stage").innerText = "רמה: " + data.stage;
@@ -92,7 +64,8 @@ function submitAnswer() {
     });
 }
 
-async function showGameEnd() {
+
+export async function showGameEnd() {
   const token = localStorage.getItem("token");
   const response = await fetch("/api/game_end", {
     headers: { "Authorization": "Bearer " + token }
@@ -121,25 +94,6 @@ async function showGameEnd() {
     <br>
     <img src="/static/dino.png" alt="דינוזאור חמוד" class="dino-img" />
     <br>
-    <a href="/" class="btn">שחק שוב</a>
+    <a href="/game" class="btn">שחק שוב</a>
   `;
 }
-
-
-
-async function getPlayerNameAndStartGame() {
-  const token = localStorage.getItem("token");
-  if (!token) return;
-  const response = await fetch("/api/player_info", {
-    headers: { "Authorization": "Bearer " + token }
-  });
-  if (response.ok) {
-    const data = await response.json();
-    playerName = data.name;   // משתמשים במשתנה הגלובלי
-
-    // התחלת המשחק אוטומטית
-    await startGame(playerName);
-  }
-}
-
-document.addEventListener("DOMContentLoaded", getPlayerNameAndStartGame);

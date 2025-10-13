@@ -1,4 +1,3 @@
-from passlib.hash import bcrypt
 from sqlalchemy.exc import SQLAlchemyError
 
 from models import Player

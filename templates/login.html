@@ -19,36 +19,6 @@
     <button type="submit">התחבר</button>
   </form>
   <p>עדיין אין לך משתמש? <a href="/signup">הרשם כאן</a></p>
-
-  <script>
-    async function loginUser() {
-      const name = document.getElementById("loginName").value;
-      const password = document.getElementById("loginPassword").value;
-
-      try {
-        const response = await fetch("/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-           body: JSON.stringify({ name: name, password: password })
-        });
-
-        if (!response.ok) {
-          const err = await response.json();
-          alert("שגיאה בהתחברות: " + (err.detail || response.statusText));
-          return;
-        }
-
-        const data = await response.json();
-
-        // ✅ שמירה של ה־token
-        localStorage.setItem("token", data.access_token);
-
-       // Redirect to the game page
-      window.location.href = "/game";
-      } catch (err) {
-        alert("אירעה שגיאה בהתחברות: " + err.message);
-      }
-    }
-  </script>
+ <script type="module" src="/static/js/main.js"></script>
 </body>
 </html>
