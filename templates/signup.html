@@ -8,12 +8,18 @@
 <body>
   <h2>הרשמה</h2>
   <form onsubmit="signupUser(); return false;">
-    <label>שם:</label>
-    <input type="text" id="signupName" required>
-    <label>גיל:</label>
-    <input type="number" id="signupAge" required>
-    <label>סיסמה:</label>
-    <input type="password" id="signupPassword" required>
+    <div>
+      <label>שם:</label>
+      <input type="text" id="signupName" required>
+    </div>
+    <div>
+      <label>גיל:</label>
+      <input type="number" id="signupAge" required>
+    </div>
+    <div>
+      <label>סיסמה:</label>
+      <input type="password" id="signupPassword" required>
+    </div>
     <button type="submit">צור משתמש</button>
   </form>
   <p>כבר יש לך משתמש? <a href="/login">התחבר</a></p>

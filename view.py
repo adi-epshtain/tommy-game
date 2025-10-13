@@ -202,3 +202,23 @@ async def end_game(request: Request, current_player=Depends(get_current_player),
                                                    "score": player_session.score,
                                                    "player_name": player_name,
                                                    "top_players": top_players})
+
+
+@app.get("/api/game_end")
+async def game_end_data(current_player=Depends(get_current_player), db: Session = Depends(get_db)):
+    player_name = current_player["sub"]
+    player: Player = await get_player_by_name(db, player_name)
+    if not player:
+        raise HTTPException(status_code=404, detail="Player not found")
+
+    player_session: Optional[PlayerSession] = await get_session_by_player_id(db, player.id)
+    if not player_session:
+        raise HTTPException(status_code=404, detail="No active session found for player")
+
+    top_players: List[PlayerScore] = await get_top_players(db, limit=5)
+
+    return {
+        "score": player_session.score,
+        "player_name": player_name,
+        "top_players": [{"name": p.name, "score": p.score} for p in top_players]
+    }
