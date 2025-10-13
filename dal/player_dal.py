@@ -1,3 +1,4 @@
+from passlib.hash import bcrypt
 from sqlalchemy.exc import SQLAlchemyError
 
 from models import Player
@@ -5,9 +6,9 @@ from sqlalchemy.orm import Session
 from typing import Optional
 
 
-async def create_player(session: Session, name: str, age: int) -> Optional[Player]:
+async def create_player(session: Session, name: str, age: int,  hashed_password: str) -> Optional[Player]:
     try:
-        player = Player(name=name, age=age)
+        player = Player(name=name, age=age, password=hashed_password)
         session.add(player)
         session.commit()
         return player

@@ -12,7 +12,7 @@ class Player(Base):
     name = Column(String(50), unique=True, nullable=False)
     age = Column(Integer)
     created_at = Column(TIMESTAMP, server_default=func.now())
-
+    password = Column(String(255), nullable=False)
     sessions = relationship("PlayerSession", back_populates="player")
 
 

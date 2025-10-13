@@ -7,25 +7,8 @@
 </head>
 <body>
   <h1>ברוך הבא למשחק של דינו!</h1>
-
-  <div id="nameInput">
-      <h2>מלא פרטי התחברות:</h2>
-      <form onsubmit="startGame(); return false;">
-        <div style="margin-bottom: 10px;">
-          <label for="playerName">שם:</label>
-          <input type="text" id="playerName" required autofocus>
-        </div>
-
-        <div style="margin-bottom: 10px;">
-          <label for="playerAge">גיל:</label>
-          <input type="number" id="playerAge" min="1" value="5" required>
-        </div>
-
-      <button type="submit">התחל</button>
-    </form>
-  </div>
-
-  <div id="game" style="display:none;">
+  <!-- המשחק מוצג כברירת מחדל -->
+  <div id="game" style="display:block;">
     <h2 id="greeting"></h2>
     <h2 id="question"></h2>
     <div id="stage">רמה: 1</div>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+  <meta charset="UTF-8">
+  <title>הרשמה - חשבון עם דינו</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <h2>הרשמה</h2>
+  <form onsubmit="signupUser(); return false;">
+    <label>שם:</label>
+    <input type="text" id="signupName" required>
+    <label>גיל:</label>
+    <input type="number" id="signupAge" required>
+    <label>סיסמה:</label>
+    <input type="password" id="signupPassword" required>
+    <button type="submit">צור משתמש</button>
+  </form>
+  <p>כבר יש לך משתמש? <a href="/login">התחבר</a></p>
+
+  <script>
+    async function signupUser() {
+      const name = document.getElementById("signupName").value;
+      const age = parseInt(document.getElementById("signupAge").value);
+      const password = document.getElementById("signupPassword").value;
+
+      try {
+        const response = await fetch("/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, age, password })
+        });
+
+        if (!response.ok) {
+          const err = await response.json();
+          alert("שגיאה בהרשמה: " + (err.detail || response.statusText));
+          return;
+        }
+
+        alert("נרשמת בהצלחה! עכשיו תוכל להתחבר.");
+        window.location.href = "/login";
+      } catch (err) {
+        alert("אירעה שגיאה בהרשמה: " + err.message);
+      }
+    }
+  </script>
+</body>
+</html>
