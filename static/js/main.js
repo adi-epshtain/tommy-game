@@ -1,4 +1,4 @@
-import { loginUser, signupUser } from './auth.js';
+import { loginUser, signupUser, logoutUser } from './auth.js';
 import { startGame, submitAnswer, showGameEnd, MATH_GAME } from './game.js';
 
 let playerName = "";
@@ -43,3 +43,11 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
   });
+
+
+document.addEventListener("DOMContentLoaded", () => {
+    const logoutBtn = document.getElementById("logout-btn");
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", logoutUser);
+    }
+});

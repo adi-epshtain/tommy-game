@@ -112,3 +112,21 @@ p {
   font-size: 1.1em;
   padding: 6px;
 }
+.logout-btn {
+  background: none;
+  color: #51728c;
+  border: 1px solid #aac8e0;
+  border-radius: 12px;
+  padding: 5px 18px;
+  font-size: 1em;
+  font-weight: normal;
+  cursor: pointer;
+  margin: 10px 0;
+  transition: background 0.18s, color 0.18s, border 0.18s;
+}
+
+.logout-btn:hover {
+  background: #eaf6fb;
+  color: #305d7a;
+  border-color: #78b7df;
+}

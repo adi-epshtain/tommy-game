@@ -70,3 +70,8 @@ export async function signupUser() {
     alert("אירעה שגיאה בהרשמה: " + err.message);
   }
 }
+
+export function logoutUser() {
+    localStorage.removeItem("token");
+    window.location.href = "/login";
+}
