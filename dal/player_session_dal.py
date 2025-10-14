@@ -75,7 +75,8 @@ async def get_top_players(db: Session, limit: int = 10) -> List[PlayerScore]:
     top_players: List[tuple[str, int]] = (
         db.query(Player.name, PlayerSession.score)
         .join(Player, Player.id == PlayerSession.player_id)  # type: ignore
-        .order_by(PlayerSession.score.desc())
+        .order_by(PlayerSession.score.desc(),
+                  PlayerSession.ended_at.desc())
         .limit(limit)
         .all()
     )

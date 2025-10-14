@@ -23,10 +23,33 @@ export async function loginUser() {
   }
 }
 
+async function isStrongPassword(password) {
+  // לפחות 6 תווים
+  if (password.length < 6) return false;
+
+  // לפחות ספרה אחת
+  if (!/[0-9]/.test(password)) return false;
+
+  // אם עבר את כל הבדיקות, הסיסמה נחשבת חזקה
+  return true;
+}
+
+
 export async function signupUser() {
   const name = document.getElementById("signupName").value;
   const age = parseInt(document.getElementById("signupAge").value);
   const password = document.getElementById("signupPassword").value;
+  const passwordConfirm = document.getElementById("signupPasswordConfirm").value;
+
+  if (password !== passwordConfirm) {
+    alert("הסיסמאות אינן תואמות.");
+    return;
+  }
+
+  if (!isStrongPassword(password)) {
+    alert("הסיסמה חייבת להיות לפחות 6 תווים ולכלול ספרה.");
+    return;
+  }
 
   try {
     const response = await fetch("/signup", {

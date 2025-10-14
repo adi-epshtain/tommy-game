@@ -1,6 +1,6 @@
 from sqlalchemy import func, select
 
-from models import Question, PlayerAnswer
+from models import Question, PlayerAnswer, PlayerSession
 from sqlalchemy.orm import Session
 from typing import Optional, List, Dict
 
@@ -37,19 +37,30 @@ async def list_questions_by_game(session: Session, game_id: int) -> List[Questio
     return list(questions)
 
 
-async def get_random_question_by_game(session: Session, game_id: int, player_session_id: int) -> Question | None:
+async def get_random_question_by_game(session: Session, game_id: int,
+                                      player_session_id: int) -> Question | None:
+    # Get player's current stage
+    player_stage: int = (
+        session.query(PlayerSession.stage)
+        .filter(PlayerSession.id == player_session_id)
+        .scalar()
+    )
+
+    # Select a random question matching the stage (difficulty)
     question = (
         session.query(Question)
         .filter(
             Question.game_id == game_id,
+            Question.difficulty == player_stage,  # match stage difficulty
             ~Question.id.in_(
                 session.query(PlayerAnswer.question_id)
                 .filter(PlayerAnswer.session_id == player_session_id)
-            )
+            ),
         )
         .order_by(func.random())
         .first()
     )
+
     return question
 
 
