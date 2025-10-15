@@ -1,32 +1,20 @@
-from typing import List
+from typing import List, Optional
 import json
 from dal.game_dal import get_game_by_name
-from models import Question
+from models import Question, Game
 from sqlalchemy.orm import Session
-from dal.game_dal import create_game
 
-
-async def add_math_game_if_not_exists(session: Session, game_name: str,
-                                      description: str):
-    game = await get_game_by_name(session, game_name)
-    if not game:
-
-        game = await create_game(session, name=game_name, description=description)
-        print(f"Game '{game_name}' created.")
-    else:
-        print(f"Game '{game_name}' already exists.")
-    return game
+BATCH_SIZE = 100
 
 
 async def insert_math_stock_questions(session: Session, filename: str,
-                                game_name: str="Math Game"):
-    game = await get_game_by_name(session, game_name)
+                                      game_name: str):
+    game: Optional[Game] = await get_game_by_name(session, game_name)
     if not game:
         raise ValueError(f"Game '{game_name}'"
                          f" does not exist. Please create it first.")
 
     questions_batch: List[Question] = []
-    batch_size = 100
     try:
         with open(filename, encoding="utf-8") as f:
             for line in f:
@@ -39,7 +27,7 @@ async def insert_math_stock_questions(session: Session, filename: str,
                 )
                 questions_batch.append(question)
 
-                if len(questions_batch) == batch_size:
+                if len(questions_batch) == BATCH_SIZE:
                     session.bulk_save_objects(questions_batch)
                     session.commit()
                     questions_batch.clear()
@@ -53,5 +41,5 @@ async def insert_math_stock_questions(session: Session, filename: str,
         print(f"File '{filename}' not found.")
     except Exception as e:
         session.rollback()
-        print(f"An error occurred: {e}")
+        print(f"insert math stock questions failed with error: {e}")
 

@@ -1,3 +1,4 @@
+from typing import Optional
 from datetime import datetime, timedelta
 
 from fastapi import HTTPException, Depends
@@ -17,7 +18,7 @@ async def create_access_token(data: dict):
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-async def verify_token(token: str):
+async def verify_token(token: str) -> Optional[dict]:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return payload
@@ -28,7 +29,7 @@ async def verify_token(token: str):
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
 
-async def get_current_player(token: str = Depends(oauth2_scheme)):
+async def get_current_player(token: str = Depends(oauth2_scheme)) -> Optional[dict]:
     payload = await verify_token(token)
     if not payload:
         raise HTTPException(

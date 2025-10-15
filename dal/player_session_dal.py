@@ -25,19 +25,6 @@ async def get_session_by_player_id(session: Session, player_id: int) -> Optional
     return player_session
 
 
-async def update_session_score(session: Session, session_id: int, new_score: int) -> Optional[PlayerSession]:
-    player_session: Optional[PlayerSession] = (
-        session.query(PlayerSession)
-        .filter(PlayerSession.id == session_id)
-        .first()
-    )
-    if not player_session:
-        return None
-    player_session.score = new_score
-    session.commit()
-    return player_session
-
-
 async def end_session(session: Session, session_id: int) -> Optional[PlayerSession]:
     player_session: Optional[PlayerSession] = (
         session.query(PlayerSession)
@@ -51,15 +38,15 @@ async def end_session(session: Session, session_id: int) -> Optional[PlayerSessi
     return player_session
 
 
-async def update_player_session(session: Session, question: Question,
-                                player_session: PlayerSession, answer: int) -> bool:
+async def update_score_and_stage_player_session(session: Session, question: Question,
+                                                player_session: PlayerSession, answer: int) -> bool:
     is_correct: bool = question.correct_answer == answer
     if is_correct:
         player_session.score += 1
     else:
         if player_session.score > 0:
             player_session.score -= 1
-    if player_session.score > 2:
+    if player_session.score > 2:  # TODO:
         player_session.stage += 1
     session.commit()
     return is_correct
