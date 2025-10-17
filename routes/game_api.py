@@ -44,7 +44,7 @@ async def game_page(request: Request):
     )
 
 
-@router.post("/start")
+@router.post("/start", tags=["Game"])
 async def start_game(
     current_player=Depends(get_current_player),
     db: Session = Depends(get_db)
@@ -77,7 +77,7 @@ class AnswerRequest(BaseModel):
     game_name: str
 
 
-@router.post("/answer")
+@router.post("/answer", tags=["Game"])
 async def submit_answer(
     req: AnswerRequest,
     current_player=Depends(get_current_player),
@@ -132,7 +132,7 @@ async def end_game(
     })
 
 
-@router.get("/api/game_end")
+@router.get("/api/game_end", tags=["Game"])
 async def game_end_data(
     current_player=Depends(get_current_player),
     db: Session = Depends(get_db)

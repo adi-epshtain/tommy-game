@@ -3,10 +3,13 @@ export async function loginUser() {
   const password = document.getElementById("loginPassword").value;
 
   try {
+      const formData = new URLSearchParams();
+      formData.append("username", name);
+      formData.append("password", password);
     const response = await fetch("/login", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, password })
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: formData.toString()
     });
 
     if (!response.ok) {
