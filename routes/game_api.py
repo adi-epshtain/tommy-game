@@ -60,21 +60,24 @@ async def start_game(
         game = await create_game(db, name=GameInfo.MATH_GAME.name, description=GameInfo.MATH_GAME.description)
     player_session: PlayerSession = await create_player_session(db, player_id=player.id, game_id=game.id)
     question: Question = await get_random_question_by_game(db, game.id, player_session.id)
+    time_limit = 10 + (question.difficulty - 1) * 3
     if not question:
         try:
             await insert_math_stock_questions(db, filename=MATH_QUESTIONS_FILE, game_name=GameInfo.MATH_GAME.name)
         except Exception as e:
             print(f"Insert math stock questions failed with error: {e}")
         question: Question = await get_random_question_by_game(db, game.id, player_session.id)
+        time_limit = 10 + (question.difficulty - 1) * 3
     return {
         "session_id": player_session.id,
         "question": question.text,
-        "question_id": question.id
+        "question_id": question.id,
+        "time_limit": time_limit
     }
 
 
 class AnswerRequest(BaseModel):
-    answer: int
+    answer: Optional[int] = None
     question_id: int
     game_name: str
 
@@ -90,6 +93,7 @@ async def submit_answer(
     if not player:
         raise HTTPException(status_code=404, detail="Player not found")
     question: Question = await get_question_by_id(db, req.question_id)
+    time_limit = 10 + (question.difficulty - 1) * 3
     if not question:
         raise HTTPException(status_code=404, detail=f"Question not found question id: {req.question_id}")
     player_session: Optional[PlayerSession] = await get_session_by_player_id(db, player.id)
@@ -109,7 +113,8 @@ async def submit_answer(
         "question": new_question.text,
         "question_id": new_question.id,
         "stage": player_session.stage,
-        "wrong_questions": player_session_answers.wrong_answer
+        "wrong_questions": player_session_answers.wrong_answer,
+        "time_limit": time_limit
     })
 
 

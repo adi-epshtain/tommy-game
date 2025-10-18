@@ -16,6 +16,7 @@ export async function startGame(playerName, playerAge = 5) {
   .then(data => {
     document.getElementById("greeting").innerText = `שלום ${playerName}`;
     document.getElementById("question").innerText = data.question;
+    startTimer(data.time_limit);
     document.getElementById("game").style.display = "block";
     document.getElementById("answer").focus();
     currentQuestionId = data.question_id;
@@ -49,6 +50,7 @@ export function submitAnswer() {
         document.getElementById("stage").innerText = "רמה: " + data.stage;
         document.getElementById("result").innerText = data.is_correct ? "✅ נכון!" : "❌ לא נכון!";
         document.getElementById("question").innerText = data.question;
+        startTimer(data.time_limit);
         document.getElementById("answer").value = "";
         document.getElementById("answer").focus();
         currentQuestionId = data.question_id;
@@ -136,3 +138,45 @@ export async function loadPlayerStats() {
 
     // ברגע שהעמוד נטען — נטען אוטומטית את הנתונים
     document.addEventListener('DOMContentLoaded', loadPlayerStats);
+
+    let countdownInterval;
+
+export function startTimer(seconds) {
+  const timerDisplay = document.getElementById("timer");
+  let remaining = seconds;
+
+  // מנקה טיימר קודם אם היה
+  clearInterval(countdownInterval);
+
+  timerDisplay.textContent = `⏰ זמן שנותר: ${remaining} שניות`;
+
+  countdownInterval = setInterval(() => {
+    remaining -= 1;
+    timerDisplay.textContent = `⏰ זמן שנותר: ${remaining} שניות`;
+
+    if (remaining <= 0) {
+      clearInterval(countdownInterval);
+      timerDisplay.textContent = "⏰ נגמר הזמן!";
+      onTimeUp(); // אפשר לקרוא כאן לפונקציה שסוגרת את השאלה
+    }
+  }, 1000);
+}
+
+function onTimeUp() {
+    clearInterval(countdownInterval);
+    const timerDisplay = document.getElementById("timer");
+    const result = document.getElementById("result");
+
+  // הצגת הודעה ברורה
+    timerDisplay.textContent = "⏰ נגמר הזמן!";
+    timerDisplay.style.color = "red";
+    result.textContent = "לא הספקת בזמן 😢";
+    result.style.color = "red";
+    result.style.fontSize = "1.5em";
+
+    // אפקט קצר לפני שממשיכים לשאלה הבאה
+    setTimeout(() => {
+    document.getElementById("answer").value = "";
+    submitAnswer(); // שולחת תשובה ריקה -> נחשב כשגיאה
+  }, 1500);
+}
