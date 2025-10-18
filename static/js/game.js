@@ -97,3 +97,42 @@ export async function showGameEnd() {
     <a href="/game" class="btn">שחק שוב</a>
   `;
 }
+
+export async function loadPlayerStats() {
+      const token = localStorage.getItem("token");
+      const container = document.getElementById('statsContainer');
+      try {
+        const response = await fetch("/player_sessions_stats", {
+        headers: { "Authorization": "Bearer " + token }
+        });
+
+        if (!response.ok) {
+          const err = await response.json();
+          container.innerHTML = `<p style="color:red;">שגיאה: ${err.detail || response.statusText}</p>`;
+          return;
+        }
+
+        const data = await response.json();
+        container.innerHTML = `<h2>שחקן: ${data.player_name}</h2>`;
+
+        data.player_stats.forEach((session, idx) => {
+          const div = document.createElement('div');
+          div.classList.add('session');
+          div.innerHTML = `
+            <h3>סשן ${idx + 1}</h3>
+            <h4> זמן משחק ${session.started_at}</h4>
+            <p>תשובות נכונות: ${session.correct_count}</p>
+            <p>תשובות שגויות: ${session.incorrect_count}</p>
+            <p>שאלות שגויות:</p>
+            <ul>${session.wrong_answer.map(q => `<li>${q}</li>`).join('')}</ul>
+          `;
+          container.appendChild(div);
+        });
+
+      } catch (err) {
+        container.innerHTML = `<p style="color:red;">שגיאה בטעינה: ${err.message}</p>`;
+      }
+    }
+
+    // ברגע שהעמוד נטען — נטען אוטומטית את הנתונים
+    document.addEventListener('DOMContentLoaded', loadPlayerStats);

@@ -51,3 +51,13 @@ document.addEventListener("DOMContentLoaded", () => {
         logoutBtn.addEventListener("click", logoutUser);
     }
 });
+
+document.addEventListener("DOMContentLoaded", () => {
+  const statsBtn = document.getElementById("stats-btn");
+  if (statsBtn) {
+    statsBtn.addEventListener("click", () => {
+      window.location.href = "player_stats";
+    });
+  }
+});
+

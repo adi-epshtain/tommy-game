@@ -8,11 +8,13 @@ from pydantic import BaseModel
 from app import templates
 from auth_utils import get_current_player
 from dal.game_dal import get_game_by_name, create_game
-from dal.player_answer_dal import get_wrong_questions, update_player_answer
+from dal.player_answer_dal import get_wrong_questions, update_player_answer, \
+    PlayerSessionAnswer
 from dal.player_dal import get_player_by_name
 from dal.player_session_dal import (
     create_player_session, update_score_and_stage_player_session, end_session,
-    get_session_by_player_id, get_top_players, PlayerScore
+    get_session_by_player_id, get_top_players, PlayerScore,
+    get_last_player_sessions
 )
 from dal.question_dal import get_random_question_by_game, get_question_by_id
 from database import get_db
@@ -100,13 +102,14 @@ async def submit_answer(
         await end_session(db, player_session.id)
         return JSONResponse({"redirect": "/end"})
     new_question: Question = await get_random_question_by_game(db, game.id, player_session.id)
+    player_session_answers: PlayerSessionAnswer = await get_wrong_questions(player_session)
     return JSONResponse({
         "is_correct": is_correct,
         "score": player_session.score,
         "question": new_question.text,
         "question_id": new_question.id,
         "stage": player_session.stage,
-        "wrong_questions": await get_wrong_questions(player_session)
+        "wrong_questions": player_session_answers.wrong_answer
     })
 
 
@@ -150,3 +153,23 @@ async def game_end_data(
         "player_name": player_name,
         "top_players": [{"name": p.name, "score": p.score} for p in top_players]
     }
+
+
+@router.get("/player_sessions_stats")
+async def get_last_player_sessions_data(current_player=Depends(get_current_player),
+                                        db: Session = Depends(get_db)):
+    player_name = current_player.get("sub")
+    player: Player = await get_player_by_name(db, player_name)
+    if not player:
+        raise HTTPException(status_code=404, detail="Player not found")
+    player_sessions: list[PlayerSession] = await get_last_player_sessions(db, player.id)
+    player_stats_list: list[PlayerSessionAnswer] = [await get_wrong_questions(player_session) for player_session in player_sessions]
+
+    return {"player_name": player_name, "player_stats": player_stats_list}
+
+
+@router.get("/player_stats", response_class=HTMLResponse)
+async def player_stats(request: Request):
+    data = {"player_name": "דינו", "player_stats": []}  # כאן תשלוף ותכניס נתונים אמיתיים
+    return templates.TemplateResponse("player_stats.html", {"request": request, **data})
+

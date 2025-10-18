@@ -1,15 +1,10 @@
+from dataclasses import dataclass
+from typing import Optional
+
+from sqlalchemy import TIMESTAMP
 from sqlalchemy.orm import Session
 
 from models import PlayerSession, PlayerAnswer
-
-
-async def get_wrong_questions(player_session: PlayerSession) -> list[str]:
-    results = [
-        f"{answer.question.text} {answer.player_answer} (תשובה נכונה: {answer.question.correct_answer})"
-        for answer in player_session.answers
-        if not answer.is_correct
-    ]
-    return results
 
 
 async def update_player_answer(session: Session, player_session_id: int,
@@ -23,3 +18,33 @@ async def update_player_answer(session: Session, player_session_id: int,
     )
     session.add(player_answer)
     session.commit()
+
+
+@dataclass
+class PlayerSessionAnswer:
+    wrong_answer: list[str]
+    correct_count: int
+    incorrect_count: int
+    started_at: Optional[str]
+
+
+async def get_wrong_questions(player_session: PlayerSession) -> PlayerSessionAnswer:
+    incorrect_count = 0
+    correct_count = 0
+    wrong_questions = []
+
+    for answer in player_session.answers:
+        if answer.is_correct:
+            correct_count += 1
+        else:
+            incorrect_count += 1
+            wrong_questions.append(f"{answer.question.text} {answer.player_answer} (תשובה נכונה: {answer.question.correct_answer})")
+    formatted_time = player_session.started_at.strftime("%d/%m/%Y %H:%M") if player_session.started_at else ""
+    return PlayerSessionAnswer(wrong_answer=wrong_questions,
+                               correct_count=correct_count,
+                               incorrect_count=incorrect_count,
+                               started_at=formatted_time)
+
+
+
+

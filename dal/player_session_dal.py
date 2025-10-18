@@ -1,8 +1,10 @@
 from dataclasses import dataclass
 
+from sqlalchemy import desc
+
 from models import PlayerSession, Question, Player
-from sqlalchemy.orm import Session
-from typing import Optional, List
+from sqlalchemy.orm import Session, joinedload
+from typing import Optional, List, Type
 from datetime import datetime
 
 
@@ -58,9 +60,9 @@ class PlayerScore:
     score: int
 
 
-async def get_top_players(db: Session, limit: int = 10) -> List[PlayerScore]:
+async def get_top_players(session: Session, limit: int = 10) -> List[PlayerScore]:
     top_players: List[tuple[str, int]] = (
-        db.query(Player.name, PlayerSession.score)
+        session.query(Player.name, PlayerSession.score)
         .join(Player, Player.id == PlayerSession.player_id)  # type: ignore
         .order_by(PlayerSession.score.desc(),
                   PlayerSession.ended_at.desc())
@@ -68,3 +70,16 @@ async def get_top_players(db: Session, limit: int = 10) -> List[PlayerScore]:
         .all()
     )
     return [PlayerScore(name=row[0], score=row[1]) for row in top_players]
+
+
+async def get_last_player_sessions(session: Session, player_id: int,
+                                   limit_num=10) -> list[PlayerSession]:
+    player_sessions = (
+        session.query(PlayerSession)
+        .options(joinedload(PlayerSession.answers))
+        .filter(PlayerSession.player_id == player_id)
+        .order_by(desc(PlayerSession.ended_at))
+        .limit(limit_num)
+        .all()
+    )
+    return player_sessions
