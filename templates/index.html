@@ -16,6 +16,7 @@
       <h2 id="greeting"></h2>
       <h2 id="question"></h2>
       <p id="timer"></p>
+      <button id="pause-btn" onclick="toggleTimer()">⏸️ עצור</button>
       <div id="stage">רמה: 1</div>
       <form onsubmit="submitAnswer(); return false;" class="centered-form">
         <input type="number" id="answer" placeholder="התשובה שלך" required>
@@ -30,5 +31,17 @@
     </div>
   </div>
   <script type="module" src="/static/js/main.js"></script>
+
+<div id="settings">
+  <h3>⚙️ הגדרות משחק</h3>
+  <label>רמת קושי התחלתית:</label>
+  <input type="number" id="difficulty" min="1" max="5" value="1"><br>
+
+  <label>ניקוד לניצחון:</label>
+  <input type="number" id="winning_score" min="2" max="10" value="5"><br>
+
+  <button onclick="saveSettings()">שמור הגדרות</button>
+</div>
+
 </body>
 </html>

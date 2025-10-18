@@ -1,3 +1,4 @@
+from fastapi import HTTPException
 from sqlalchemy import select
 
 from models import Game
@@ -5,8 +6,8 @@ from sqlalchemy.orm import Session
 from typing import Optional, List
 
 
-async def create_game(session: Session, name: str, description: Optional[str] = None) -> Game:
-    new_game = Game(name=name, description=description)
+async def create_game(session: Session, name: str, winning_score: int, description: Optional[str] = None) -> Game:
+    new_game = Game(name=name, description=description, winning_score=winning_score)
     session.add(new_game)
     session.commit()
     session.refresh(new_game)
@@ -21,3 +22,11 @@ async def list_games(session: Session) -> List[Game]:
     result = session.scalars(select(Game))
     return list(result)
 
+
+async def update_winning_score(session: Session, game_id: int, new_winning_score: int) -> None:
+    game = session.query(Game).filter(Game.id == game_id).first()
+    if not game:
+        raise HTTPException(status_code=404, detail=f"Game with id={game_id} not found")
+
+    game.winning_score = new_winning_score
+    session.commit()

@@ -54,6 +54,12 @@ async def update_score_and_stage_player_session(session: Session, question: Ques
     return is_correct
 
 
+async def update_player_stage(session: Session, player_session: PlayerSession, new_stage: int=1):
+    player_session.stage = new_stage
+    session.commit()
+    print(f"player session update stage : {new_stage}")
+
+
 @dataclass
 class PlayerScore:
     name: str

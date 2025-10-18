@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from typing import Optional
 
-from sqlalchemy import TIMESTAMP
 from sqlalchemy.orm import Session
 
 from models import PlayerSession, PlayerAnswer

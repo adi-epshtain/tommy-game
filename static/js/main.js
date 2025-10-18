@@ -1,5 +1,6 @@
 import { loginUser, signupUser, logoutUser } from './auth.js';
-import { startGame, submitAnswer, showGameEnd, MATH_GAME } from './game.js';
+import { startGame, submitAnswer, showGameEnd, MATH_GAME, saveSettings } from './game.js';
+window.saveSettings = saveSettings;
 
 let playerName = "";
 
@@ -60,4 +61,3 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
-

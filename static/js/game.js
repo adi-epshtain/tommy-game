@@ -139,28 +139,35 @@ export async function loadPlayerStats() {
     // ברגע שהעמוד נטען — נטען אוטומטית את הנתונים
     document.addEventListener('DOMContentLoaded', loadPlayerStats);
 
-    let countdownInterval;
+let countdownInterval;
+let isPaused = false;
+let remainingTime = 0;
 
 export function startTimer(seconds) {
   const timerDisplay = document.getElementById("timer");
-  let remaining = seconds;
+  const pauseBtn = document.getElementById("pause-btn");
 
-  // מנקה טיימר קודם אם היה
   clearInterval(countdownInterval);
+  remainingTime = seconds;
+  isPaused = false;
+  if (pauseBtn) pauseBtn.innerText = "⏸️ עצור";
 
-  timerDisplay.textContent = `⏰ זמן שנותר: ${remaining} שניות`;
+  timerDisplay.textContent = `⏰ זמן שנותר: ${remainingTime} שניות`;
 
   countdownInterval = setInterval(() => {
-    remaining -= 1;
-    timerDisplay.textContent = `⏰ זמן שנותר: ${remaining} שניות`;
+    if (!isPaused) {
+      remainingTime -= 1;
+      timerDisplay.textContent = `⏰ זמן שנותר: ${remainingTime} שניות`;
 
-    if (remaining <= 0) {
-      clearInterval(countdownInterval);
-      timerDisplay.textContent = "⏰ נגמר הזמן!";
-      onTimeUp(); // אפשר לקרוא כאן לפונקציה שסוגרת את השאלה
+      if (remainingTime <= 0) {
+        clearInterval(countdownInterval);
+        timerDisplay.textContent = "⏰ נגמר הזמן!";
+        onTimeUp();
+      }
     }
   }, 1000);
 }
+
 
 function onTimeUp() {
     clearInterval(countdownInterval);
@@ -179,4 +186,43 @@ function onTimeUp() {
     document.getElementById("answer").value = "";
     submitAnswer(); // שולחת תשובה ריקה -> נחשב כשגיאה
   }, 1500);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const pauseBtn = document.getElementById("pause-btn");
+  if (pauseBtn) {
+    pauseBtn.addEventListener("click", toggleTimer);
+  }
+});
+
+export function toggleTimer() {
+  const pauseBtn = document.getElementById("pause-btn");
+  isPaused = !isPaused;
+  pauseBtn.innerText = isPaused ? "▶️ המשך" : "⏸️ עצור";
+}
+
+export async function saveSettings() {
+  const token = localStorage.getItem("token");
+  const difficulty = parseInt(document.getElementById("difficulty").value);
+  const winningScore = parseInt(document.getElementById("winning_score").value);
+
+  await fetch("/set_game_settings", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + token
+    },
+    body: JSON.stringify({
+      difficulty: difficulty,
+      winning_score: winningScore
+    }),
+  })
+  .then(r => r.json())
+  .then(data => {
+    alert("🎮 ההגדרות נשמרו בהצלחה!");
+  })
+  .catch(err => {
+    alert("שגיאה בשמירת ההגדרות");
+    console.error(err);
+  });
 }
