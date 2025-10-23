@@ -20,9 +20,14 @@ from dal.question_dal import get_random_question_by_game, get_question_by_id
 from database import get_db
 from models import PlayerSession, Question, Player, Game
 from scripts.init_math_game import insert_math_stock_questions
+import os
+
 
 router = APIRouter()
-MATH_QUESTIONS_FILE = r".\resources\math_stock_questions.jsonl"
+
+
+MATH_QUESTIONS_FILE = os.path.join("resources", "math_stock_questions.jsonl")
+
 
 
 class GameInfo(Enum):
@@ -65,14 +70,15 @@ async def start_game(
         game: Game = await create_game(db, name=GameInfo.MATH_GAME.name, winning_score=GameInfo.MATH_GAME.winning_score, description=GameInfo.MATH_GAME.description)
     player_session: PlayerSession = await create_player_session(db, player_id=player.id, game_id=game.id)
     question: Question = await get_random_question_by_game(db, game.id, player_session.id)
-    time_limit = 10 + (question.difficulty - 1) * 3
     if not question:
         try:
             await insert_math_stock_questions(db, filename=MATH_QUESTIONS_FILE, game_name=GameInfo.MATH_GAME.name)
         except Exception as e:
             print(f"Insert math stock questions failed with error: {e}")
         question: Question = await get_random_question_by_game(db, game.id, player_session.id)
-        time_limit = 10 + (question.difficulty - 1) * 3
+    if not question:
+        raise HTTPException(status_code=404, detail="Question not found after insert_math_stock_questions")
+    time_limit = 10 + (question.difficulty - 1) * 3
     return {
         "session_id": player_session.id,
         "question": question.text,
@@ -111,6 +117,8 @@ async def submit_answer(
         await end_session(db, player_session.id)
         return JSONResponse({"redirect": "/end"})
     new_question: Question = await get_random_question_by_game(db, game.id, player_session.id)
+    if not new_question:
+        raise HTTPException(status_code=404, detail="Question not found")
     player_session_answers: PlayerSessionAnswer = await get_wrong_questions(player_session)
     return JSONResponse({
         "is_correct": is_correct,
