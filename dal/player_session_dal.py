@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 from sqlalchemy import desc
 
+from logger import log
 from models import PlayerSession, Question, Player
 from sqlalchemy.orm import Session, joinedload
 from typing import Optional, List, Type
@@ -57,7 +58,7 @@ async def update_score_and_stage_player_session(session: Session, question: Ques
 async def update_player_stage(session: Session, player_session: PlayerSession, new_stage: int=1):
     player_session.stage = new_stage
     session.commit()
-    print(f"player session update stage : {new_stage}")
+    log.info(f"player session update stage : {new_stage}")
 
 
 @dataclass

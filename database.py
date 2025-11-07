@@ -1,5 +1,7 @@
 from databases import Database
 from sqlalchemy import create_engine
+
+from logger import log
 from models import Base
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
@@ -20,7 +22,7 @@ engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 metadata.create_all(engine)
-print("DB Tables created")
+log.info("DB Tables created")
 
 
 def get_db():

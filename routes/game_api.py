@@ -18,6 +18,7 @@ from dal.player_session_dal import (
 )
 from dal.question_dal import get_random_question_by_game, get_question_by_id
 from database import get_db
+from logger import log
 from models import PlayerSession, Question, Player, Game
 from scripts.init_math_game import insert_math_stock_questions
 import os
@@ -74,7 +75,7 @@ async def start_game(
         try:
             await insert_math_stock_questions(db, filename=MATH_QUESTIONS_FILE, game_name=GameInfo.MATH_GAME.name)
         except Exception as e:
-            print(f"Insert math stock questions failed with error: {e}")
+            log.error(f"Insert math stock questions failed with error: {e}")
         question: Question = await get_random_question_by_game(db, game.id, player_session.id)
     if not question:
         raise HTTPException(status_code=404, detail="Question not found after insert_math_stock_questions")

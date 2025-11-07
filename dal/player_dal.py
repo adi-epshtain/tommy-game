@@ -1,5 +1,6 @@
 from sqlalchemy.exc import SQLAlchemyError
 
+from logger import log
 from models import Player
 from sqlalchemy.orm import Session
 from typing import Optional
@@ -13,7 +14,7 @@ async def create_player(session: Session, name: str, age: int,  hashed_password:
         return player
     except SQLAlchemyError as e:
         session.rollback()
-        print(f"Error creating player: {e}")
+        log.error(f"Error creating player: {e}")
         return None
 
 

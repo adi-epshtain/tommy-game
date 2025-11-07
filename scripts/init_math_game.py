@@ -1,6 +1,7 @@
 from typing import List, Optional
 import json
 from dal.game_dal import get_game_by_name
+from logger import log
 from models import Question, Game
 from sqlalchemy.orm import Session
 
@@ -36,10 +37,10 @@ async def insert_math_stock_questions(session: Session, filename: str,
             if questions_batch:
                 session.bulk_save_objects(questions_batch)
                 session.commit()
-        print("Stock questions inserted successfully.")
+        log.info("Stock questions inserted successfully.")
     except FileNotFoundError:
-        print(f"File '{filename}' not found.")
+        log.error(f"File '{filename}' not found.")
     except Exception as e:
         session.rollback()
-        print(f"insert math stock questions failed with error: {e}")
+        log.error(f"insert math stock questions failed with error: {e}")
 
