@@ -77,45 +77,4 @@ A web-based math quiz game platform built with FastAPI and PostgreSQL. Players s
    ```
 
 ## Database Schema
-
-### Players
-- `id` (PK)
-- `name` (unique)
-- `age`
-- `password` (hashed)
-- `created_at`
-
-### Games
-- `id` (PK)
-- `name`
-- `description`
-- `winning_score`
-- `created_at`
-
-### Questions
-- `id` (PK)
-- `game_id` (FK → Games)
-- `text`
-- `correct_answer`
-- `difficulty`
-- `extra_data` (JSON)
-- `created_at`
-
-### PlayerSessions
-- `id` (PK)
-- `player_id` (FK → Players)
-- `game_id` (FK → Games)
-- `score`
-- `stage`
-- `started_at`
-- `ended_at`
-
-### PlayerAnswers
-- `id` (PK)
-- `session_id` (FK → PlayerSessions)
-- `question_id` (FK → Questions)
-- `player_answer`
-- `is_correct`
-- `answered_at`
-
-
+![DB Schema](docs/db/schema.png)

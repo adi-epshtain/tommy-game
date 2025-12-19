@@ -1,0 +1,58 @@
+// Database schema for Tommy Game - Math Quiz Platform
+// Generated from SQLAlchemy models
+
+Table players {
+  id integer [primary key]
+  name varchar(50) [not null, unique]
+  age integer
+  password varchar(255) [not null]
+  created_at timestamp [default: `now()`]
+  
+  Note: 'User accounts for game players'
+}
+
+Table games {
+  id integer [primary key]
+  name varchar(100) [not null]
+  description text
+  winning_score integer [default: 2]
+  created_at timestamp [default: `now()`]
+  
+  Note: 'Game definitions with winning conditions'
+}
+
+Table questions {
+  id integer [primary key]
+  game_id integer [ref: > games.id]
+  text text [not null]
+  correct_answer integer [not null]
+  difficulty integer [default: 1]
+  extra_data json
+  created_at timestamp [default: `now()`]
+  
+  Note: 'Questions for games with flexible extra_data for different game types'
+}
+
+Table player_sessions {
+  id integer [primary key]
+  player_id integer [ref: > players.id]
+  game_id integer [ref: > games.id]
+  score integer [default: 0]
+  stage integer [default: 1]
+  started_at timestamp [default: `now()`]
+  ended_at timestamp
+  
+  Note: 'Individual game sessions tracking player progress'
+}
+
+Table player_answers {
+  id integer [primary key]
+  session_id integer [ref: > player_sessions.id]
+  question_id integer [ref: > questions.id]
+  player_answer integer
+  is_correct boolean
+  answered_at timestamp [default: `now()`]
+  
+  Note: 'Individual answers submitted during game sessions'
+}
+
