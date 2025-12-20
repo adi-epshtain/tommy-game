@@ -34,29 +34,12 @@ A web-based math quiz game platform built with FastAPI and PostgreSQL. Players s
 
 ### Using Docker (Recommended)
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd tommy-game
-   ```
-
-2. **Create environment file** (optional, defaults are provided)
-   ```bash
-   # Create .env file with:
-   DB_NAME=tommy_game_db
-   DB_USER=postgres
-   DB_PASSWORD=postgres
-   DB_HOST=db
-   DB_PORT=5432
-   LOG_LEVEL=INFO
-   ```
-
-3. **Start the application**
+1.**Start the application** ( Builds Docker images and starts containers)
    ```bash
    docker-compose up --build
    ```
 
-4. **Access the application**
+2. **Access the application**
    - Web UI: http://localhost:8000
    - API Docs: http://localhost:8000/docs
 
