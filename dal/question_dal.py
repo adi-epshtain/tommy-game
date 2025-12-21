@@ -30,13 +30,6 @@ async def get_question_by_id(session: Session, question_id: int) -> Optional[Que
     return session.query(Question).filter(Question.id == question_id).first()
 
 
-async def list_questions_by_game(session: Session, game_id: int) -> List[Question]:
-    questions = session.scalars(
-        select(Question).where(Question.game_id == game_id)
-    )
-    return list(questions)
-
-
 async def get_random_question_by_game(session: Session, game_id: int,
                                       player_session_id: int) -> Question | None:
     # Get player's current stage

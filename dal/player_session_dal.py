@@ -94,8 +94,24 @@ async def get_top_players(session: Session, limit: int = 10) -> List[PlayerScore
 
     return result
 
-async def get_last_player_sessions(session: Session, player_id: int,
-                                   limit_num=10) -> list[PlayerSession]:
+async def get_last_player_sessions(
+    session: Session,
+    player_id: int,
+    limit_num: int = 10,
+) -> list[PlayerSession]:
+    cache_key = f"player:{player_id}:last_sessions:{limit_num}"
+
+    cached = redis_client.get(cache_key)
+    if cached:
+        ids: list[int] = json.loads(cached)
+        return (
+            session.query(PlayerSession)
+            .options(joinedload(PlayerSession.answers))
+            .filter(PlayerSession.id.in_(ids))
+            .order_by(desc(PlayerSession.ended_at))
+            .all()
+        )
+
     player_sessions = (
         session.query(PlayerSession)
         .options(joinedload(PlayerSession.answers))
@@ -104,4 +120,11 @@ async def get_last_player_sessions(session: Session, player_id: int,
         .limit(limit_num)
         .all()
     )
+
+    redis_client.setex(
+        cache_key,
+        120,
+        json.dumps([ps.id for ps in player_sessions]),
+    )
+
     return player_sessions

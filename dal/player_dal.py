@@ -1,5 +1,6 @@
+import json
 from sqlalchemy.exc import SQLAlchemyError
-
+from infra.redis_client import redis_client
 from infra.logger import log
 from models import Player
 from sqlalchemy.orm import Session
@@ -23,8 +24,32 @@ async def get_player_by_id(session: Session, player_id: int) -> Optional[Player]
     return player
 
 
-async def get_player_by_name(session: Session, player_name: str) -> Optional[Player]:
-    player = session.query(Player).filter(Player.name == player_name).first() or None
+async def get_player_by_name(
+    session: Session,
+    player_name: str,
+) -> Optional[Player]:
+    cache_key = f"player:name:{player_name}"
+
+    cached = redis_client.get(cache_key)
+    if cached:
+        player_id = int(cached)
+        return session.get(Player, player_id)
+
+    player = (
+        session.query(Player)
+        .filter(Player.name == player_name)
+        .first()
+    )
+
+    if not player:
+        return None
+
+    redis_client.setex(
+        cache_key,
+        120,
+        str(player.id),
+    )
+
     return player
 
 
