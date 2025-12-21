@@ -1,7 +1,7 @@
 from databases import Database
 from sqlalchemy import create_engine
 
-from logger import log
+from infra.logger import log
 from models import Base
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker

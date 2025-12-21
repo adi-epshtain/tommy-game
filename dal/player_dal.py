@@ -1,6 +1,6 @@
 from sqlalchemy.exc import SQLAlchemyError
 
-from logger import log
+from infra.logger import log
 from models import Player
 from sqlalchemy.orm import Session
 from typing import Optional

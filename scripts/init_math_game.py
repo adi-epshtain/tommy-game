@@ -1,7 +1,7 @@
 from typing import List, Optional
 import json
 from dal.game_dal import get_game_by_name
-from logger import log
+from infra.logger import log
 from models import Question, Game
 from sqlalchemy.orm import Session
 

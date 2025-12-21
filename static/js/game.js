@@ -67,6 +67,40 @@ export function submitAnswer() {
 }
 
 
+// פונקציה משותפת להצגת לוח תוצאות (רק הטבלה, ללא כותרת)
+function renderLeaderboard(topPlayers, container = null) {
+  if (!topPlayers || topPlayers.length === 0) {
+    const emptyMsg = `<p>אין עדיין תוצאות להצגה</p>`;
+    if (container) {
+      container.innerHTML = emptyMsg;
+    }
+    return emptyMsg;
+  }
+  
+  const medals = ['🥇', '🥈', '🥉'];
+  const tableHTML = `
+    <table style="margin:auto; border-collapse: collapse; width: 50%; max-width: 600px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+      <tr>
+        <th style="background-color: #4CAF50; color: white; padding: 12px;">מקום</th>
+        <th style="background-color: #4CAF50; color: white; padding: 12px;">שם</th>
+        <th style="background-color: #4CAF50; color: white; padding: 12px;">ניקוד</th>
+      </tr>
+      ${topPlayers.map((p, i) => `
+        <tr style="background-color: ${i % 2 === 0 ? '#f9f9f9' : 'white'};">
+          <td style="padding: 10px;">${i < 3 ? `<span style="font-size: 1.2em;">${medals[i]}</span>` : i + 1}</td>
+          <td style="padding: 10px;">${p.name}</td>
+          <td style="padding: 10px;">${p.score}</td>
+        </tr>
+      `).join('')}
+    </table>
+  `;
+  
+  if (container) {
+    container.innerHTML = tableHTML;
+  }
+  return tableHTML;
+}
+
 export async function showGameEnd() {
   const token = localStorage.getItem("token");
   const response = await fetch("/api/game_end", {
@@ -78,21 +112,14 @@ export async function showGameEnd() {
   }
   const data = await response.json();
 
+  const leaderboardHTML = renderLeaderboard(data.top_players);
+  
   document.body.innerHTML = `
     <h1>כל הכבוד ${data.player_name}!</h1>
     <h2>הניקוד שלך: ${data.score}</h2>
     <hr>
     <h2>🏆 לוח התוצאות</h2>
-    <table style="margin:auto; border-collapse: collapse; width: 50%;">
-      <tr><th>מקום</th><th>שם</th><th>ניקוד</th></tr>
-      ${data.top_players.map((p, i) => `
-        <tr>
-          <td>${i + 1}</td>
-          <td>${p.name}</td>
-          <td>${p.score}</td>
-        </tr>
-      `).join('')}
-    </table>
+    ${leaderboardHTML}
     <br>
     <img src="/static/dino.png" alt="דינוזאור חמוד" class="dino-img" />
     <br>
@@ -138,6 +165,37 @@ export async function loadPlayerStats() {
 
     // ברגע שהעמוד נטען — נטען אוטומטית את הנתונים
     document.addEventListener('DOMContentLoaded', loadPlayerStats);
+
+export async function loadTopPlayers() {
+  const token = localStorage.getItem("token");
+  const container = document.getElementById('statsContainer');
+  // מחליף את הכותרת "סטטיסטיקות שחקן" בכותרת ללוח תוצאות
+  const pageTitle = document.querySelector('h1');
+  if (pageTitle) {
+    pageTitle.textContent = '🏆 לוח התוצאות';
+  }
+  // מעדכן את title של הדף
+  document.title = 'לוח התוצאות';
+  
+  try {
+    const response = await fetch("/api/top_players", {
+      headers: { "Authorization": "Bearer " + token }
+    });
+    if (!response.ok) {
+      const err = await response.json();
+      container.innerHTML = `<p style="color:red;">שגיאה: ${err.detail || response.statusText}</p>`;
+      return;
+    }
+    const data = await response.json();
+    renderLeaderboard(data.top_players, container);
+  } catch (err) {
+    container.innerHTML = `<p style="color:red;">שגיאה בטעינה: ${err.message}</p>`;
+  }
+}
+
+if (window.location.pathname === '/top_players') {
+  document.addEventListener('DOMContentLoaded', loadTopPlayers);
+}
 
 let countdownInterval;
 let isPaused = false;

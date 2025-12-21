@@ -7,7 +7,7 @@ from pydantic import BaseModel
 import bcrypt
 from auth_utils import create_access_token, get_current_player
 from dal.player_dal import get_player_by_name, create_player
-from database import get_db
+from infra.database import get_db
 from models import Player
 from fastapi.security import OAuth2PasswordRequestForm
 

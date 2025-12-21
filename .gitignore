@@ -6,6 +6,13 @@ __pycache__/
 
 # Environments
 env/
+.venv/
 
-# mongo data db
+# Env vars
+.env
+
+# Local data
 data/
+
+# Logs
+*.log

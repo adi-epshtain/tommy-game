@@ -61,3 +61,17 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
+// Handle top players button click
+document.addEventListener("DOMContentLoaded", () => {
+  const topPlayersBtn = document.getElementById("top-players-btn");
+  if (topPlayersBtn) {
+    topPlayersBtn.onclick = function() {
+      console.log("Top players button clicked!");
+      window.location.href = "/top_players";
+    };
+  } else {
+    console.error("Top players button not found!");
+  }
+});
+

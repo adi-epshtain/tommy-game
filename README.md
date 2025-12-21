@@ -36,7 +36,9 @@ A web-based math quiz game platform built with FastAPI and PostgreSQL. Players s
 
 1.**Start the application** ( Builds Docker images and starts containers)
    ```bash
-   docker-compose up --build
+   docker system prune -a --volumes (only if you want to remove all unused data)
+   docker-compose build --no-cache
+   docker-compose up
    ```
 
 2. **Access the application**
@@ -47,7 +49,7 @@ A web-based math quiz game platform built with FastAPI and PostgreSQL. Players s
 
 1. **Install dependencies**
    ```bash
-   pip install -r requirements.txt
+   python -m pip install -r requirements.txt
    ```
 
 2. **Set up PostgreSQL database**
@@ -56,7 +58,7 @@ A web-based math quiz game platform built with FastAPI and PostgreSQL. Players s
 
 3. **Run the application**
    ```bash
-   python main.py
+   uvicorn main:app --reload
    ```
 
 ## Database Schema

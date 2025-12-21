@@ -3,7 +3,7 @@ from routes.game_api import router as game_router
 from routes.auth_routes import router as auth_router
 from routes.pages import router as pages_router
 from app import app
-from database import database
+from infra.database import database
 
 
 app.include_router(game_router)

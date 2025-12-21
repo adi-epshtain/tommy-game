@@ -1,12 +1,12 @@
-from dataclasses import dataclass
-
+from dataclasses import asdict, dataclass
+import json
 from sqlalchemy import desc
-
-from logger import log
+from infra.logger import log
 from models import PlayerSession, Question, Player
 from sqlalchemy.orm import Session, joinedload
 from typing import Optional, List, Type
 from datetime import datetime
+from infra.redis_client import redis_client
 
 
 async def create_player_session(session: Session, player_id: int, game_id: int) -> PlayerSession:
@@ -36,7 +36,7 @@ async def end_session(session: Session, session_id: int) -> Optional[PlayerSessi
     )
     if not player_session:
         return None
-    player_session.ended_at = datetime.utcnow()
+    player_session.ended_at = datetime.now()
     session.commit()
     return player_session
 
@@ -68,16 +68,31 @@ class PlayerScore:
 
 
 async def get_top_players(session: Session, limit: int = 10) -> List[PlayerScore]:
+    cache_key = f"leaderboard:top:{limit}"
+    cached = redis_client.get(cache_key)
+    if cached:
+        data = json.loads(cached)
+        return [PlayerScore(**row) for row in data]
+    
+    # מסנן רק sessions שנסיימו ומשפר את הביצועים
     top_players: List[tuple[str, int]] = (
         session.query(Player.name, PlayerSession.score)
         .join(Player, Player.id == PlayerSession.player_id)  # type: ignore
+        .filter(PlayerSession.ended_at.isnot(None))  # רק sessions שנסיימו
         .order_by(PlayerSession.score.desc(),
                   PlayerSession.ended_at.desc())
         .limit(limit)
         .all()
     )
-    return [PlayerScore(name=row[0], score=row[1]) for row in top_players]
+    result = [PlayerScore(name=row[0], score=row[1]) for row in top_players]
+    # מגדיל את זמן ה-cache ל-5 דקות במקום 60 שניות
+    redis_client.setex(
+        cache_key,
+        300,  # 5 דקות
+        json.dumps([asdict(r) for r in result]),
+    )
 
+    return result
 
 async def get_last_player_sessions(session: Session, player_id: int,
                                    limit_num=10) -> list[PlayerSession]:

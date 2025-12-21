@@ -17,8 +17,9 @@ from dal.player_session_dal import (
     get_last_player_sessions, update_player_stage
 )
 from dal.question_dal import get_random_question_by_game, get_question_by_id
-from database import get_db
-from logger import log
+from infra.database import get_db
+from infra.logger import log
+from infra.redis_client import redis_client
 from models import PlayerSession, Question, Player, Game
 from scripts.init_math_game import insert_math_stock_questions
 import os
@@ -145,6 +146,11 @@ async def end_game(
     player_session: Optional[PlayerSession] = await get_session_by_player_id(db, player.id)
     if not player_session:
         raise HTTPException(status_code=404, detail="No active session found for player")
+    
+    # invalidate leaderboard cache - מוחק את כל ה-caches הרלוונטיים
+    for limit in [5, 10, 20]:
+        redis_client.delete(f"leaderboard:top:{limit}")
+
     top_players: List[PlayerScore] = await get_top_players(db, limit=5)
     return templates.TemplateResponse("end.html", {
         "request": request,
@@ -166,7 +172,8 @@ async def game_end_data(
     player_session: Optional[PlayerSession] = await get_session_by_player_id(db, player.id)
     if not player_session:
         raise HTTPException(status_code=404, detail="No active session found for player")
-    top_players: List[PlayerScore] = await get_top_players(db, limit=5)
+    # שימוש באותו endpoint של top_players
+    top_players: List[PlayerScore] = await get_top_players(db, limit=10)
     return {
         "score": player_session.score,
         "player_name": player_name,
@@ -191,6 +198,22 @@ async def get_last_player_sessions_data(current_player=Depends(get_current_playe
 async def player_stats(request: Request):
     data = {"player_name": "דינו", "player_stats": []}  # כאן תשלוף ותכניס נתונים אמיתיים
     return templates.TemplateResponse("player_stats.html", {"request": request, **data})
+
+
+@router.get("/api/top_players", tags=["Game"])
+async def get_top_players_api(
+    current_player=Depends(get_current_player),
+    db: Session = Depends(get_db)
+):
+    top_players: List[PlayerScore] = await get_top_players(db, limit=10)
+    return {
+        "top_players": [{"name": p.name, "score": p.score} for p in top_players]
+    }
+
+
+@router.get("/top_players", response_class=HTMLResponse)
+async def top_players_page(request: Request):
+    return templates.TemplateResponse("player_stats.html", {"request": request})
 
 
 class GameSettingsRequest(BaseModel):
