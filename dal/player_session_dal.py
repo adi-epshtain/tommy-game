@@ -85,7 +85,7 @@ async def get_top_players(session: Session, limit: int = 10) -> List[PlayerScore
         .all()
     )
     result = [PlayerScore(name=row[0], score=row[1]) for row in top_players]
-    # מגדיל את זמן ה-cache ל-5 דקות במקום 60 שניות
+
     redis_client.setex(
         cache_key,
         300,  # 5 דקות
