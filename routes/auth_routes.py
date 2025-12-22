@@ -8,6 +8,8 @@ import bcrypt
 from auth_utils import create_access_token, get_current_player
 from dal.player_dal import get_player_by_name, create_player
 from infra.database import get_db
+from infra.rate_limiter import rate_limit
+from infra.redis_client import redis_client
 from models import Player
 from fastapi.security import OAuth2PasswordRequestForm
 
@@ -41,8 +43,16 @@ async def signup(req: SignupRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/login", tags=["Auth"])
-async def login(req: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+async def login(
+    request: Request,
+    req: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db),
+):
+    # rate limit by IP address
+    await rate_limit(request, redis_client)
     player: Optional[Player] = await get_player_by_name(db, req.username)
+    if not player:
+         raise HTTPException(status_code=404, detail="Invalid player")
     is_correct: bool = bcrypt.checkpw(req.password.encode("utf-8"),
                                       player.password.encode("utf-8"))
     if not is_correct:
