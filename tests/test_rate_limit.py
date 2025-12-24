@@ -39,3 +39,24 @@ def test_login_rate_limit_exceeded():
     res = client.post("/login", data=payload, headers=headers)
     assert res.status_code == 429
     assert res.json()["detail"] == RATE_LIMIT_MSG
+
+
+def test_signup_rate_limit_exceeded():
+    # clean Redis state before test
+    redis_client.flushdb()
+
+    payload = {
+        "name": "spam_user",
+        "age": 7,
+        "password": "secret123"
+    }
+
+    # first RATE_LIMIT attempts – allowed (200 or 400 if user already exists)
+    for _ in range(RATE_LIMIT):
+        res = client.post("/signup", json=payload)
+        assert res.status_code in (200, 400)
+
+    # next attempt – should be rate limited
+    res = client.post("/signup", json=payload)
+    assert res.status_code == 429
+    assert res.json()["detail"] == RATE_LIMIT_MSG

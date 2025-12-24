@@ -19,6 +19,7 @@ from dal.player_session_dal import (
 from dal.question_dal import get_random_question_by_game, get_question_by_id
 from infra.database import get_db
 from infra.logger import log
+from infra.rate_limiter import rate_limit
 from infra.redis_client import redis_client
 from models import PlayerSession, Question, Player, Game
 from scripts.init_math_game import insert_math_stock_questions

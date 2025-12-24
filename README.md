@@ -60,6 +60,14 @@ A web-based math quiz game platform built with FastAPI and PostgreSQL. Players s
    ```bash
    uvicorn main:app --reload
    ```
+## 🧪 Running tests with Docker
+
+To run the test suite (or a specific test file) **inside the application container**, use:
+
+```bash
+docker compose run web pytest tests
+docker compose run web pytest tests/test_rate_limit.py
+```
 
 ## Database Schema
 ![DB Schema](docs/db/schema.png)

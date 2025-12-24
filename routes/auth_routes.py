@@ -33,13 +33,31 @@ async def player_info(current_player=Depends(get_current_player)):
 
 
 @router.post("/signup", tags=["Auth"])
-async def signup(req: SignupRequest, db: Session = Depends(get_db)):
+async def signup(
+    request: Request,
+    req: SignupRequest,
+    db: Session = Depends(get_db),
+):
+    # rate limit to prevent signup abuse
+    await rate_limit(request, redis_client)
+
     existing_player: Optional[Player] = await get_player_by_name(db, req.name)
     if existing_player:
         raise HTTPException(status_code=400, detail="User already exists")
-    hashed_password = bcrypt.hashpw(req.password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
-    await create_player(db, name=req.name, age=req.age, hashed_password=hashed_password)
-    return {"message": f"User created successfully"}
+
+    hashed_password = bcrypt.hashpw(
+        req.password.encode("utf-8"),
+        bcrypt.gensalt()
+    ).decode("utf-8")
+
+    await create_player(
+        db,
+        name=req.name,
+        age=req.age,
+        hashed_password=hashed_password
+    )
+
+    return {"message": "User created successfully"}
 
 
 @router.post("/login", tags=["Auth"])
