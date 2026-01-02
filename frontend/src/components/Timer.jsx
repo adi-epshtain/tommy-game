@@ -1,30 +1,62 @@
 import { useState, useEffect, useRef } from 'react'
 import Button from './Button'
 
-function Timer({ seconds, onTimeUp, isPaused: externalPaused }) {
+function Timer({ seconds, onTimeUp, isPaused: externalPaused, onTimeChange }) {
   const [remainingTime, setRemainingTime] = useState(seconds)
   const [isPaused, setIsPaused] = useState(false)
   const intervalRef = useRef(null)
+  const remainingTimeRef = useRef(seconds)
 
+  // Update ref when state changes
   useEffect(() => {
-    setRemainingTime(seconds)
-    setIsPaused(false)
-  }, [seconds])
+    remainingTimeRef.current = remainingTime
+  }, [remainingTime])
 
+  // Reset timer when seconds prop changes
   useEffect(() => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current)
+      intervalRef.current = null
+    }
+    setRemainingTime(seconds)
+    remainingTimeRef.current = seconds
+    setIsPaused(false)
+    if (onTimeChange) {
+      onTimeChange(seconds)
+    }
+  }, [seconds, onTimeChange])
+
+  // Handle timer countdown
+  useEffect(() => {
+    // Clear existing interval
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+      intervalRef.current = null
     }
 
-    if (!isPaused && !externalPaused && remainingTime > 0) {
+    // Start timer if not paused and time > 0
+    if (!isPaused && !externalPaused && remainingTimeRef.current > 0) {
       intervalRef.current = setInterval(() => {
         setRemainingTime((prev) => {
-          if (prev <= 1) {
-            clearInterval(intervalRef.current)
+          const current = remainingTimeRef.current
+          if (current <= 1) {
+            if (intervalRef.current) {
+              clearInterval(intervalRef.current)
+              intervalRef.current = null
+            }
+            remainingTimeRef.current = 0
+            if (onTimeChange) {
+              onTimeChange(0)
+            }
             onTimeUp()
             return 0
           }
-          return prev - 1
+          const newTime = current - 1
+          remainingTimeRef.current = newTime
+          if (onTimeChange) {
+            onTimeChange(newTime)
+          }
+          return newTime
         })
       }, 1000)
     }
@@ -32,9 +64,10 @@ function Timer({ seconds, onTimeUp, isPaused: externalPaused }) {
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current)
+        intervalRef.current = null
       }
     }
-  }, [isPaused, externalPaused, remainingTime, onTimeUp])
+  }, [isPaused, externalPaused, onTimeUp, onTimeChange])
 
   const togglePause = () => {
     setIsPaused(!isPaused)

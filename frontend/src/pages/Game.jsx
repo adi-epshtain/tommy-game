@@ -25,6 +25,11 @@ function Game({ onLogout }) {
   const [consecutiveCorrect, setConsecutiveCorrect] = useState(0)
   const [showCelebration, setShowCelebration] = useState(false)
   const [encouragementMessage, setEncouragementMessage] = useState('')
+  const [winningScore, setWinningScore] = useState(5) // Default, will be updated from settings
+  const [showScorePopup, setShowScorePopup] = useState(false)
+  const [scoreChange, setScoreChange] = useState(0)
+  const [remainingTime, setRemainingTime] = useState(30)
+  const [questionFade, setQuestionFade] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -47,6 +52,7 @@ function Game({ onLogout }) {
       const data = await api.startGame(5)
       setQuestion(data.question)
       setTimeLimit(data.time_limit)
+      setRemainingTime(data.time_limit)
       setCurrentQuestionId(data.question_id)
       setScore(0)
       setStage(1)
@@ -81,6 +87,11 @@ function Game({ onLogout }) {
           setShowCelebration(true)
           setTimeout(() => setShowCelebration(false), 2000)
           
+          // Score popup animation
+          setScoreChange(1)
+          setShowScorePopup(true)
+          setTimeout(() => setShowScorePopup(false), 1000)
+          
           // הודעות מעודדות לפי רצף
           let message = '✅ נכון!'
           if (newConsecutive === 3) {
@@ -101,10 +112,19 @@ function Game({ onLogout }) {
           setConsecutiveCorrect(0)
           setResult('❌ לא נכון! נסה שוב! 💪')
           setEncouragementMessage('')
+          setScoreChange(-1)
+          setShowScorePopup(true)
+          setTimeout(() => setShowScorePopup(false), 1000)
         }
         
-        setQuestion(data.question)
-        setTimeLimit(data.time_limit)
+        // Question transition animation
+        setQuestionFade(true)
+        setTimeout(() => {
+          setQuestion(data.question)
+          setTimeLimit(data.time_limit)
+          setRemainingTime(data.time_limit)
+          setQuestionFade(false)
+        }, 300)
         setAnswer('')
         setCurrentQuestionId(data.question_id)
         setWrongQuestions(data.wrong_questions || [])
@@ -404,24 +424,68 @@ function Game({ onLogout }) {
               pointerEvents: 'none'
             }}></div>
             
-            <h2 className="question text-7xl md:text-8xl font-extrabold text-center relative z-10" dir="ltr" style={{
-              color: '#DC143C',
-              textShadow: '3px 3px 0px rgba(255,255,255,0.6), 5px 5px 10px rgba(0,0,0,0.2)',
-              letterSpacing: '0.05em',
-              fontFamily: 'Arial, "Helvetica Neue", sans-serif',
-              lineHeight: '1.2'
-            }}>
+            <h2 
+              className={`question text-7xl md:text-8xl font-extrabold text-center relative z-10 transition-opacity duration-300 ${questionFade ? 'opacity-0' : 'opacity-100'}`}
+              dir="ltr" 
+              style={{
+                color: '#DC143C',
+                textShadow: '3px 3px 0px rgba(255,255,255,0.6), 5px 5px 10px rgba(0,0,0,0.2)',
+                letterSpacing: '0.05em',
+                fontFamily: 'Arial, "Helvetica Neue", sans-serif',
+                lineHeight: '1.2'
+              }}
+            >
               {question}
             </h2>
           </div>
 
-          {/* Timer */}
-          <div className="mb-6">
+          {/* Timer with Visual Progress Bar */}
+          <div className="mb-6 w-full max-w-md mx-auto">
             <Timer
               seconds={timeLimit}
               onTimeUp={handleTimeUp}
               isPaused={timerPaused}
+              onTimeChange={setRemainingTime}
             />
+            {/* Visual Timer Bar */}
+            <div className="mt-2 w-full h-4 bg-gray-200 rounded-full overflow-hidden shadow-inner">
+              <div 
+                className="h-full transition-all duration-1000 ease-linear rounded-full"
+                style={{
+                  width: `${(remainingTime / timeLimit) * 100}%`,
+                  background: remainingTime > timeLimit * 0.5 
+                    ? 'linear-gradient(90deg, #22c55e, #10b981)' 
+                    : remainingTime > timeLimit * 0.25
+                    ? 'linear-gradient(90deg, #f59e0b, #f97316)'
+                    : 'linear-gradient(90deg, #ef4444, #dc2626)',
+                  boxShadow: '0 0 10px rgba(34, 197, 94, 0.5)'
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Progress Bar to Victory */}
+          <div className="mb-4 w-full max-w-md mx-auto relative z-10">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm font-semibold" style={{ color: '#654321' }}>התקדמות לניצחון</span>
+              <span className="text-sm font-bold" style={{ color: '#654321' }}>{score} / {winningScore}</span>
+            </div>
+            <div className="w-full h-6 bg-gray-200 rounded-full overflow-hidden shadow-inner border-2 border-gray-300">
+              <div 
+                className="h-full transition-all duration-500 ease-out rounded-full relative"
+                style={{
+                  width: `${Math.min((score / winningScore) * 100, 100)}%`,
+                  background: score >= winningScore 
+                    ? 'linear-gradient(90deg, #fbbf24, #f59e0b, #d97706)'
+                    : 'linear-gradient(90deg, #22c55e, #10b981, #059669)',
+                  boxShadow: '0 0 15px rgba(34, 197, 94, 0.6)'
+                }}
+              >
+                {score >= winningScore && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent animate-pulse opacity-50"></div>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Stage and Score */}
@@ -429,10 +493,34 @@ function Game({ onLogout }) {
             <div id="stage" className="text-lg md:text-xl font-bold px-4 py-2 rounded-lg bg-gradient-to-r from-purple-100 to-pink-100 border-2 border-purple-300 shadow-md" style={{ color: '#654321' }}>
               🎯 רמה: {stage}
             </div>
-            <div id="score" className={`text-lg md:text-xl font-bold px-4 py-2 rounded-lg border-2 shadow-md transition-all duration-300 ${score > 0 ? 'bg-gradient-to-r from-green-100 to-emerald-100 border-green-400 scale-110' : 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-300'}`} style={{ color: '#654321' }}>
+            <div id="score" className={`text-lg md:text-xl font-bold px-4 py-2 rounded-lg border-2 shadow-md transition-all duration-300 relative ${score > 0 ? 'bg-gradient-to-r from-green-100 to-emerald-100 border-green-400 scale-110' : 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-300'}`} style={{ color: '#654321' }}>
               ⭐ ניקוד: {score}
+              {/* Score Popup */}
+              {showScorePopup && (
+                <div 
+                  className="absolute -top-12 left-1/2 transform -translate-x-1/2 text-2xl font-bold animate-bounce"
+                  style={{ 
+                    color: scoreChange > 0 ? '#22c55e' : '#ef4444',
+                    textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+                    animation: 'bounce 1s ease-out forwards'
+                  }}
+                >
+                  {scoreChange > 0 ? `+${scoreChange} ⭐` : `${scoreChange} ⭐`}
+                </div>
+              )}
             </div>
           </div>
+
+          {/* Streak Counter */}
+          {consecutiveCorrect > 0 && (
+            <div className="mb-4 text-center relative z-10">
+              <div className="inline-block bg-gradient-to-r from-yellow-200 via-orange-200 to-pink-200 rounded-full px-6 py-2 border-2 border-yellow-400 shadow-lg animate-pulse">
+                <span className="text-xl font-bold" style={{ color: '#654321' }}>
+                  🔥 רצף: {consecutiveCorrect} תשובות נכונות!
+                </span>
+              </div>
+            </div>
+          )}
 
           {/* Input + Submit Grouped Together */}
           <form onSubmit={handleSubmitAnswer} className="flex gap-2 justify-center items-center mb-4">
