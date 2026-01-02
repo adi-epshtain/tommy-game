@@ -251,12 +251,14 @@ function Game({ onLogout }) {
           marginTop: '3vh',
           marginBottom: '3vh',
           background: 'linear-gradient(135deg, #CD853F 0%, #D2691E 20%, #B8860B 40%, #CD853F 60%, #D2691E 80%, #B8860B 100%)',
-          padding: '2.5rem 2rem',
+          padding: '2.5rem 2rem 3rem 2rem',
+          minHeight: 'fit-content',
           borderRadius: '50% 40% 55% 45% / 45% 55% 40% 50%',
           boxShadow: '0 25px 50px rgba(0,0,0,0.4), inset 0 3px 6px rgba(255,255,255,0.2), inset 0 -3px 6px rgba(0,0,0,0.3)',
           border: '10px solid #8B4513',
           transform: 'rotate(-0.5deg)',
-          position: 'relative'
+          position: 'relative',
+          overflow: 'visible'
         }}>
           {/* Wood grain texture */}
           <div className="absolute inset-0 opacity-25" style={{
@@ -290,7 +292,6 @@ function Game({ onLogout }) {
             background: 'linear-gradient(135deg, #FFF8DC 0%, #F5E6D3 50%, #FFF8DC 100%)',
             padding: '2.5rem 3rem',
             borderRadius: '30% 70% 25% 75% / 60% 40% 60% 40%',
-            border: '5px solid #DEB887',
             boxShadow: 'inset 0 3px 10px rgba(0,0,0,0.08), 0 5px 15px rgba(0,0,0,0.15)',
             position: 'relative'
           }}>
@@ -342,7 +343,6 @@ function Game({ onLogout }) {
               className="flex-1 max-w-xs px-6 py-4 text-2xl text-center rounded-full focus:outline-none focus:ring-4 focus:ring-green-300"
               style={{
                 background: '#FFF8DC',
-                border: '3px solid #DEB887',
                 boxShadow: 'inset 0 2px 5px rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.15)'
               }}
             />
@@ -368,21 +368,19 @@ function Game({ onLogout }) {
             </div>
           )}
 
-          {/* Wrong Questions */}
+          {/* Wrong Questions - Integrated into wooden sign */}
           {wrongQuestions.length > 0 && (
-            <div className="mt-6 relative z-10">
+            <div className="mt-6 mb-2 relative z-10 text-center">
               <h4 className="text-lg md:text-xl font-bold mb-3" style={{ color: '#654321' }}>השאלות שלא ידע לענות עליהן:</h4>
-              <div id="wrong-questions" dir="ltr" className="rounded-xl p-4" style={{
-                background: 'linear-gradient(135deg, #FFF8DC 0%, #F5E6D3 100%)',
-                border: '3px solid #DEB887',
-                boxShadow: 'inset 0 2px 5px rgba(0,0,0,0.1)'
+              <ul id="wrong-questions" dir="ltr" className="list-none inline-block text-center" style={{
+                maxHeight: '300px',
+                overflowY: 'auto',
+                padding: '0 1rem'
               }}>
-                <ul className="list-disc list-inside">
-                  {wrongQuestions.map((q, i) => (
-                    <li key={i} className="text-base md:text-lg" style={{ color: '#654321' }}>{q}</li>
-                  ))}
-                </ul>
-              </div>
+                {wrongQuestions.map((q, i) => (
+                  <li key={i} className="text-base md:text-lg mb-2" style={{ color: '#654321' }}>• {q}</li>
+                ))}
+              </ul>
             </div>
           )}
         </div>
