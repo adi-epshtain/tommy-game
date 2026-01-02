@@ -142,35 +142,23 @@ function Game({ onLogout }) {
   }
 
   return (
-    <div className="min-h-screen w-full relative overflow-hidden">
-      {/* Sky gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-sky-300 via-sky-200 to-sky-100"></div>
+    <div 
+      className="min-h-screen w-full relative overflow-hidden" 
+      style={{
+        backgroundImage: 'url(/static/math_dino2.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed'
+      }}
+    >
       
-      {/* Jungle green hills/middle ground */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-green-400/40 to-green-600" style={{
-        backgroundPosition: 'center bottom',
-        backgroundSize: '100% 60%',
-        clipPath: 'polygon(0% 70%, 0% 100%, 100% 100%, 100% 70%, 90% 65%, 80% 68%, 70% 63%, 60% 66%, 50% 62%, 40% 65%, 30% 63%, 20% 66%, 10% 64%, 0% 70%)'
-      }}></div>
-      
-      {/* Ground path in center - dirt/brown trail */}
-      <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-2/5 h-1/3" style={{
-        background: 'linear-gradient(to bottom, #8B7355 0%, #6B5B4A 50%, #5A4A3A 100%)',
-        clipPath: 'polygon(10% 0%, 90% 0%, 100% 100%, 0% 100%)',
-        borderRadius: '50% 50% 0 0 / 30% 30% 0 0'
-      }}></div>
-      
-      {/* Path texture/center line */}
-      <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1/6 h-1/4 bg-gradient-to-b from-amber-200/30 via-transparent to-transparent" style={{
-        clipPath: 'polygon(40% 0%, 60% 0%, 55% 100%, 45% 100%)'
-      }}></div>
-      
-      {/* Additional jungle layers for depth */}
-      <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-green-700 via-green-600 to-green-500/50" style={{
-        clipPath: 'polygon(0% 100%, 0% 50%, 15% 45%, 25% 48%, 35% 44%, 45% 47%, 55% 43%, 65% 46%, 75% 44%, 85% 47%, 100% 45%, 100% 100%)'
-      }}></div>
-      {/* Top Header - Floating */}
-      <header className="absolute top-0 left-0 right-0 w-full p-4 flex justify-between items-center z-30 bg-white/80 backdrop-blur-sm">
+      {/* Top Header - Light green semi-transparent */}
+      <header className="absolute top-0 left-0 right-0 w-full p-3 md:p-4 flex justify-between items-center z-30" style={{
+        background: 'rgba(144, 238, 144, 0.85)',
+        backdropFilter: 'blur(8px)',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+      }}>
         <div className="flex gap-2">
           <button
             onClick={() => navigate('/player_stats')}
@@ -185,7 +173,7 @@ function Game({ onLogout }) {
             🥇 הצג לוח תוצאות
           </button>
         </div>
-        <h1 className="text-2xl font-bold text-green-800">ברוך הבא למשחק של דינו!!!</h1>
+        <h1 className="text-xl md:text-2xl font-bold" style={{ color: '#2d5016', textShadow: '1px 1px 2px rgba(255,255,255,0.5)' }}>ברוך הבא למשחק של דינו!!!</h1>
         <button 
           onClick={handleLogout}
           className="px-4 py-2 bg-white text-gray-800 font-semibold rounded-lg shadow-md hover:shadow-lg transition-shadow"
@@ -194,46 +182,63 @@ function Game({ onLogout }) {
         </button>
       </header>
 
-      {/* Large Dinosaur Character - Left Side */}
-      <div className="absolute left-4 md:left-8 lg:left-16 bottom-0 z-20 pointer-events-none" style={{ height: '40vh', minHeight: '300px' }}>
+      {/* Left Dinosaur - Green Brontosaurus with yellow crest */}
+      <div className="absolute left-2 md:left-4 lg:left-8 bottom-0 z-20 pointer-events-none" style={{ height: '35vh', minHeight: '280px', maxHeight: '400px' }}>
         <div className="relative h-full flex items-end">
-          {/* Large Dinosaur Body */}
           <div className="relative">
-            {/* Main body */}
-            <div className="w-32 h-40 md:w-48 md:h-60 lg:w-56 lg:h-72 bg-gradient-to-b from-green-400 via-green-500 to-green-600 rounded-full shadow-2xl flex items-center justify-center" style={{
-              clipPath: 'polygon(50% 0%, 85% 15%, 100% 40%, 95% 70%, 80% 90%, 50% 100%, 20% 90%, 5% 70%, 0% 40%, 15% 15%)'
+            {/* Long neck */}
+            <div className="absolute bottom-24 md:bottom-32 left-1/2 transform -translate-x-1/2 w-12 h-32 md:w-16 md:h-40 bg-gradient-to-b from-green-300 to-green-500 rounded-full"></div>
+            {/* Body */}
+            <div className="w-28 h-32 md:w-40 md:h-48 lg:w-48 lg:h-56 bg-gradient-to-b from-green-300 via-green-400 to-green-600 rounded-full shadow-xl flex items-center justify-center" style={{
+              clipPath: 'polygon(30% 0%, 70% 0%, 90% 30%, 95% 60%, 90% 90%, 50% 100%, 10% 90%, 5% 60%, 10% 30%)'
             }}>
-              <div className="text-6xl md:text-8xl lg:text-9xl">🦕</div>
+              <div className="text-5xl md:text-7xl lg:text-8xl">🦕</div>
             </div>
-            {/* Tail */}
-            <div className="absolute -right-8 top-1/2 w-16 h-12 bg-green-500 rounded-full transform rotate-12"></div>
+            {/* Yellow spiky crest on head */}
+            <div className="absolute -top-8 md:-top-12 left-1/2 transform -translate-x-1/2" style={{
+              width: '40px',
+              height: '60px',
+              background: 'linear-gradient(to bottom, #FFD700, #FFA500)',
+              clipPath: 'polygon(50% 0%, 80% 30%, 70% 50%, 90% 70%, 50% 100%, 10% 70%, 30% 50%, 20% 30%)',
+              filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.3))'
+            }}></div>
             {/* Speech bubble */}
-            <div className="absolute -top-16 -right-4 md:-top-20 md:-right-8 bg-white rounded-2xl p-3 md:p-4 shadow-2xl border-4 border-gray-300 z-30" style={{
-              clipPath: 'polygon(0% 0%, 100% 0%, 100% 75%, 85% 75%, 75% 100%, 65% 75%, 0% 75%)',
-              minWidth: '120px'
+            <div className="absolute -top-20 md:-top-24 -right-8 md:-right-12 bg-white rounded-2xl p-3 md:p-4 shadow-2xl z-30 border-2 border-gray-300" style={{
+              minWidth: '110px',
+              clipPath: 'polygon(0% 0%, 100% 0%, 100% 80%, 88% 80%, 78% 100%, 68% 80%, 0% 80%)'
             }}>
-              <div className="text-xl md:text-2xl font-bold text-gray-800" dir="ltr">5 + 2 = 7</div>
+              <div className="text-lg md:text-xl font-bold text-gray-800" dir="ltr">5 + 2 = 7</div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Large Dinosaur Character - Right Side */}
-      <div className="absolute right-4 md:right-8 lg:right-16 bottom-0 z-20 pointer-events-none" style={{ height: '40vh', minHeight: '300px' }}>
+      {/* Right Dinosaur - Blue Triceratops with brown backpack */}
+      <div className="absolute right-2 md:right-4 lg:right-8 bottom-0 z-20 pointer-events-none" style={{ height: '35vh', minHeight: '280px', maxHeight: '400px' }}>
         <div className="relative h-full flex items-end">
-          {/* Large Dinosaur Body */}
           <div className="relative">
-            {/* Main body */}
-            <div className="w-32 h-40 md:w-48 md:h-60 lg:w-56 lg:h-72 bg-gradient-to-b from-blue-400 via-blue-500 to-blue-600 rounded-full shadow-2xl flex items-center justify-center" style={{
+            {/* Body */}
+            <div className="w-28 h-32 md:w-40 md:h-48 lg:w-48 lg:h-56 bg-gradient-to-b from-cyan-300 via-blue-400 to-blue-600 rounded-full shadow-xl flex items-center justify-center" style={{
               clipPath: 'polygon(20% 0%, 80% 0%, 100% 25%, 95% 60%, 85% 85%, 50% 100%, 15% 85%, 5% 60%, 0% 25%)'
             }}>
-              <div className="text-6xl md:text-8xl lg:text-9xl">🦖</div>
+              <div className="text-5xl md:text-7xl lg:text-8xl">🦖</div>
             </div>
-            {/* Frill/crest */}
-            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 w-20 h-8 bg-blue-300 rounded-full"></div>
-            {/* Basket/backpack on back */}
-            <div className="absolute top-1/3 -right-4 w-16 h-20 md:w-20 md:h-24 bg-amber-800 rounded-lg shadow-lg border-4 border-amber-900 transform rotate-12">
-              <div className="absolute top-2 left-1/2 transform -translate-x-1/2 w-12 h-2 bg-amber-900 rounded"></div>
+            {/* Frill */}
+            <div className="absolute -top-6 md:-top-8 left-1/2 transform -translate-x-1/2 w-24 h-10 md:w-32 md:h-12 bg-gradient-to-b from-blue-200 to-blue-400 rounded-full shadow-md" style={{
+              clipPath: 'polygon(10% 0%, 90% 0%, 100% 50%, 90% 100%, 10% 100%, 0% 50%)'
+            }}></div>
+            {/* Three small horns */}
+            <div className="absolute -top-12 md:-top-16 left-1/2 transform -translate-x-1/2 w-2 h-6 md:h-8 bg-gray-700 rounded-full"></div>
+            <div className="absolute -top-10 md:-top-14 left-1/3 transform -translate-x-1/2 w-1.5 h-4 md:h-6 bg-gray-700 rounded-full"></div>
+            <div className="absolute -top-10 md:-top-14 right-1/3 transform translate-x-1/2 w-1.5 h-4 md:h-6 bg-gray-700 rounded-full"></div>
+            {/* Brown backpack/basket on back */}
+            <div className="absolute top-1/4 -right-6 md:-right-8 w-14 h-18 md:w-18 md:h-22 bg-gradient-to-b from-amber-700 to-amber-900 rounded-lg shadow-xl border-3 border-amber-950 transform rotate-12" style={{
+              borderWidth: '3px'
+            }}>
+              <div className="absolute top-1 left-1/2 transform -translate-x-1/2 w-10 h-1.5 bg-amber-950 rounded"></div>
+              <div className="absolute top-4 left-1 right-1 h-1 bg-amber-800 rounded"></div>
+              <div className="absolute top-7 left-1 right-1 h-1 bg-amber-800 rounded"></div>
+              <div className="absolute top-10 left-1 right-1 h-1 bg-amber-800 rounded"></div>
             </div>
           </div>
         </div>
@@ -241,64 +246,69 @@ function Game({ onLogout }) {
 
       {/* Game Scene Container - Centered */}
       <main className="absolute inset-0 flex flex-col items-center justify-center p-4 z-10" style={{ paddingTop: '80px' }}>
-        {/* Centered Wooden Sign Card for Question - Part of Scene */}
-        <div className="w-full max-w-2xl relative z-30" style={{
-          marginTop: '5vh',
-          marginBottom: '5vh',
-          background: 'linear-gradient(135deg, #D2B48C 0%, #C19A6B 25%, #B8860B 50%, #C19A6B 75%, #D2B48C 100%)',
-          padding: '2rem',
-          borderRadius: '45% 55% 40% 60% / 60% 40% 60% 40%',
-          boxShadow: '0 20px 40px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.3), inset 0 -2px 4px rgba(0,0,0,0.2)',
-          border: '8px solid #8B6914',
-          transform: 'rotate(-1deg)',
+        {/* Centered Wooden Sign Card - Large irregular organic shape */}
+        <div className="w-full max-w-3xl relative z-30" style={{
+          marginTop: '3vh',
+          marginBottom: '3vh',
+          background: 'linear-gradient(135deg, #CD853F 0%, #D2691E 20%, #B8860B 40%, #CD853F 60%, #D2691E 80%, #B8860B 100%)',
+          padding: '2.5rem 2rem',
+          borderRadius: '50% 40% 55% 45% / 45% 55% 40% 50%',
+          boxShadow: '0 25px 50px rgba(0,0,0,0.4), inset 0 3px 6px rgba(255,255,255,0.2), inset 0 -3px 6px rgba(0,0,0,0.3)',
+          border: '10px solid #8B4513',
+          transform: 'rotate(-0.5deg)',
           position: 'relative'
         }}>
-          {/* Wood grain texture effect */}
-          <div className="absolute inset-0 opacity-20" style={{
+          {/* Wood grain texture */}
+          <div className="absolute inset-0 opacity-25" style={{
             backgroundImage: `
-              repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(139, 105, 20, 0.3) 2px, rgba(139, 105, 20, 0.3) 4px),
-              repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(139, 105, 20, 0.2) 2px, rgba(139, 105, 20, 0.2) 4px)
+              repeating-linear-gradient(90deg, transparent, transparent 3px, rgba(139, 69, 19, 0.4) 3px, rgba(139, 69, 19, 0.4) 6px),
+              repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(160, 82, 45, 0.3) 4px, rgba(160, 82, 45, 0.3) 8px),
+              repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(139, 69, 19, 0.2) 8px, rgba(139, 69, 19, 0.2) 16px)
             `,
             borderRadius: 'inherit',
             pointerEvents: 'none'
           }}></div>
           
-          {/* Nail/screw decorations */}
-          <div className="absolute top-2 left-2 w-3 h-3 bg-gray-700 rounded-full shadow-inner"></div>
-          <div className="absolute top-2 right-2 w-3 h-3 bg-gray-700 rounded-full shadow-inner"></div>
-          <div className="absolute bottom-2 left-2 w-3 h-3 bg-gray-700 rounded-full shadow-inner"></div>
-          <div className="absolute bottom-2 right-2 w-3 h-3 bg-gray-700 rounded-full shadow-inner"></div>
+          {/* Dark decorative nails at corners */}
+          <div className="absolute top-3 left-3 w-4 h-4 bg-gray-800 rounded-full shadow-inner border border-gray-900"></div>
+          <div className="absolute top-3 right-3 w-4 h-4 bg-gray-800 rounded-full shadow-inner border border-gray-900"></div>
+          <div className="absolute bottom-3 left-3 w-4 h-4 bg-gray-800 rounded-full shadow-inner border border-gray-900"></div>
+          <div className="absolute bottom-3 right-3 w-4 h-4 bg-gray-800 rounded-full shadow-inner border border-gray-900"></div>
           
           {/* Player Greeting */}
           {playerName && (
-            <h2 className="text-2xl mb-4 text-center relative z-10 text-amber-900 font-bold drop-shadow-md">
+            <h2 className="text-2xl md:text-3xl mb-5 text-center relative z-10 font-bold" style={{
+              color: '#654321',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.2)'
+            }}>
               שלום {playerName}
             </h2>
           )}
           
-          {/* Question Display - Wooden Sign Style */}
+          {/* Question Display - Cream colored paper area */}
           <div className="relative z-10 mb-6" style={{
-            background: 'linear-gradient(135deg, #F5DEB3 0%, #DEB887 50%, #F5DEB3 100%)',
-            padding: '2rem 3rem',
-            borderRadius: '35% 65% 30% 70% / 50% 30% 70% 50%',
-            border: '6px solid #8B6914',
-            boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.1), 0 4px 12px rgba(0,0,0,0.2)',
+            background: 'linear-gradient(135deg, #FFF8DC 0%, #F5E6D3 50%, #FFF8DC 100%)',
+            padding: '2.5rem 3rem',
+            borderRadius: '30% 70% 25% 75% / 60% 40% 60% 40%',
+            border: '5px solid #DEB887',
+            boxShadow: 'inset 0 3px 10px rgba(0,0,0,0.08), 0 5px 15px rgba(0,0,0,0.15)',
             position: 'relative'
           }}>
-            {/* Inner wood texture */}
-            <div className="absolute inset-0 opacity-15" style={{
+            {/* Subtle paper texture */}
+            <div className="absolute inset-0 opacity-10" style={{
               backgroundImage: `
-                repeating-linear-gradient(90deg, transparent, transparent 3px, rgba(139, 105, 20, 0.2) 3px, rgba(139, 105, 20, 0.2) 6px)
+                repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(139, 105, 20, 0.15) 2px, rgba(139, 105, 20, 0.15) 4px)
               `,
               borderRadius: 'inherit',
               pointerEvents: 'none'
             }}></div>
             
-            <h2 className="question text-6xl font-bold text-center relative z-10" dir="ltr" style={{
-              color: '#654321',
-              textShadow: '2px 2px 0px rgba(255,255,255,0.5), 4px 4px 8px rgba(0,0,0,0.3)',
-              letterSpacing: '0.1em',
-              fontFamily: 'Arial, sans-serif'
+            <h2 className="question text-7xl md:text-8xl font-extrabold text-center relative z-10" dir="ltr" style={{
+              color: '#DC143C',
+              textShadow: '3px 3px 0px rgba(255,255,255,0.6), 5px 5px 10px rgba(0,0,0,0.2)',
+              letterSpacing: '0.05em',
+              fontFamily: 'Arial, "Helvetica Neue", sans-serif',
+              lineHeight: '1.2'
             }}>
               {question}
             </h2>
@@ -314,9 +324,9 @@ function Game({ onLogout }) {
           </div>
 
           {/* Stage and Score */}
-          <div className="flex justify-center gap-4 mb-6">
-            <div id="stage" className="text-xl font-semibold">רמה: {stage}</div>
-            <div id="score" className="text-xl font-semibold">ניקוד: {score}</div>
+          <div className="flex justify-center gap-6 mb-6 relative z-10">
+            <div id="stage" className="text-lg md:text-xl font-bold" style={{ color: '#654321' }}>רמה: {stage}</div>
+            <div id="score" className="text-lg md:text-xl font-bold" style={{ color: '#654321' }}>ניקוד: {score}</div>
           </div>
 
           {/* Input + Submit Grouped Together */}
@@ -329,11 +339,20 @@ function Game({ onLogout }) {
               placeholder="התשובה שלך"
               required
               autoFocus
-              className="flex-1 max-w-xs px-6 py-4 text-2xl text-center border-4 border-amber-400 rounded-xl focus:outline-none focus:ring-4 focus:ring-amber-300"
+              className="flex-1 max-w-xs px-6 py-4 text-2xl text-center rounded-full focus:outline-none focus:ring-4 focus:ring-green-300"
+              style={{
+                background: '#FFF8DC',
+                border: '3px solid #DEB887',
+                boxShadow: 'inset 0 2px 5px rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.15)'
+              }}
             />
             <button 
               type="submit"
-              className="px-8 py-4 bg-green-500 text-white text-xl font-bold rounded-xl shadow-lg hover:bg-green-600 transition-colors"
+              className="px-8 py-4 text-white text-xl font-bold rounded-full shadow-lg hover:opacity-90 transition-opacity"
+              style={{
+                background: 'linear-gradient(to bottom, #4CAF50, #45a049)',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.25), inset 0 2px 4px rgba(255,255,255,0.3)'
+              }}
             >
               שלח
             </button>
@@ -341,19 +360,26 @@ function Game({ onLogout }) {
 
           {/* Result Feedback */}
           {result && (
-            <div className="result text-2xl font-bold text-center mb-4">
+            <div className="result text-2xl md:text-3xl font-bold text-center mb-4 relative z-10" style={{
+              color: '#654321',
+              textShadow: '1px 1px 3px rgba(0,0,0,0.2)'
+            }}>
               {result}
             </div>
           )}
 
           {/* Wrong Questions */}
           {wrongQuestions.length > 0 && (
-            <div className="mt-6">
-              <h4 className="text-lg font-semibold mb-2">השאלות שלא ידע לענות עליהן:</h4>
-              <div id="wrong-questions" dir="ltr" className="bg-white rounded-lg p-4">
+            <div className="mt-6 relative z-10">
+              <h4 className="text-lg md:text-xl font-bold mb-3" style={{ color: '#654321' }}>השאלות שלא ידע לענות עליהן:</h4>
+              <div id="wrong-questions" dir="ltr" className="rounded-xl p-4" style={{
+                background: 'linear-gradient(135deg, #FFF8DC 0%, #F5E6D3 100%)',
+                border: '3px solid #DEB887',
+                boxShadow: 'inset 0 2px 5px rgba(0,0,0,0.1)'
+              }}>
                 <ul className="list-disc list-inside">
                   {wrongQuestions.map((q, i) => (
-                    <li key={i} className="text-lg">{q}</li>
+                    <li key={i} className="text-base md:text-lg" style={{ color: '#654321' }}>{q}</li>
                   ))}
                 </ul>
               </div>
