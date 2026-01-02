@@ -22,6 +22,9 @@ function Game({ onLogout }) {
   const [gameEndData, setGameEndData] = useState(null)
   const [timerPaused, setTimerPaused] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [consecutiveCorrect, setConsecutiveCorrect] = useState(0)
+  const [showCelebration, setShowCelebration] = useState(false)
+  const [encouragementMessage, setEncouragementMessage] = useState('')
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -50,6 +53,9 @@ function Game({ onLogout }) {
       setResult('')
       setWrongQuestions([])
       setGameEnded(false)
+      setConsecutiveCorrect(0)
+      setShowCelebration(false)
+      setEncouragementMessage('')
     } catch (err) {
       alert('אירעה שגיאה בהתחלת המשחק')
       console.error(err)
@@ -68,7 +74,35 @@ function Game({ onLogout }) {
       } else {
         setScore(data.score)
         setStage(data.stage)
-        setResult(data.is_correct ? '✅ נכון!' : '❌ לא נכון!')
+        
+        if (data.is_correct) {
+          const newConsecutive = consecutiveCorrect + 1
+          setConsecutiveCorrect(newConsecutive)
+          setShowCelebration(true)
+          setTimeout(() => setShowCelebration(false), 2000)
+          
+          // הודעות מעודדות לפי רצף
+          let message = '✅ נכון!'
+          if (newConsecutive === 3) {
+            message = '🎉 3 תשובות נכונות ברצף! כל הכבוד!'
+          } else if (newConsecutive === 5) {
+            message = '🌟 5 תשובות נכונות ברצף! אתה מדהים!'
+          } else if (newConsecutive === 10) {
+            message = '🏆 10 תשובות נכונות ברצף! אתה אלוף!'
+          } else if (newConsecutive > 10 && newConsecutive % 5 === 0) {
+            message = `🔥 ${newConsecutive} תשובות נכונות ברצף! אתה גאון!`
+          } else if (newConsecutive > 1) {
+            message = `✅ נכון! ${newConsecutive} ברצף!`
+          }
+          
+          setResult(message)
+          setEncouragementMessage('')
+        } else {
+          setConsecutiveCorrect(0)
+          setResult('❌ לא נכון! נסה שוב! 💪')
+          setEncouragementMessage('')
+        }
+        
         setQuestion(data.question)
         setTimeLimit(data.time_limit)
         setAnswer('')
@@ -249,7 +283,7 @@ function Game({ onLogout }) {
       </header>
 
       {/* Left Dinosaur - Green Brontosaurus with yellow crest */}
-      <div className="absolute left-2 md:left-4 lg:left-8 bottom-0 z-20 pointer-events-none" style={{ height: '35vh', minHeight: '280px', maxHeight: '400px' }}>
+      <div className={`absolute left-2 md:left-4 lg:left-8 bottom-0 z-20 pointer-events-none transition-transform duration-500 ${showCelebration ? 'animate-bounce' : ''}`} style={{ height: '35vh', minHeight: '280px', maxHeight: '400px' }}>
         <div className="relative h-full flex items-end">
           <div className="relative">
             {/* Long neck */}
@@ -280,7 +314,7 @@ function Game({ onLogout }) {
       </div>
 
       {/* Right Dinosaur - Blue Triceratops with brown backpack */}
-      <div className="absolute right-2 md:right-4 lg:right-8 bottom-0 z-20 pointer-events-none" style={{ height: '35vh', minHeight: '280px', maxHeight: '400px' }}>
+      <div className={`absolute right-2 md:right-4 lg:right-8 bottom-0 z-20 pointer-events-none transition-transform duration-500 ${showCelebration ? 'animate-bounce' : ''}`} style={{ height: '35vh', minHeight: '280px', maxHeight: '400px' }}>
         <div className="relative h-full flex items-end">
           <div className="relative">
             {/* Body */}
@@ -392,8 +426,12 @@ function Game({ onLogout }) {
 
           {/* Stage and Score */}
           <div className="flex justify-center gap-6 mb-6 relative z-10">
-            <div id="stage" className="text-lg md:text-xl font-bold" style={{ color: '#654321' }}>רמה: {stage}</div>
-            <div id="score" className="text-lg md:text-xl font-bold" style={{ color: '#654321' }}>ניקוד: {score}</div>
+            <div id="stage" className="text-lg md:text-xl font-bold px-4 py-2 rounded-lg bg-gradient-to-r from-purple-100 to-pink-100 border-2 border-purple-300 shadow-md" style={{ color: '#654321' }}>
+              🎯 רמה: {stage}
+            </div>
+            <div id="score" className={`text-lg md:text-xl font-bold px-4 py-2 rounded-lg border-2 shadow-md transition-all duration-300 ${score > 0 ? 'bg-gradient-to-r from-green-100 to-emerald-100 border-green-400 scale-110' : 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-300'}`} style={{ color: '#654321' }}>
+              ⭐ ניקוד: {score}
+            </div>
           </div>
 
           {/* Input + Submit Grouped Together */}
@@ -423,11 +461,60 @@ function Game({ onLogout }) {
 
           {/* Result Feedback */}
           {result && (
-            <div className="result text-2xl md:text-3xl font-bold text-center mb-4 relative z-10" style={{
-              color: '#654321',
-              textShadow: '1px 1px 3px rgba(0,0,0,0.2)'
+            <div className="result text-2xl md:text-3xl font-bold text-center mb-4 relative z-10 animate-bounce" style={{
+              color: result.includes('✅') || result.includes('🎉') || result.includes('🌟') || result.includes('🏆') || result.includes('🔥') ? '#22c55e' : '#ef4444',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+              animation: showCelebration ? 'bounce 0.6s ease-in-out 3' : 'none'
             }}>
               {result}
+            </div>
+          )}
+
+          {/* Celebration Effect - Sparkles/Glitter */}
+          {showCelebration && (
+            <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden" style={{ top: 0, left: 0, right: 0, bottom: 0 }}>
+              {[...Array(60)].map((_, i) => {
+                const angle = (Math.PI * 2 * i) / 60
+                const distance = 150 + Math.random() * 200
+                const tx = Math.cos(angle) * distance
+                const ty = Math.sin(angle) * distance
+                const delay = Math.random() * 0.3
+                const duration = 0.8 + Math.random() * 0.4
+                const colors = ['#FFD700', '#FFA500', '#FF69B4', '#00CED1', '#FF1493', '#FFD700', '#FF6347', '#32CD32']
+                const color = colors[Math.floor(Math.random() * colors.length)]
+                const size = 6 + Math.random() * 6
+                
+                return (
+                  <div
+                    key={i}
+                    className="sparkle-particle absolute"
+                    style={{
+                      left: '50%',
+                      top: '50%',
+                      width: `${size}px`,
+                      height: `${size}px`,
+                      background: color,
+                      borderRadius: '50%',
+                      boxShadow: `0 0 ${size * 2}px ${color}, 0 0 ${size * 4}px ${color}`,
+                      animationDelay: `${delay}s`,
+                      animationDuration: `${duration}s`,
+                      transform: `translate(${tx}px, ${ty}px) scale(1.5)`,
+                      opacity: 0
+                    }}
+                  />
+                )
+              })}
+            </div>
+          )}
+
+          {/* Stage Progress Indicator */}
+          {stage > 1 && (
+            <div className="mb-4 text-center relative z-10">
+              <div className="inline-block bg-gradient-to-r from-purple-200 to-pink-200 rounded-full px-6 py-2 border-2 border-purple-400 shadow-lg">
+                <span className="text-lg font-bold" style={{ color: '#654321' }}>
+                  🎯 עלית לשלב {stage}! כל הכבוד!
+                </span>
+              </div>
             </div>
           )}
 

@@ -153,3 +153,21 @@ p {
   padding-right: 20px;
 }
 
+/* === אנימציית נצנצנים לחגיגה === */
+.sparkle-particle {
+  animation: sparkle-fade 1.2s ease-out forwards;
+}
+
+@keyframes sparkle-fade {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
