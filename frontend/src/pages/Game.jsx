@@ -134,7 +134,7 @@ function Game({ onLogout }) {
         <br />
         <img src="/static/dino.png" alt="דינוזאור חמוד" className="dino-img" />
         <br />
-        <button className="btn" onClick={() => window.location.reload()}>
+        <button className="px-6 py-3 bg-green-500 text-white font-bold rounded-lg shadow-md hover:bg-green-600 transition-colors" onClick={() => window.location.reload()}>
           שחק שוב
         </button>
       </div>
@@ -174,21 +174,21 @@ function Game({ onLogout }) {
         <div className="flex gap-2">
           <button
             onClick={() => navigate('/player_stats')}
-            className="px-4 py-2 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
+            className="px-4 py-2 bg-white text-gray-800 font-semibold rounded-lg shadow-md hover:shadow-lg transition-shadow"
           >
             📊 הצג סטטיסטיקות
           </button>
           <button
             onClick={() => navigate('/top_players')}
-            className="px-4 py-2 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
+            className="px-4 py-2 bg-white text-gray-800 font-semibold rounded-lg shadow-md hover:shadow-lg transition-shadow"
           >
             🥇 הצג לוח תוצאות
           </button>
         </div>
-        <h1 className="text-2xl font-bold">ברוך הבא למשחק של דינו!</h1>
+        <h1 className="text-2xl font-bold text-green-800">ברוך הבא למשחק של דינו!!!</h1>
         <button 
           onClick={handleLogout}
-          className="px-4 py-2 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
+          className="px-4 py-2 bg-white text-gray-800 font-semibold rounded-lg shadow-md hover:shadow-lg transition-shadow"
         >
           🔒 התנתקות
         </button>
