@@ -1,0 +1,8 @@
+{
+  "watch": ["src", "index.html", "tailwind.config.js", "vite.config.js"],
+  "ext": "js,jsx,html,css,json",
+  "exec": "npm run build",
+  "legacyWatch": true,
+  "polling": true
+}
+

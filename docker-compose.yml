@@ -14,9 +14,12 @@ services:
       - DB_PASSWORD=postgres
       - DB_HOST=db
       - DB_PORT=5432
+      - CHOKIDAR_USEPOLLING=true
+      - SHELL=/bin/sh
     volumes:
       - .:/app # Link the local code into the container
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload  # Enable reolad during development
+      - /app/frontend/node_modules # Exclude node_modules from volume mount
+    command: sh -c "cd /app/frontend && npm run build && (npm run build:watch &) && cd /app && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"  # Initial build, then watch for frontend changes and auto-rebuild
 
   db:
     image: postgres:15

@@ -34,4 +34,6 @@ RUN if [ ! -d "static/react" ]; then \
 
 EXPOSE 8000
 
+# Use a startup script that runs both the watch process and uvicorn
+# Default command - can be overridden by docker-compose
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

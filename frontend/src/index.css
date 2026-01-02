@@ -1,9 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* === עיצוב בסיסי לכל הדפים === */
 body {
   font-family: Arial, sans-serif;
-  text-align: center;
-  margin-top: 50px;
-  background: linear-gradient(135deg, #d1f7d6, #a1e3f9);
   direction: rtl;
   margin: 0;
   padding: 0;
