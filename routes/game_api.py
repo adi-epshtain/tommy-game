@@ -1,11 +1,9 @@
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import HTMLResponse
 from starlette.responses import JSONResponse
 from sqlalchemy.orm import Session
 from enum import Enum
 from pydantic import BaseModel
-from app import templates
 from auth_utils import get_current_player
 from dal.game_dal import get_game_by_name, create_game, update_winning_score
 from dal.player_answer_dal import get_wrong_questions, update_player_answer, \
@@ -22,6 +20,7 @@ from infra.logger import log
 from infra.rate_limiter import rate_limit
 from infra.redis_client import redis_client
 from models import PlayerSession, Question, Player, Game
+import redis
 from scripts.init_math_game import insert_math_stock_questions
 import os
 
@@ -51,12 +50,7 @@ class GameInfo(Enum):
         return self.value[2]
 
 
-@router.get("/game", response_class=HTMLResponse)
-async def game_page(request: Request):
-    return templates.TemplateResponse(
-        "index.html",
-        {"request": request}
-    )
+# Removed - React handles /game route via pages.py
 
 
 @router.post("/start", tags=["Game"])
@@ -134,31 +128,7 @@ async def submit_answer(
     })
 
 
-@router.get("/end", response_class=HTMLResponse)
-async def end_game(
-    request: Request,
-    current_player=Depends(get_current_player),
-    db: Session = Depends(get_db)
-):
-    player_name = current_player.get("sub")
-    player: Player = await get_player_by_name(db, player_name)
-    if not player:
-        raise HTTPException(status_code=404, detail="Player not found")
-    player_session: Optional[PlayerSession] = await get_session_by_player_id(db, player.id)
-    if not player_session:
-        raise HTTPException(status_code=404, detail="No active session found for player")
-    
-    # invalidate leaderboard cache - מוחק את כל ה-caches הרלוונטיים
-    for limit in [5, 10, 20]:
-        redis_client.delete(f"leaderboard:top:{limit}")
-
-    top_players: List[PlayerScore] = await get_top_players(db, limit=5)
-    return templates.TemplateResponse("end.html", {
-        "request": request,
-        "score": player_session.score,
-        "player_name": player_name,
-        "top_players": top_players
-    })
+# Removed - React handles game end via /api/game_end JSON endpoint
 
 
 @router.get("/api/game_end", tags=["Game"])
@@ -195,10 +165,7 @@ async def get_last_player_sessions_data(current_player=Depends(get_current_playe
     return {"player_name": player_name, "player_stats": player_stats_list}
 
 
-@router.get("/player_stats", response_class=HTMLResponse)
-async def player_stats(request: Request):
-    data = {"player_name": "דינו", "player_stats": []}  # כאן תשלוף ותכניס נתונים אמיתיים
-    return templates.TemplateResponse("player_stats.html", {"request": request, **data})
+# Removed - React handles /player_stats route via pages.py
 
 
 @router.get("/api/top_players", tags=["Game"])
@@ -212,9 +179,7 @@ async def get_top_players_api(
     }
 
 
-@router.get("/top_players", response_class=HTMLResponse)
-async def top_players_page(request: Request):
-    return templates.TemplateResponse("player_stats.html", {"request": request})
+# Removed - React handles /top_players route via pages.py
 
 
 class GameSettingsRequest(BaseModel):

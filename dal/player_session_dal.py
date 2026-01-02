@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session, joinedload
 from typing import Optional, List, Type
 from datetime import datetime
 from infra.redis_client import redis_client
+import redis
 
 
 async def create_player_session(session: Session, player_id: int, game_id: int) -> PlayerSession:
@@ -69,10 +70,15 @@ class PlayerScore:
 
 async def get_top_players(session: Session, limit: int = 10) -> List[PlayerScore]:
     cache_key = f"leaderboard:top:{limit}"
-    cached = redis_client.get(cache_key)
-    if cached:
-        data = json.loads(cached)
-        return [PlayerScore(**row) for row in data]
+    
+    # Try to get from cache
+    try:
+        cached = redis_client.get(cache_key)
+        if cached:
+            data = json.loads(cached)
+            return [PlayerScore(**row) for row in data]
+    except (redis.ConnectionError, redis.TimeoutError, AttributeError) as e:
+        raise RuntimeError("Redis is unavailable or not defined for leaderboard caching") from e
     
     # מסנן רק sessions שנסיימו ומשפר את הביצועים
     top_players: List[tuple[str, int]] = (
@@ -86,11 +92,15 @@ async def get_top_players(session: Session, limit: int = 10) -> List[PlayerScore
     )
     result = [PlayerScore(name=row[0], score=row[1]) for row in top_players]
 
-    redis_client.setex(
-        cache_key,
-        300,  # 5 דקות
-        json.dumps([asdict(r) for r in result]),
-    )
+    # Try to cache the result
+    try:
+        redis_client.setex(
+            cache_key,
+            300,  # 5 דקות
+            json.dumps([asdict(r) for r in result]),
+        )
+    except (redis.ConnectionError, redis.TimeoutError, AttributeError):
+        pass  # Redis unavailable, skip caching
 
     return result
 
@@ -101,16 +111,20 @@ async def get_last_player_sessions(
 ) -> list[PlayerSession]:
     cache_key = f"player:{player_id}:last_sessions:{limit_num}"
 
-    cached = redis_client.get(cache_key)
-    if cached:
-        ids: list[int] = json.loads(cached)
-        return (
-            session.query(PlayerSession)
-            .options(joinedload(PlayerSession.answers))
-            .filter(PlayerSession.id.in_(ids))
-            .order_by(desc(PlayerSession.ended_at))
-            .all()
-        )
+    # Try to get from cache
+    try:
+        cached = redis_client.get(cache_key)
+        if cached:
+            ids: list[int] = json.loads(cached)
+            return (
+                session.query(PlayerSession)
+                .options(joinedload(PlayerSession.answers))
+                .filter(PlayerSession.id.in_(ids))
+                .order_by(desc(PlayerSession.ended_at))
+                .all()
+            )
+    except (redis.ConnectionError, redis.TimeoutError, AttributeError):
+        pass  # Redis unavailable, continue without cache
 
     player_sessions = (
         session.query(PlayerSession)
@@ -121,10 +135,14 @@ async def get_last_player_sessions(
         .all()
     )
 
-    redis_client.setex(
-        cache_key,
-        120,
-        json.dumps([ps.id for ps in player_sessions]),
-    )
+    # Try to cache the result
+    try:
+        redis_client.setex(
+            cache_key,
+            120,
+            json.dumps([ps.id for ps in player_sessions]),
+        )
+    except (redis.ConnectionError, redis.TimeoutError, AttributeError):
+        pass  # Redis unavailable, skip caching
 
     return player_sessions

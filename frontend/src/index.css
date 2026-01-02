@@ -5,6 +5,12 @@ body {
   margin-top: 50px;
   background: linear-gradient(135deg, #d1f7d6, #a1e3f9);
   direction: rtl;
+  margin: 0;
+  padding: 0;
+}
+
+#root {
+  min-height: 100vh;
 }
 
 h1 {
@@ -16,6 +22,7 @@ h2 {
   font-size: 32px;
   margin-top: 20px;
   color: #285e61;
+  text-align: center;
 }
 
 /* === שדות טקסט וכפתורים === */
@@ -32,12 +39,17 @@ button {
   color: white;
   cursor: pointer;
   box-shadow: 0 0 10px rgba(0,0,0,0.2);
+  border: none;
 }
 
 button:hover {
   background: #2c7a7b;
 }
 
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 
 .btn {
   display: inline-block;
@@ -56,14 +68,14 @@ button:hover {
 }
 
 /* === תצוגת תוצאה (במשחק) === */
-#result {
+.result {
   font-size: 22px;
   margin-top: 20px;
   color: #2c7a7b;
 }
 
 /* === השאלה בחידון (יישור LTR למספרים) === */
-#question {
+.question {
   direction: ltr;
   text-align: center;
   font-size: 28px;
@@ -71,7 +83,7 @@ button:hover {
 }
 
 /* === עיצוב מיוחד לדף הסיום === */
-.end-page img.dino-img {
+.dino-img {
   margin-top: 30px;
   width: 250px;
   border-radius: 20px;
@@ -99,19 +111,17 @@ form input {
   width: 100%;
 }
 
-h2 {
-  text-align: center;
-}
-
 p {
   text-align: center;
 }
-#answer {
-  width: 230px;     /* רוחב קבוע שמסתדר טוב ברוב העיצובים */
+
+.answer-input {
+  width: 230px;
   margin-bottom: 8px;
   font-size: 1.1em;
   padding: 6px;
 }
+
 .logout-btn {
   background: none;
   color: #51728c;
@@ -130,3 +140,15 @@ p {
   color: #305d7a;
   border-color: #78b7df;
 }
+
+.session {
+  border: 1px solid #ccc;
+  padding: 15px;
+  margin: 10px 0;
+  border-radius: 8px;
+}
+
+.session ul {
+  padding-right: 20px;
+}
+

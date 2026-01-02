@@ -1,6 +1,7 @@
 import json
 from sqlalchemy.exc import SQLAlchemyError
 from infra.redis_client import redis_client
+import redis
 from infra.logger import log
 from models import Player
 from sqlalchemy.orm import Session
@@ -30,10 +31,15 @@ async def get_player_by_name(
 ) -> Optional[Player]:
     cache_key = f"player:name:{player_name}"
 
-    cached = redis_client.get(cache_key)
-    if cached:
-        player_id = int(cached)
-        return session.get(Player, player_id)
+    # Try to get from cache
+    try:
+        cached = redis_client.get(cache_key)
+        if cached:
+            player_id = int(cached)
+            return session.get(Player, player_id)
+    except (redis.ConnectionError, redis.TimeoutError, AttributeError) as e:
+        raise RuntimeError(f"Redis unavailable when retrieving player '{player_name}': {e}")
+
 
     player = (
         session.query(Player)
@@ -44,11 +50,15 @@ async def get_player_by_name(
     if not player:
         return None
 
-    redis_client.setex(
-        cache_key,
-        120,
-        str(player.id),
-    )
+    # Try to cache the result
+    try:
+        redis_client.setex(
+            cache_key,
+            120,
+            str(player.id),
+        )
+    except (redis.ConnectionError, redis.TimeoutError, AttributeError):
+        pass  # Redis unavailable, skip caching
 
     return player
 
