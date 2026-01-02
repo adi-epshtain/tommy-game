@@ -12,6 +12,14 @@ function Signup() {
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
 
+  // Shared input styles for consistency
+  const inputStyle = {
+    background: '#FFF8DC',
+    color: '#654321'
+  }
+
+  const inputClasses = "w-full px-4 py-3 text-lg border-2 border-amber-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-amber-200 focus:border-amber-400 transition-all"
+
   const isStrongPassword = (pwd) => {
     return pwd.length >= 6 && /[0-9]/.test(pwd)
   }
@@ -68,11 +76,8 @@ function Signup() {
                 onChange={(e) => setName(e.target.value)}
                 required
                 disabled={loading}
-                className="w-full px-4 py-3 text-lg border-2 border-amber-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-amber-200 focus:border-amber-400 transition-all"
-                style={{
-                  background: '#FFF8DC',
-                  color: '#654321'
-                }}
+                className={inputClasses}
+                style={inputStyle}
               />
             </div>
             <div>
@@ -85,11 +90,8 @@ function Signup() {
                 onChange={(e) => setAge(e.target.value)}
                 required
                 disabled={loading}
-                className="w-full px-4 py-3 text-lg border-2 border-amber-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-amber-200 focus:border-amber-400 transition-all"
-                style={{
-                  background: '#FFF8DC',
-                  color: '#654321'
-                }}
+                className={inputClasses}
+                style={inputStyle}
               />
             </div>
             <div>
@@ -102,11 +104,8 @@ function Signup() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={loading}
-                className="w-full px-4 py-3 text-lg border-2 border-amber-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-amber-200 focus:border-amber-400 transition-all"
-                style={{
-                  background: '#FFF8DC',
-                  color: '#654321'
-                }}
+                className={inputClasses}
+                style={inputStyle}
               />
             </div>
             <div>
@@ -119,11 +118,8 @@ function Signup() {
                 onChange={(e) => setPasswordConfirm(e.target.value)}
                 required
                 disabled={loading}
-                className="w-full px-4 py-3 text-lg border-2 border-amber-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-amber-200 focus:border-amber-400 transition-all"
-                style={{
-                  background: '#FFF8DC',
-                  color: '#654321'
-                }}
+                className={inputClasses}
+                style={inputStyle}
               />
             </div>
             {error && (

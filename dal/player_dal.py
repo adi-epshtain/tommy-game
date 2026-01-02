@@ -1,4 +1,3 @@
-import json
 from sqlalchemy.exc import SQLAlchemyError
 from infra.redis_client import redis_client
 import redis
@@ -37,8 +36,8 @@ async def get_player_by_name(
         if cached:
             player_id = int(cached)
             return session.get(Player, player_id)
-    except (redis.ConnectionError, redis.TimeoutError, AttributeError) as e:
-        raise RuntimeError(f"Redis unavailable when retrieving player '{player_name}': {e}")
+    except (redis.ConnectionError, redis.TimeoutError, AttributeError):
+        pass  # Redis unavailable, skip caching and continue with database query
 
 
     player = (
