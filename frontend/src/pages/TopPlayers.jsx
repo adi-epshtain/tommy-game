@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../services/api'
 import Leaderboard from '../components/Leaderboard'
+import Button from '../components/Button'
 
 function TopPlayers() {
   const [topPlayers, setTopPlayers] = useState([])
@@ -36,9 +37,11 @@ function TopPlayers() {
       ) : (
         <Leaderboard topPlayers={topPlayers} />
       )}
-      <button onClick={() => navigate('/game')} style={{ marginTop: '20px' }}>
-        חזור למשחק
-      </button>
+      <div style={{ marginTop: '20px' }}>
+        <Button onClick={() => navigate('/game')}>
+          חזור למשחק
+        </Button>
+      </div>
     </div>
   )
 }

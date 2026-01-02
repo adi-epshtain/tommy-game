@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { api } from '../services/api'
+import Button from '../components/Button'
 
 function Settings() {
   const [difficulty, setDifficulty] = useState(1)
@@ -56,13 +57,13 @@ function Settings() {
           </p>
         )}
         <div className="text-center">
-          <button 
+          <Button 
+            variant="info"
             onClick={handleSave} 
             disabled={loading}
-            className="px-6 py-3 bg-blue-500 text-white font-bold rounded-lg shadow-md hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'שומר...' : 'שמור הגדרות'}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

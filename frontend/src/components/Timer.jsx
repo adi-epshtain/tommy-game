@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import Button from './Button'
 
 function Timer({ seconds, onTimeUp, isPaused: externalPaused }) {
   const [remainingTime, setRemainingTime] = useState(seconds)
@@ -45,9 +46,9 @@ function Timer({ seconds, onTimeUp, isPaused: externalPaused }) {
         ⏰ זמן שנותר: {remainingTime} שניות
         {remainingTime === 0 && <span style={{ color: 'red' }}> - נגמר הזמן!</span>}
       </p>
-      <button onClick={togglePause}>
+      <Button variant="secondary" size="sm" onClick={togglePause}>
         {isPaused ? '▶️ המשך' : '⏸️ עצור'}
-      </button>
+      </Button>
     </div>
   )
 }

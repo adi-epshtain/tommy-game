@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { api } from '../services/api'
+import Button from '../components/Button'
 
 function Signup() {
   const [name, setName] = useState('')
@@ -87,9 +88,9 @@ function Signup() {
           />
         </div>
         {error && <p style={{ color: 'red' }}>{error}</p>}
-        <button type="submit" disabled={loading}>
+        <Button type="submit" disabled={loading}>
           {loading ? 'נרשם...' : 'צור משתמש'}
-        </button>
+        </Button>
       </form>
       <p>כבר יש לך משתמש? <Link to="/login">התחבר</Link></p>
     </div>

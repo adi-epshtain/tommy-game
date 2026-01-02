@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../services/api'
+import Button from '../components/Button'
 
 function PlayerStats() {
   const [stats, setStats] = useState(null)
@@ -51,9 +52,11 @@ function PlayerStats() {
         </div>
       ))}
       
-      <button onClick={() => navigate('/game')} style={{ marginTop: '20px' }}>
-        חזור למשחק
-      </button>
+      <div style={{ marginTop: '20px' }}>
+        <Button onClick={() => navigate('/game')}>
+          חזור למשחק
+        </Button>
+      </div>
     </div>
   )
 }

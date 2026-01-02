@@ -4,6 +4,7 @@ import { api, removeToken } from '../services/api'
 import Timer from '../components/Timer'
 import Settings from '../components/Settings'
 import Leaderboard from '../components/Leaderboard'
+import Button from '../components/Button'
 
 const MATH_GAME = 'Math Game'
 
@@ -134,9 +135,9 @@ function Game({ onLogout }) {
         <br />
         <img src="/static/dino.png" alt="דינוזאור חמוד" className="dino-img" />
         <br />
-        <button className="px-6 py-3 bg-green-500 text-white font-bold rounded-lg shadow-md hover:bg-green-600 transition-colors" onClick={() => window.location.reload()}>
+        <Button onClick={() => window.location.reload()}>
           שחק שוב
-        </button>
+        </Button>
       </div>
     )
   }
@@ -160,26 +161,29 @@ function Game({ onLogout }) {
         boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
       }}>
         <div className="flex gap-2">
-          <button
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={() => navigate('/player_stats')}
-            className="px-4 py-2 bg-white text-gray-800 font-semibold rounded-lg shadow-md hover:shadow-lg transition-shadow"
           >
-            📊 הצג סטטיסטיקות
-          </button>
-          <button
+            📊 סטטיסטיקות
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={() => navigate('/top_players')}
-            className="px-4 py-2 bg-white text-gray-800 font-semibold rounded-lg shadow-md hover:shadow-lg transition-shadow"
           >
-            🥇 הצג לוח תוצאות
-          </button>
+            🥇 לוח תוצאות
+          </Button>
         </div>
         <h1 className="text-xl md:text-2xl font-bold" style={{ color: '#2d5016', textShadow: '1px 1px 2px rgba(255,255,255,0.5)' }}>ברוך הבא למשחק של דינו!!!</h1>
-        <button 
+        <Button 
+          variant="secondary"
+          size="sm"
           onClick={handleLogout}
-          className="px-4 py-2 bg-white text-gray-800 font-semibold rounded-lg shadow-md hover:shadow-lg transition-shadow"
         >
           🔒 התנתקות
-        </button>
+        </Button>
       </header>
 
       {/* Left Dinosaur - Green Brontosaurus with yellow crest */}
@@ -346,16 +350,13 @@ function Game({ onLogout }) {
                 boxShadow: 'inset 0 2px 5px rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.15)'
               }}
             />
-            <button 
+            <Button 
               type="submit"
-              className="px-8 py-4 text-white text-xl font-bold rounded-full shadow-lg hover:opacity-90 transition-opacity"
-              style={{
-                background: 'linear-gradient(to bottom, #4CAF50, #45a049)',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.25), inset 0 2px 4px rgba(255,255,255,0.3)'
-              }}
+              variant="secondary"
+              size="sm"
             >
-              שלח
-            </button>
+              🚀 שלח
+            </Button>
           </form>
 
           {/* Result Feedback */}
