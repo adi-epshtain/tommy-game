@@ -41,14 +41,16 @@ function Timer({ seconds, onTimeUp, isPaused: externalPaused }) {
   }
 
   return (
-    <div>
-      <p>
-        ⏰ זמן שנותר: {remainingTime} שניות
+    <div className="flex flex-col items-center">
+      <p className="text-center">
+        <span className="text-4xl">⏰</span> זמן שנותר: {remainingTime} שניות
         {remainingTime === 0 && <span style={{ color: 'red' }}> - נגמר הזמן!</span>}
       </p>
-      <Button variant="secondary" size="sm" onClick={togglePause}>
-        {isPaused ? '▶️ המשך' : '⏸️ עצור'}
-      </Button>
+      <div className="mt-2">
+        <Button variant="secondary" size="sm" onClick={togglePause}>
+          {isPaused ? '▶️ המשך' : '⏸️ עצור'}
+        </Button>
+      </div>
     </div>
   )
 }

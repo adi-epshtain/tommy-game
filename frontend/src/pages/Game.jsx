@@ -21,6 +21,7 @@ function Game({ onLogout }) {
   const [gameEnded, setGameEnded] = useState(false)
   const [gameEndData, setGameEndData] = useState(null)
   const [timerPaused, setTimerPaused] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -126,18 +127,72 @@ function Game({ onLogout }) {
 
   if (gameEnded && gameEndData) {
     return (
-      <div>
-        <h1>כל הכבוד {gameEndData.player_name}!</h1>
-        <h2>הניקוד שלך: {gameEndData.score}</h2>
-        <hr />
-        <h2>🏆 לוח התוצאות</h2>
-        <Leaderboard topPlayers={gameEndData.top_players} />
-        <br />
-        <img src="/static/dino.png" alt="דינוזאור חמוד" className="dino-img" />
-        <br />
-        <Button onClick={() => window.location.reload()}>
-          שחק שוב
-        </Button>
+      <div 
+        className="min-h-screen w-full relative overflow-hidden flex items-center justify-center" 
+        style={{
+          backgroundImage: 'url(/static/math_dino2.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          backgroundAttachment: 'fixed'
+        }}
+      >
+        <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center p-8 z-10">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="text-center mb-6">
+              <h1 className="text-4xl font-bold mb-4" style={{ color: '#654321' }}>
+                🎉 כל הכבוד {gameEndData.player_name}!
+              </h1>
+              <div className="bg-gradient-to-br from-green-100 to-emerald-100 rounded-xl p-6 border-2 border-green-300 inline-block">
+                <div className="text-5xl font-bold text-green-700 mb-2">{gameEndData.score}</div>
+                <div className="text-xl font-semibold text-green-800">ניקוד סופי</div>
+              </div>
+            </div>
+            
+            <div className="my-8">
+              <h2 className="text-2xl font-bold mb-4 text-center" style={{ color: '#654321' }}>🏆 לוח התוצאות</h2>
+              <Leaderboard topPlayers={gameEndData.top_players} />
+            </div>
+            
+            <div className="text-center my-6">
+              <img src="/static/dino.png" alt="דינוזאור חמוד" className="mx-auto w-32 h-32 object-contain" />
+            </div>
+            
+            <div className="text-center">
+              <Button onClick={() => window.location.reload()}>
+                🎮 שחק שוב
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Settings screen - separate full screen
+  if (showSettings) {
+    return (
+      <div className="min-h-screen w-full relative overflow-hidden" style={{
+        backgroundImage: 'url(/static/math_dino2.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed'
+      }}>
+        <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex flex-col items-center justify-center p-8 z-50">
+          <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl p-8">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-3xl font-bold" style={{ color: '#654321' }}>⚙️ הגדרות משחק</h2>
+              <Button
+                variant="primary"
+                onClick={() => setShowSettings(false)}
+              >
+                ← חזור למשחק
+              </Button>
+            </div>
+            <Settings />
+          </div>
+        </div>
       </div>
     )
   }
@@ -164,6 +219,13 @@ function Game({ onLogout }) {
           <Button
             variant="secondary"
             size="sm"
+            onClick={() => setShowSettings(!showSettings)}
+          >
+            ⚙️ הגדרות
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={() => navigate('/player_stats')}
           >
             📊 סטטיסטיקות
@@ -176,7 +238,7 @@ function Game({ onLogout }) {
             🥇 לוח תוצאות
           </Button>
         </div>
-        <h1 className="text-xl md:text-2xl font-bold" style={{ color: '#2d5016', textShadow: '1px 1px 2px rgba(255,255,255,0.5)' }}>ברוך הבא למשחק של דינו!!!</h1>
+        <h1 className="absolute left-1/2 transform -translate-x-1/2 text-xl md:text-2xl font-bold text-center" style={{ color: '#2d5016', textShadow: '1px 1px 2px rgba(255,255,255,0.5)' }}>ברוך הבא למשחק של דינו!!!</h1>
         <Button 
           variant="secondary"
           size="sm"
@@ -386,10 +448,6 @@ function Game({ onLogout }) {
           )}
         </div>
 
-        {/* Settings */}
-        <div className="w-full max-w-2xl">
-          <Settings />
-        </div>
       </main>
     </div>
   )
