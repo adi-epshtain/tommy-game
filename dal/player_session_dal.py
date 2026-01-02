@@ -4,7 +4,7 @@ from sqlalchemy import desc
 from infra.logger import log
 from models import PlayerSession, Question, Player
 from sqlalchemy.orm import Session, joinedload
-from typing import Optional, List, Type
+from typing import Optional, List
 from datetime import datetime
 from infra.redis_client import redis_client
 import redis
@@ -39,6 +39,16 @@ async def end_session(session: Session, session_id: int) -> Optional[PlayerSessi
         return None
     player_session.ended_at = datetime.now()
     session.commit()
+    
+    # Clear leaderboard cache when a game ends
+    try:
+        # Delete all leaderboard cache keys (for different limits)
+        for limit in [10, 20, 50, 100]:
+            cache_key = f"leaderboard:top:{limit}"
+            redis_client.delete(cache_key)
+    except (redis.ConnectionError, redis.TimeoutError, AttributeError):
+        pass  # Redis unavailable, skip cache clearing
+    
     return player_session
 
 
@@ -77,8 +87,8 @@ async def get_top_players(session: Session, limit: int = 10) -> List[PlayerScore
         if cached:
             data = json.loads(cached)
             return [PlayerScore(**row) for row in data]
-    except (redis.ConnectionError, redis.TimeoutError, AttributeError) as e:
-        raise RuntimeError("Redis is unavailable or not defined for leaderboard caching") from e
+    except (redis.ConnectionError, redis.TimeoutError, AttributeError):
+        pass  # Redis unavailable, skip caching and continue with database query
     
     # מסנן רק sessions שנסיימו ומשפר את הביצועים
     top_players: List[tuple[str, int]] = (

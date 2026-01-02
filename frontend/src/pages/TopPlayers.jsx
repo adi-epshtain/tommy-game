@@ -10,6 +10,16 @@ function TopPlayers() {
   const [error, setError] = useState('')
   const navigate = useNavigate()
 
+  const handlePlayAgain = async () => {
+    try {
+      await api.startGame(5)
+      navigate('/game')
+    } catch (err) {
+      alert('אירעה שגיאה בהתחלת המשחק')
+      console.error(err)
+    }
+  }
+
   useEffect(() => {
     loadTopPlayers()
   }, [])
@@ -62,10 +72,10 @@ function TopPlayers() {
       <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center p-8 z-10">
         <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto relative">
           <div className="sticky top-0 bg-white z-20 pb-4 mb-6 border-b-2 border-gray-200">
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center gap-4">
               <h1 className="text-3xl font-bold" style={{ color: '#654321' }}>🏆 לוח התוצאות</h1>
-              <Button onClick={() => navigate('/game')}>
-                ← חזור למשחק
+              <Button onClick={handlePlayAgain}>
+                🎮 שחק שוב
               </Button>
             </div>
           </div>
