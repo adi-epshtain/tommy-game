@@ -75,7 +75,7 @@ async def start_game(
         question: Question = await get_random_question_by_game(db, game.id, player_session.id)
     if not question:
         raise HTTPException(status_code=404, detail="Question not found after insert_math_stock_questions")
-    time_limit = 10 + (question.difficulty - 1) * 3
+    time_limit = 20 + (question.difficulty - 1) * 5
     return {
         "session_id": player_session.id,
         "question": question.text,
@@ -101,7 +101,7 @@ async def submit_answer(
     if not player:
         raise HTTPException(status_code=404, detail="Player not found")
     question: Question = await get_question_by_id(db, req.question_id)
-    time_limit = 10 + (question.difficulty - 1) * 3
+    time_limit = 20 + (question.difficulty - 1) * 5
     if not question:
         raise HTTPException(status_code=404, detail=f"Question not found question id: {req.question_id}")
     player_session: Optional[PlayerSession] = await get_session_by_player_id(db, player.id)
