@@ -22,9 +22,7 @@ function Game({ onLogout }) {
   const [gameEndData, setGameEndData] = useState(null)
   const [timerPaused, setTimerPaused] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
-  const [consecutiveCorrect, setConsecutiveCorrect] = useState(0)
   const [showCelebration, setShowCelebration] = useState(false)
-  const [encouragementMessage, setEncouragementMessage] = useState('')
   const [winningScore, setWinningScore] = useState(5) // Default, will be updated from settings
   const [showScorePopup, setShowScorePopup] = useState(false)
   const [scoreChange, setScoreChange] = useState(0)
@@ -59,9 +57,7 @@ function Game({ onLogout }) {
       setResult('')
       setWrongQuestions([])
       setGameEnded(false)
-      setConsecutiveCorrect(0)
       setShowCelebration(false)
-      setEncouragementMessage('')
     } catch (err) {
       alert('אירעה שגיאה בהתחלת המשחק')
       console.error(err)
@@ -82,36 +78,17 @@ function Game({ onLogout }) {
         setStage(data.stage)
         
         if (data.is_correct) {
-          const newConsecutive = consecutiveCorrect + 1
-          setConsecutiveCorrect(newConsecutive)
           setShowCelebration(true)
-          setTimeout(() => setShowCelebration(false), 2000)
+          setTimeout(() => setShowCelebration(false), 1500)
           
           // Score popup animation
           setScoreChange(1)
           setShowScorePopup(true)
           setTimeout(() => setShowScorePopup(false), 1000)
           
-          // הודעות מעודדות לפי רצף
-          let message = '✅ נכון!'
-          if (newConsecutive === 3) {
-            message = '🎉 3 תשובות נכונות ברצף! כל הכבוד!'
-          } else if (newConsecutive === 5) {
-            message = '🌟 5 תשובות נכונות ברצף! אתה מדהים!'
-          } else if (newConsecutive === 10) {
-            message = '🏆 10 תשובות נכונות ברצף! אתה אלוף!'
-          } else if (newConsecutive > 10 && newConsecutive % 5 === 0) {
-            message = `🔥 ${newConsecutive} תשובות נכונות ברצף! אתה גאון!`
-          } else if (newConsecutive > 1) {
-            message = `✅ נכון! ${newConsecutive} ברצף!`
-          }
-          
-          setResult(message)
-          setEncouragementMessage('')
+          setResult('✅ נכון! כל הכבוד!')
         } else {
-          setConsecutiveCorrect(0)
           setResult('❌ לא נכון! נסה שוב! 💪')
-          setEncouragementMessage('')
           setScoreChange(-1)
           setShowScorePopup(true)
           setTimeout(() => setShowScorePopup(false), 1000)
@@ -149,8 +126,16 @@ function Game({ onLogout }) {
           setScore(data.score)
           setStage(data.stage)
           setResult('')
-          setQuestion(data.question)
-          setTimeLimit(data.time_limit)
+          
+          // Question transition animation
+          setQuestionFade(true)
+          setTimeout(() => {
+            setQuestion(data.question)
+            setTimeLimit(data.time_limit)
+            setRemainingTime(data.time_limit) // Reset timer for new question
+            setQuestionFade(false)
+          }, 300)
+          
           setAnswer('')
           setCurrentQuestionId(data.question_id)
           setWrongQuestions(data.wrong_questions || [])
@@ -292,7 +277,7 @@ function Game({ onLogout }) {
             🥇 לוח תוצאות
           </Button>
         </div>
-        <h1 className="absolute left-1/2 transform -translate-x-1/2 text-xl md:text-2xl font-bold text-center" style={{ color: '#2d5016', textShadow: '1px 1px 2px rgba(255,255,255,0.5)' }}>ברוך הבא למשחק של דינו!!!</h1>
+        <h1 className="absolute left-1/2 transform -translate-x-1/2 text-base md:text-lg font-bold text-center" style={{ color: '#2d5016', textShadow: '1px 1px 2px rgba(255,255,255,0.5)' }}>ברוך הבא למשחק של דינו!!!</h1>
         <Button 
           variant="secondary"
           size="sm"
@@ -303,16 +288,16 @@ function Game({ onLogout }) {
       </header>
 
       {/* Left Dinosaur - Green Brontosaurus with yellow crest */}
-      <div className={`absolute left-2 md:left-4 lg:left-8 bottom-0 z-20 pointer-events-none transition-transform duration-500 ${showCelebration ? 'animate-bounce' : ''}`} style={{ height: '35vh', minHeight: '280px', maxHeight: '400px' }}>
+      <div className={`absolute left-2 md:left-4 lg:left-8 bottom-0 z-20 pointer-events-none transition-transform duration-500 ${showCelebration ? 'animate-bounce' : ''}`} style={{ height: '25vh', minHeight: '180px', maxHeight: '250px' }}>
         <div className="relative h-full flex items-end">
           <div className="relative">
             {/* Long neck */}
-            <div className="absolute bottom-24 md:bottom-32 left-1/2 transform -translate-x-1/2 w-12 h-32 md:w-16 md:h-40 bg-gradient-to-b from-green-300 to-green-500 rounded-full"></div>
+            <div className="absolute bottom-16 md:bottom-20 left-1/2 transform -translate-x-1/2 w-8 h-20 md:w-12 md:h-28 bg-gradient-to-b from-green-300 to-green-500 rounded-full"></div>
             {/* Body */}
-            <div className="w-28 h-32 md:w-40 md:h-48 lg:w-48 lg:h-56 bg-gradient-to-b from-green-300 via-green-400 to-green-600 rounded-full shadow-xl flex items-center justify-center" style={{
+            <div className="w-20 md:w-28 h-24 md:h-32 bg-gradient-to-b from-green-300 via-green-400 to-green-600 rounded-full shadow-xl flex items-center justify-center" style={{
               clipPath: 'polygon(30% 0%, 70% 0%, 90% 30%, 95% 60%, 90% 90%, 50% 100%, 10% 90%, 5% 60%, 10% 30%)'
             }}>
-              <div className="text-5xl md:text-7xl lg:text-8xl">🦕</div>
+              <div className="text-3xl md:text-5xl">🦕</div>
             </div>
             {/* Yellow spiky crest on head */}
             <div className="absolute -top-8 md:-top-12 left-1/2 transform -translate-x-1/2" style={{
@@ -334,14 +319,14 @@ function Game({ onLogout }) {
       </div>
 
       {/* Right Dinosaur - Blue Triceratops with brown backpack */}
-      <div className={`absolute right-2 md:right-4 lg:right-8 bottom-0 z-20 pointer-events-none transition-transform duration-500 ${showCelebration ? 'animate-bounce' : ''}`} style={{ height: '35vh', minHeight: '280px', maxHeight: '400px' }}>
+      <div className={`absolute right-2 md:right-4 lg:right-8 bottom-0 z-20 pointer-events-none transition-transform duration-500 ${showCelebration ? 'animate-bounce' : ''}`} style={{ height: '25vh', minHeight: '180px', maxHeight: '250px' }}>
         <div className="relative h-full flex items-end">
           <div className="relative">
             {/* Body */}
-            <div className="w-28 h-32 md:w-40 md:h-48 lg:w-48 lg:h-56 bg-gradient-to-b from-cyan-300 via-blue-400 to-blue-600 rounded-full shadow-xl flex items-center justify-center" style={{
+            <div className="w-20 md:w-28 h-24 md:h-32 bg-gradient-to-b from-cyan-300 via-blue-400 to-blue-600 rounded-full shadow-xl flex items-center justify-center" style={{
               clipPath: 'polygon(20% 0%, 80% 0%, 100% 25%, 95% 60%, 85% 85%, 50% 100%, 15% 85%, 5% 60%, 0% 25%)'
             }}>
-              <div className="text-5xl md:text-7xl lg:text-8xl">🦖</div>
+              <div className="text-3xl md:text-5xl">🦖</div>
             </div>
             {/* Frill */}
             <div className="absolute -top-6 md:-top-8 left-1/2 transform -translate-x-1/2 w-24 h-10 md:w-32 md:h-12 bg-gradient-to-b from-blue-200 to-blue-400 rounded-full shadow-md" style={{
@@ -367,12 +352,12 @@ function Game({ onLogout }) {
       {/* Game Scene Container - Centered */}
       <main className="absolute inset-0 flex flex-col items-center justify-center p-4 z-10" style={{ paddingTop: '80px' }}>
         {/* Centered Wooden Sign Card - Large irregular organic shape */}
-        <div className="w-full max-w-3xl relative z-30 flex flex-col" style={{
-          marginTop: '3vh',
-          marginBottom: '3vh',
+        <div className="w-full max-w-2xl relative z-30 flex flex-col" style={{
+          marginTop: '2vh',
+          marginBottom: '2vh',
           background: 'linear-gradient(135deg, #CD853F 0%, #D2691E 20%, #B8860B 40%, #CD853F 60%, #D2691E 80%, #B8860B 100%)',
-          padding: '2.5rem 2rem 3rem 2rem',
-          maxHeight: '85vh',
+          padding: '1.5rem 1.5rem 2rem 1.5rem',
+          maxHeight: '90vh',
           borderRadius: '50% 40% 55% 45% / 45% 55% 40% 50%',
           boxShadow: '0 25px 50px rgba(0,0,0,0.4), inset 0 3px 6px rgba(255,255,255,0.2), inset 0 -3px 6px rgba(0,0,0,0.3)',
           border: '10px solid #8B4513',
@@ -399,7 +384,7 @@ function Game({ onLogout }) {
           
           {/* Player Greeting */}
           {playerName && (
-            <h2 className="text-2xl md:text-3xl mb-5 text-center relative z-10 font-bold" style={{
+            <h2 className="text-lg md:text-xl mb-3 text-center relative z-10 font-bold" style={{
               color: '#654321',
               textShadow: '2px 2px 4px rgba(0,0,0,0.2)'
             }}>
@@ -408,9 +393,9 @@ function Game({ onLogout }) {
           )}
           
           {/* Question Display - Cream colored paper area */}
-          <div className="relative z-10 mb-6" style={{
+          <div className="relative z-10 mb-4" style={{
             background: 'linear-gradient(135deg, #FFF8DC 0%, #F5E6D3 50%, #FFF8DC 100%)',
-            padding: '2.5rem 3rem',
+            padding: '1.5rem 2rem',
             borderRadius: '30% 70% 25% 75% / 60% 40% 60% 40%',
             boxShadow: 'inset 0 3px 10px rgba(0,0,0,0.08), 0 5px 15px rgba(0,0,0,0.15)',
             position: 'relative'
@@ -425,11 +410,11 @@ function Game({ onLogout }) {
             }}></div>
             
             <h2 
-              className={`question text-7xl md:text-8xl font-extrabold text-center relative z-10 transition-opacity duration-300 ${questionFade ? 'opacity-0' : 'opacity-100'}`}
+              className={`question text-4xl md:text-5xl font-extrabold text-center relative z-10 transition-opacity duration-300 ${questionFade ? 'opacity-0' : 'opacity-100'}`}
               dir="ltr" 
               style={{
                 color: '#DC143C',
-                textShadow: '3px 3px 0px rgba(255,255,255,0.6), 5px 5px 10px rgba(0,0,0,0.2)',
+                textShadow: '2px 2px 0px rgba(255,255,255,0.6), 3px 3px 8px rgba(0,0,0,0.2)',
                 letterSpacing: '0.05em',
                 fontFamily: 'Arial, "Helvetica Neue", sans-serif',
                 lineHeight: '1.2'
@@ -465,12 +450,12 @@ function Game({ onLogout }) {
           </div>
 
           {/* Progress Bar to Victory */}
-          <div className="mb-4 w-full max-w-md mx-auto relative z-10">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm font-semibold" style={{ color: '#654321' }}>התקדמות לניצחון</span>
-              <span className="text-sm font-bold" style={{ color: '#654321' }}>{score} / {winningScore}</span>
+          <div className="mb-3 w-full max-w-md mx-auto relative z-10">
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-xs md:text-sm font-semibold" style={{ color: '#654321' }}>התקדמות לניצחון</span>
+              <span className="text-xs md:text-sm font-bold" style={{ color: '#654321' }}>{score} / {winningScore}</span>
             </div>
-            <div className="w-full h-6 bg-gray-200 rounded-full overflow-hidden shadow-inner border-2 border-gray-300">
+            <div className="w-full h-4 bg-gray-200 rounded-full overflow-hidden shadow-inner border-2 border-gray-300">
               <div 
                 className="h-full transition-all duration-500 ease-out rounded-full relative"
                 style={{
@@ -489,19 +474,19 @@ function Game({ onLogout }) {
           </div>
 
           {/* Stage and Score */}
-          <div className="flex justify-center gap-6 mb-6 relative z-10">
-            <div id="stage" className="text-lg md:text-xl font-bold px-4 py-2 rounded-lg bg-gradient-to-r from-purple-100 to-pink-100 border-2 border-purple-300 shadow-md" style={{ color: '#654321' }}>
+          <div className="flex justify-center gap-4 mb-4 relative z-10">
+            <div id="stage" className="text-sm md:text-base font-bold px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-100 to-pink-100 border-2 border-purple-300 shadow-md" style={{ color: '#654321' }}>
               🎯 רמה: {stage}
             </div>
-            <div id="score" className={`text-lg md:text-xl font-bold px-4 py-2 rounded-lg border-2 shadow-md transition-all duration-300 relative ${score > 0 ? 'bg-gradient-to-r from-green-100 to-emerald-100 border-green-400 scale-110' : 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-300'}`} style={{ color: '#654321' }}>
+            <div id="score" className={`text-sm md:text-base font-bold px-3 py-1.5 rounded-lg border-2 shadow-md transition-all duration-300 relative ${score > 0 ? 'bg-gradient-to-r from-green-100 to-emerald-100 border-green-400 scale-105' : 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-300'}`} style={{ color: '#654321' }}>
               ⭐ ניקוד: {score}
               {/* Score Popup */}
               {showScorePopup && (
                 <div 
-                  className="absolute -top-12 left-1/2 transform -translate-x-1/2 text-2xl font-bold animate-bounce"
+                  className="absolute -top-8 left-1/2 transform -translate-x-1/2 text-lg font-bold animate-bounce"
                   style={{ 
                     color: scoreChange > 0 ? '#22c55e' : '#ef4444',
-                    textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+                    textShadow: '1px 1px 2px rgba(0,0,0,0.3)',
                     animation: 'bounce 1s ease-out forwards'
                   }}
                 >
@@ -510,17 +495,6 @@ function Game({ onLogout }) {
               )}
             </div>
           </div>
-
-          {/* Streak Counter */}
-          {consecutiveCorrect > 0 && (
-            <div className="mb-4 text-center relative z-10">
-              <div className="inline-block bg-gradient-to-r from-yellow-200 via-orange-200 to-pink-200 rounded-full px-6 py-2 border-2 border-yellow-400 shadow-lg animate-pulse">
-                <span className="text-xl font-bold" style={{ color: '#654321' }}>
-                  🔥 רצף: {consecutiveCorrect} תשובות נכונות!
-                </span>
-              </div>
-            </div>
-          )}
 
           {/* Input + Submit Grouped Together */}
           <form onSubmit={handleSubmitAnswer} className="flex gap-2 justify-center items-center mb-4">
@@ -532,7 +506,7 @@ function Game({ onLogout }) {
               placeholder="התשובה שלך"
               required
               autoFocus
-              className="flex-1 max-w-xs px-6 py-4 text-2xl text-center rounded-full focus:outline-none focus:ring-4 focus:ring-green-300"
+              className="flex-1 max-w-xs px-4 py-3 text-xl text-center rounded-full focus:outline-none focus:ring-4 focus:ring-green-300"
               style={{
                 background: '#FFF8DC',
                 boxShadow: 'inset 0 2px 5px rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.15)'
@@ -549,10 +523,10 @@ function Game({ onLogout }) {
 
           {/* Result Feedback */}
           {result && (
-            <div className="result text-2xl md:text-3xl font-bold text-center mb-4 relative z-10 animate-bounce" style={{
+            <div className="result text-lg md:text-xl font-bold text-center mb-3 relative z-10" style={{
               color: result.includes('✅') || result.includes('🎉') || result.includes('🌟') || result.includes('🏆') || result.includes('🔥') ? '#22c55e' : '#ef4444',
-              textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
-              animation: showCelebration ? 'bounce 0.6s ease-in-out 3' : 'none'
+              textShadow: '1px 1px 2px rgba(0,0,0,0.3)',
+              animation: showCelebration ? 'bounce 0.6s ease-in-out 2' : 'none'
             }}>
               {result}
             </div>
@@ -608,12 +582,12 @@ function Game({ onLogout }) {
 
           {/* Wrong Questions - Integrated into wooden sign with scroll */}
           {wrongQuestions.length > 0 && (
-            <div className="mt-6 mb-2 relative z-10 text-center flex-shrink-0" style={{ maxHeight: '30vh', overflowY: 'auto' }}>
-              <h4 className="text-lg md:text-xl font-bold mb-3" style={{ color: '#654321' }}>השאלות שלא ידע לענות עליהן:</h4>
-              <div className="bg-white/50 rounded-lg p-3 border-2 border-amber-300">
-                <ul id="wrong-questions" dir="ltr" className="list-none text-left space-y-1">
+            <div className="mt-3 mb-2 relative z-10 text-center flex-shrink-0" style={{ maxHeight: '20vh', overflowY: 'auto' }}>
+              <h4 className="text-sm md:text-base font-bold mb-2" style={{ color: '#654321' }}>השאלות שלא ידע לענות עליהן:</h4>
+              <div className="bg-white/50 rounded-lg p-2 border-2 border-amber-300">
+                <ul id="wrong-questions" dir="ltr" className="list-none text-left space-y-0.5">
                   {wrongQuestions.map((q, i) => (
-                    <li key={i} className="text-sm md:text-base" style={{ color: '#654321' }}>• {q}</li>
+                    <li key={i} className="text-xs md:text-sm" style={{ color: '#654321' }}>• {q}</li>
                   ))}
                 </ul>
               </div>

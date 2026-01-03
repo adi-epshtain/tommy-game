@@ -5,26 +5,36 @@ function Timer({ seconds, onTimeUp, isPaused: externalPaused, onTimeChange }) {
   const [remainingTime, setRemainingTime] = useState(seconds)
   const [isPaused, setIsPaused] = useState(false)
   const intervalRef = useRef(null)
-  const remainingTimeRef = useRef(seconds)
+  const onTimeUpRef = useRef(onTimeUp)
+  const onTimeChangeRef = useRef(onTimeChange)
+  const externalPausedRef = useRef(externalPaused)
+  const isPausedRef = useRef(false)
 
-  // Update ref when state changes
+  // Update refs when props change (without causing re-renders)
   useEffect(() => {
-    remainingTimeRef.current = remainingTime
-  }, [remainingTime])
+    onTimeUpRef.current = onTimeUp
+    onTimeChangeRef.current = onTimeChange
+    externalPausedRef.current = externalPaused
+  }, [onTimeUp, onTimeChange, externalPaused])
 
-  // Reset timer when seconds prop changes
+  // Reset timer when seconds prop changes (new question)
   useEffect(() => {
+    // Clear existing interval immediately
     if (intervalRef.current) {
       clearInterval(intervalRef.current)
       intervalRef.current = null
     }
+    
+    // Reset all timer state
     setRemainingTime(seconds)
-    remainingTimeRef.current = seconds
     setIsPaused(false)
-    if (onTimeChange) {
-      onTimeChange(seconds)
+    isPausedRef.current = false
+    
+    // Notify parent of new time
+    if (onTimeChangeRef.current) {
+      onTimeChangeRef.current(seconds)
     }
-  }, [seconds, onTimeChange])
+  }, [seconds])
 
   // Handle timer countdown
   useEffect(() => {
@@ -35,26 +45,28 @@ function Timer({ seconds, onTimeUp, isPaused: externalPaused, onTimeChange }) {
     }
 
     // Start timer if not paused and time > 0
-    if (!isPaused && !externalPaused && remainingTimeRef.current > 0) {
+    const shouldRun = !isPaused && !externalPaused && remainingTime > 0
+    
+    if (shouldRun) {
       intervalRef.current = setInterval(() => {
         setRemainingTime((prev) => {
-          const current = remainingTimeRef.current
-          if (current <= 1) {
+          if (prev <= 1) {
+            // Time is up
             if (intervalRef.current) {
               clearInterval(intervalRef.current)
               intervalRef.current = null
             }
-            remainingTimeRef.current = 0
-            if (onTimeChange) {
-              onTimeChange(0)
+            if (onTimeChangeRef.current) {
+              onTimeChangeRef.current(0)
             }
-            onTimeUp()
+            if (onTimeUpRef.current) {
+              onTimeUpRef.current()
+            }
             return 0
           }
-          const newTime = current - 1
-          remainingTimeRef.current = newTime
-          if (onTimeChange) {
-            onTimeChange(newTime)
+          const newTime = prev - 1
+          if (onTimeChangeRef.current) {
+            onTimeChangeRef.current(newTime)
           }
           return newTime
         })
@@ -67,16 +79,24 @@ function Timer({ seconds, onTimeUp, isPaused: externalPaused, onTimeChange }) {
         intervalRef.current = null
       }
     }
-  }, [isPaused, externalPaused, onTimeUp, onTimeChange])
+  }, [isPaused, externalPaused, remainingTime])
 
   const togglePause = () => {
-    setIsPaused(!isPaused)
+    const newPausedState = !isPaused
+    setIsPaused(newPausedState)
+    isPausedRef.current = newPausedState
+    
+    // Clear interval when pausing
+    if (newPausedState && intervalRef.current) {
+      clearInterval(intervalRef.current)
+      intervalRef.current = null
+    }
   }
 
   return (
     <div className="flex flex-col items-center">
-      <p className="text-center">
-        <span className="text-4xl">⏰</span> זמן שנותר: {remainingTime} שניות
+      <p className="text-center text-base md:text-lg">
+        <span className="text-2xl md:text-3xl">⏰</span> זמן שנותר: {remainingTime} שניות
         {remainingTime === 0 && <span style={{ color: 'red' }}> - נגמר הזמן!</span>}
       </p>
       <div className="mt-2">
