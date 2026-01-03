@@ -39,6 +39,9 @@ async def get_wrong_questions(player_session: PlayerSession) -> PlayerSessionAns
             incorrect_count += 1
             wrong_questions.append(f"{answer.question.text} {answer.player_answer} (תשובה נכונה: {answer.question.correct_answer})")
     
+    # Limit to last 5 wrong questions only
+    wrong_questions = wrong_questions[-5:] if len(wrong_questions) > 5 else wrong_questions
+    
     # Return ISO format timestamp (UTC) - frontend will format to local time
     if player_session.started_at:
         # Ensure UTC timezone and return ISO format string

@@ -53,7 +53,6 @@ function Settings({ onSettingsSaved }) {
 
   return (
     <div id="settings" className="bg-white rounded-xl p-6 shadow-lg border-2 border-amber-300">
-      <h3 className="text-2xl font-bold mb-4 text-center">⚙️ הגדרות משחק</h3>
       <div className="space-y-4">
         <div>
           <label className="block text-lg font-semibold mb-2">רמה נוכחית (למשחק הנוכחי):</label>

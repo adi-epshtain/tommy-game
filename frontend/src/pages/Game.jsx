@@ -389,13 +389,11 @@ function Game({ onLogout }) {
       {/* Left Dinosaur - Image */}
       <div className={`absolute left-2 md:left-4 lg:left-8 bottom-0 z-20 pointer-events-none transition-transform duration-500 ${showCelebration ? 'animate-bounce' : ''}`} style={{ height: '25vh', minHeight: '180px', maxHeight: '250px' }}>
         <img 
-          src="/static/dino_1.jpg" 
+          src="/static/dino_1.png" 
           alt="דינוזאור שמאלי" 
           className="h-full w-auto object-contain"
           style={{ 
-            filter: 'drop-shadow(4px 4px 8px rgba(0,0,0,0.3))',
-            mixBlendMode: 'multiply',
-            backgroundColor: 'transparent'
+            filter: 'drop-shadow(4px 4px 8px rgba(0,0,0,0.3))'
           }}
         />
       </div>
@@ -403,13 +401,11 @@ function Game({ onLogout }) {
       {/* Right Dinosaur - Image */}
       <div className={`absolute right-2 md:right-4 lg:right-8 bottom-0 z-20 pointer-events-none transition-transform duration-500 ${showCelebration ? 'animate-bounce' : ''}`} style={{ height: '25vh', minHeight: '180px', maxHeight: '250px' }}>
         <img 
-          src="/static/dino_2.jpg" 
+          src="/static/dino_2.png" 
           alt="דינוזאור ימני" 
           className="h-full w-auto object-contain"
           style={{ 
-            filter: 'drop-shadow(4px 4px 8px rgba(0,0,0,0.3))',
-            mixBlendMode: 'multiply',
-            backgroundColor: 'transparent'
+            filter: 'drop-shadow(4px 4px 8px rgba(0,0,0,0.3))'
           }}
         />
       </div>
@@ -599,7 +595,7 @@ function Game({ onLogout }) {
           {/* Wrong Questions - Integrated into wooden sign with scroll */}
           {wrongQuestions.length > 0 && (
             <div className="mt-3 mb-2 relative z-10 text-center flex-shrink-0" style={{ maxHeight: '20vh', overflowY: 'auto' }}>
-              <h4 className="text-sm md:text-base font-bold mb-2 text-center" style={{ color: '#654321' }}>השאלות שלא ידע לענות עליהן:</h4>
+              <h4 className="text-sm md:text-base font-bold mb-2 text-center" style={{ color: '#654321' }}>השאלות האחרונות שלא ידע לענות עליהן:</h4>
               <div className="bg-white/50 rounded-lg p-2 border-2 border-amber-300">
                 <ul id="wrong-questions" dir="ltr" className="list-none text-center space-y-0.5">
                   {wrongQuestions.map((q, i) => (
