@@ -75,12 +75,10 @@ async def start_game(
         question: Question = await get_random_question_by_game(db, game.id, player_session.id)
     if not question:
         raise HTTPException(status_code=404, detail="Question not found after insert_math_stock_questions")
-    time_limit = 20 + (question.difficulty - 1) * 5
     return {
         "session_id": player_session.id,
         "question": question.text,
-        "question_id": question.id,
-        "time_limit": time_limit
+        "question_id": question.id
     }
 
 
@@ -101,7 +99,6 @@ async def submit_answer(
     if not player:
         raise HTTPException(status_code=404, detail="Player not found")
     question: Question = await get_question_by_id(db, req.question_id)
-    time_limit = 20 + (question.difficulty - 1) * 5
     if not question:
         raise HTTPException(status_code=404, detail=f"Question not found question id: {req.question_id}")
     player_session: Optional[PlayerSession] = await get_session_by_player_id(db, player.id)
@@ -123,8 +120,7 @@ async def submit_answer(
         "question": new_question.text,
         "question_id": new_question.id,
         "stage": player_session.stage,
-        "wrong_questions": player_session_answers.wrong_answer,
-        "time_limit": time_limit
+        "wrong_questions": player_session_answers.wrong_answer
     })
 
 
@@ -185,6 +181,32 @@ async def get_top_players_api(
 class GameSettingsRequest(BaseModel):
     difficulty: int = 1
     winning_score: int = 5
+    current_stage: Optional[int] = None
+
+
+@router.get("/api/current_game_state", tags=["Game"])
+async def get_current_game_state(
+    current_player=Depends(get_current_player),
+    db: Session = Depends(get_db)
+):
+    player_name = current_player.get("sub")
+    player: Player = await get_player_by_name(db, player_name)
+    if not player:
+        raise HTTPException(status_code=404, detail="Player not found")
+
+    player_session = await get_session_by_player_id(db, player.id)
+    if not player_session:
+        raise HTTPException(status_code=404, detail="No active session")
+    
+    game: Game = await get_game_by_name(db, GameInfo.MATH_GAME.name)
+    if not game:
+        game: Game = await create_game(db, name=GameInfo.MATH_GAME.name, winning_score=GameInfo.MATH_GAME.winning_score, description=GameInfo.MATH_GAME.description)
+    
+    return {
+        "current_stage": player_session.stage,
+        "current_score": player_session.score,
+        "winning_score": game.winning_score
+    }
 
 
 @router.post("/set_game_settings")
@@ -201,8 +223,16 @@ async def set_game_settings(
     player_session = await get_session_by_player_id(db, player.id)
     if not player_session:
         raise HTTPException(status_code=404, detail="No active session")
-    await update_player_stage(session=db, player_session=player_session,
-                              new_stage=req.difficulty)
+    
+    # Update current stage if provided
+    if req.current_stage is not None:
+        await update_player_stage(session=db, player_session=player_session,
+                                  new_stage=req.current_stage)
+    else:
+        # Otherwise use difficulty as starting stage (for new games)
+        await update_player_stage(session=db, player_session=player_session,
+                                  new_stage=req.difficulty)
+    
     await update_winning_score(session=db, game_id=player_session.game_id,
                                new_winning_score=req.winning_score)
 

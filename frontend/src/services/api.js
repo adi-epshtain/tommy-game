@@ -138,17 +138,35 @@ export const api = {
     return response.json()
   },
 
-  async saveSettings(difficulty, winningScore) {
+  async getCurrentGameState() {
+    const response = await fetch(`${API_BASE}/api/current_game_state`, {
+      headers: getHeaders()
+    })
+    
+    if (!response.ok) {
+      throw new Error('Failed to get current game state')
+    }
+    
+    return response.json()
+  },
+
+  async saveSettings(difficulty, winningScore, currentStage = null) {
+    const body = {
+      difficulty: difficulty,
+      winning_score: winningScore
+    }
+    
+    if (currentStage !== null) {
+      body.current_stage = currentStage
+    }
+    
     const response = await fetch(`${API_BASE}/set_game_settings`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         ...getHeaders()
       },
-      body: JSON.stringify({
-        difficulty: difficulty,
-        winning_score: winningScore
-      })
+      body: JSON.stringify(body)
     })
     
     if (!response.ok) {

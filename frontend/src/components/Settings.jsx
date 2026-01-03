@@ -1,21 +1,41 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { api } from '../services/api'
 import Button from '../components/Button'
 
-function Settings() {
+function Settings({ onSettingsSaved }) {
   const [difficulty, setDifficulty] = useState(1)
+  const [currentStage, setCurrentStage] = useState(1)
   const [winningScore, setWinningScore] = useState(5)
   const [loading, setLoading] = useState(false)
+  const [loadingState, setLoadingState] = useState(true)
   const [message, setMessage] = useState('')
+
+  useEffect(() => {
+    const loadCurrentState = async () => {
+      try {
+        const state = await api.getCurrentGameState()
+        setCurrentStage(state.current_stage)
+        setWinningScore(state.winning_score)
+      } catch (err) {
+        console.error('Failed to load current game state:', err)
+      } finally {
+        setLoadingState(false)
+      }
+    }
+    loadCurrentState()
+  }, [])
 
   const handleSave = async () => {
     setLoading(true)
     setMessage('')
     
     try {
-      await api.saveSettings(difficulty, winningScore)
+      await api.saveSettings(difficulty, winningScore, currentStage)
       setMessage('🎮 ההגדרות נשמרו בהצלחה!')
       setTimeout(() => setMessage(''), 3000)
+      if (onSettingsSaved) {
+        onSettingsSaved()
+      }
     } catch (err) {
       setMessage('שגיאה בשמירת ההגדרות')
     } finally {
@@ -23,21 +43,30 @@ function Settings() {
     }
   }
 
+  if (loadingState) {
+    return (
+      <div className="bg-white rounded-xl p-6 shadow-lg border-2 border-amber-300">
+        <div className="text-center">טוען...</div>
+      </div>
+    )
+  }
+
   return (
     <div id="settings" className="bg-white rounded-xl p-6 shadow-lg border-2 border-amber-300">
       <h3 className="text-2xl font-bold mb-4 text-center">⚙️ הגדרות משחק</h3>
       <div className="space-y-4">
         <div>
-          <label className="block text-lg font-semibold mb-2">רמת קושי התחלתית:</label>
+          <label className="block text-lg font-semibold mb-2">רמה נוכחית (למשחק הנוכחי):</label>
           <input
             type="number"
-            id="difficulty"
+            id="current_stage"
             min="1"
             max="5"
-            value={difficulty}
-            onChange={(e) => setDifficulty(parseInt(e.target.value))}
-            className="w-full max-w-xs mx-auto px-4 py-2 text-center border-2 border-amber-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-300"
+            value={currentStage}
+            onChange={(e) => setCurrentStage(parseInt(e.target.value))}
+            className="w-full max-w-xs mx-auto px-4 py-2 text-center border-2 border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
           />
+          <p className="text-sm text-gray-600 mt-1 text-center">שינוי הרמה הנוכחית ישפיע מיד על המשחק</p>
         </div>
         <div>
           <label className="block text-lg font-semibold mb-2">ניקוד לניצחון:</label>

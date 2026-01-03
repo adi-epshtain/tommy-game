@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api, removeToken } from '../services/api'
-import Timer from '../components/Timer'
 import Settings from '../components/Settings'
 import Leaderboard from '../components/Leaderboard'
 import Button from '../components/Button'
@@ -16,19 +15,141 @@ function Game({ onLogout }) {
   const [stage, setStage] = useState(1)
   const [result, setResult] = useState('')
   const [answer, setAnswer] = useState('')
-  const [timeLimit, setTimeLimit] = useState(30)
   const [wrongQuestions, setWrongQuestions] = useState([])
   const [gameEnded, setGameEnded] = useState(false)
   const [gameEndData, setGameEndData] = useState(null)
-  const [timerPaused, setTimerPaused] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [showCelebration, setShowCelebration] = useState(false)
   const [winningScore, setWinningScore] = useState(5) // Default, will be updated from settings
   const [showScorePopup, setShowScorePopup] = useState(false)
   const [scoreChange, setScoreChange] = useState(0)
-  const [remainingTime, setRemainingTime] = useState(30)
   const [questionFade, setQuestionFade] = useState(false)
   const navigate = useNavigate()
+
+  // Function to play celebration sound (applause/clapping)
+  const playCelebrationSound = () => {
+    try {
+      // Create a simple applause-like sound using Web Audio API
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)()
+      const duration = 0.5 // 500ms
+      const sampleRate = audioContext.sampleRate
+      const numSamples = duration * sampleRate
+      const buffer = audioContext.createBuffer(1, numSamples, sampleRate)
+      const data = buffer.getChannelData(0)
+
+      // Generate applause-like sound (multiple claps)
+      for (let i = 0; i < numSamples; i++) {
+        const t = i / sampleRate
+        // Multiple overlapping claps with different frequencies
+        let sample = 0
+        for (let clap = 0; clap < 5; clap++) {
+          const clapTime = t - clap * 0.1
+          if (clapTime >= 0 && clapTime < 0.3) {
+            const freq = 200 + clap * 50 + Math.random() * 100
+            const envelope = Math.exp(-clapTime * 10) * (1 - clapTime / 0.3)
+            sample += Math.sin(2 * Math.PI * freq * clapTime) * envelope * 0.3
+          }
+        }
+        // Add some noise for texture
+        sample += (Math.random() * 2 - 1) * 0.1 * Math.exp(-t * 5)
+        data[i] = Math.max(-1, Math.min(1, sample))
+      }
+
+      const source = audioContext.createBufferSource()
+      source.buffer = buffer
+      source.connect(audioContext.destination)
+      source.start(0)
+    } catch (err) {
+      // Fallback: try to play a simple beep if Web Audio API fails
+      try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)()
+        const oscillator = audioContext.createOscillator()
+        const gainNode = audioContext.createGain()
+        
+        oscillator.connect(gainNode)
+        gainNode.connect(audioContext.destination)
+        
+        oscillator.frequency.value = 800
+        oscillator.type = 'sine'
+        
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime)
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3)
+        
+        oscillator.start(audioContext.currentTime)
+        oscillator.stop(audioContext.currentTime + 0.3)
+      } catch (e) {
+        console.log('Audio not available')
+      }
+    }
+  }
+
+  // Function to play error sound ("אוי אוי אוי" - sad/disappointed sound)
+  const playErrorSound = () => {
+    try {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)()
+      const duration = 0.6 // 600ms
+      const sampleRate = audioContext.sampleRate
+      const numSamples = duration * sampleRate
+      const buffer = audioContext.createBuffer(1, numSamples, sampleRate)
+      const data = buffer.getChannelData(0)
+
+      // Generate "אוי אוי אוי" sound - descending sad tones
+      for (let i = 0; i < numSamples; i++) {
+        const t = i / sampleRate
+        let sample = 0
+        
+        // Three descending "אוי" sounds
+        for (let oy = 0; oy < 3; oy++) {
+          const oyStart = oy * 0.15
+          const oyDuration = 0.12
+          if (t >= oyStart && t < oyStart + oyDuration) {
+            const localTime = t - oyStart
+            // Descending frequency for each "אוי"
+            const startFreq = 300 - oy * 30
+            const endFreq = 200 - oy * 20
+            const freq = startFreq + (endFreq - startFreq) * (localTime / oyDuration)
+            const envelope = Math.sin(Math.PI * localTime / oyDuration) * 0.4
+            sample += Math.sin(2 * Math.PI * freq * localTime) * envelope
+          }
+        }
+        
+        // Add some low-frequency rumble for disappointment
+        if (t < 0.5) {
+          sample += Math.sin(2 * Math.PI * 80 * t) * 0.1 * Math.exp(-t * 3)
+        }
+        
+        data[i] = Math.max(-1, Math.min(1, sample))
+      }
+
+      const source = audioContext.createBufferSource()
+      source.buffer = buffer
+      source.connect(audioContext.destination)
+      source.start(0)
+    } catch (err) {
+      // Fallback: try to play a low sad beep
+      try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)()
+        const oscillator = audioContext.createOscillator()
+        const gainNode = audioContext.createGain()
+        
+        oscillator.connect(gainNode)
+        gainNode.connect(audioContext.destination)
+        
+        // Low descending frequency for sad sound
+        oscillator.frequency.setValueAtTime(300, audioContext.currentTime)
+        oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.4)
+        oscillator.type = 'sine'
+        
+        gainNode.gain.setValueAtTime(0.25, audioContext.currentTime)
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4)
+        
+        oscillator.start(audioContext.currentTime)
+        oscillator.stop(audioContext.currentTime + 0.4)
+      } catch (e) {
+        console.log('Audio not available')
+      }
+    }
+  }
 
   useEffect(() => {
     loadPlayerInfo()
@@ -49,8 +170,6 @@ function Game({ onLogout }) {
     try {
       const data = await api.startGame(5)
       setQuestion(data.question)
-      setTimeLimit(data.time_limit)
-      setRemainingTime(data.time_limit)
       setCurrentQuestionId(data.question_id)
       setScore(0)
       setStage(1)
@@ -58,6 +177,13 @@ function Game({ onLogout }) {
       setWrongQuestions([])
       setGameEnded(false)
       setShowCelebration(false)
+      // Load winning score from current game state
+      try {
+        const state = await api.getCurrentGameState()
+        setWinningScore(state.winning_score)
+      } catch (err) {
+        console.error('Failed to load game state:', err)
+      }
     } catch (err) {
       alert('אירעה שגיאה בהתחלת המשחק')
       console.error(err)
@@ -79,6 +205,7 @@ function Game({ onLogout }) {
         
         if (data.is_correct) {
           setShowCelebration(true)
+          playCelebrationSound() // Play celebration sound
           setTimeout(() => setShowCelebration(false), 1500)
           
           // Score popup animation
@@ -88,6 +215,7 @@ function Game({ onLogout }) {
           
           setResult('✅ נכון! כל הכבוד!')
         } else {
+          playErrorSound() // Play error sound
           setResult('❌ לא נכון! נסה שוב! 💪')
           setScoreChange(-1)
           setShowScorePopup(true)
@@ -98,8 +226,6 @@ function Game({ onLogout }) {
         setQuestionFade(true)
         setTimeout(() => {
           setQuestion(data.question)
-          setTimeLimit(data.time_limit)
-          setRemainingTime(data.time_limit)
           setQuestionFade(false)
         }, 300)
         setAnswer('')
@@ -109,42 +235,6 @@ function Game({ onLogout }) {
     } catch (err) {
       console.error('Failed to submit answer:', err)
     }
-  }
-
-  const handleTimeUp = async () => {
-    setResult('לא הספקת בזמן 😢')
-    setTimerPaused(true)
-    
-    setTimeout(async () => {
-      setAnswer('')
-      // Submit empty answer (treated as wrong)
-      try {
-        const data = await api.submitAnswer('', currentQuestionId, MATH_GAME)
-        if (data.redirect) {
-          await showGameEnd()
-        } else {
-          setScore(data.score)
-          setStage(data.stage)
-          setResult('')
-          
-          // Question transition animation
-          setQuestionFade(true)
-          setTimeout(() => {
-            setQuestion(data.question)
-            setTimeLimit(data.time_limit)
-            setRemainingTime(data.time_limit) // Reset timer for new question
-            setQuestionFade(false)
-          }, 300)
-          
-          setAnswer('')
-          setCurrentQuestionId(data.question_id)
-          setWrongQuestions(data.wrong_questions || [])
-        }
-      } catch (err) {
-        console.error('Failed to submit answer:', err)
-      }
-      setTimerPaused(false)
-    }, 1500)
   }
 
   const showGameEnd = async () => {
@@ -229,7 +319,16 @@ function Game({ onLogout }) {
                 ← חזור למשחק
               </Button>
             </div>
-            <Settings />
+            <Settings onSettingsSaved={async () => {
+              // Update stage and winning score after settings are saved
+              try {
+                const state = await api.getCurrentGameState()
+                setStage(state.current_stage)
+                setWinningScore(state.winning_score)
+              } catch (err) {
+                console.error('Failed to reload game state:', err)
+              }
+            }} />
           </div>
         </div>
       </div>
@@ -287,66 +386,32 @@ function Game({ onLogout }) {
         </Button>
       </header>
 
-      {/* Left Dinosaur - Green Brontosaurus with yellow crest */}
+      {/* Left Dinosaur - Image */}
       <div className={`absolute left-2 md:left-4 lg:left-8 bottom-0 z-20 pointer-events-none transition-transform duration-500 ${showCelebration ? 'animate-bounce' : ''}`} style={{ height: '25vh', minHeight: '180px', maxHeight: '250px' }}>
-        <div className="relative h-full flex items-end">
-          <div className="relative">
-            {/* Long neck */}
-            <div className="absolute bottom-16 md:bottom-20 left-1/2 transform -translate-x-1/2 w-8 h-20 md:w-12 md:h-28 bg-gradient-to-b from-green-300 to-green-500 rounded-full"></div>
-            {/* Body */}
-            <div className="w-20 md:w-28 h-24 md:h-32 bg-gradient-to-b from-green-300 via-green-400 to-green-600 rounded-full shadow-xl flex items-center justify-center" style={{
-              clipPath: 'polygon(30% 0%, 70% 0%, 90% 30%, 95% 60%, 90% 90%, 50% 100%, 10% 90%, 5% 60%, 10% 30%)'
-            }}>
-              <div className="text-3xl md:text-5xl">🦕</div>
-            </div>
-            {/* Yellow spiky crest on head */}
-            <div className="absolute -top-8 md:-top-12 left-1/2 transform -translate-x-1/2" style={{
-              width: '40px',
-              height: '60px',
-              background: 'linear-gradient(to bottom, #FFD700, #FFA500)',
-              clipPath: 'polygon(50% 0%, 80% 30%, 70% 50%, 90% 70%, 50% 100%, 10% 70%, 30% 50%, 20% 30%)',
-              filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.3))'
-            }}></div>
-            {/* Speech bubble */}
-            <div className="absolute -top-20 md:-top-24 -right-8 md:-right-12 bg-white rounded-2xl p-3 md:p-4 shadow-2xl z-30 border-2 border-gray-300" style={{
-              minWidth: '110px',
-              clipPath: 'polygon(0% 0%, 100% 0%, 100% 80%, 88% 80%, 78% 100%, 68% 80%, 0% 80%)'
-            }}>
-              <div className="text-lg md:text-xl font-bold text-gray-800" dir="ltr">5 + 2 = 7</div>
-            </div>
-          </div>
-        </div>
+        <img 
+          src="/static/dino_1.jpg" 
+          alt="דינוזאור שמאלי" 
+          className="h-full w-auto object-contain"
+          style={{ 
+            filter: 'drop-shadow(4px 4px 8px rgba(0,0,0,0.3))',
+            mixBlendMode: 'multiply',
+            backgroundColor: 'transparent'
+          }}
+        />
       </div>
 
-      {/* Right Dinosaur - Blue Triceratops with brown backpack */}
+      {/* Right Dinosaur - Image */}
       <div className={`absolute right-2 md:right-4 lg:right-8 bottom-0 z-20 pointer-events-none transition-transform duration-500 ${showCelebration ? 'animate-bounce' : ''}`} style={{ height: '25vh', minHeight: '180px', maxHeight: '250px' }}>
-        <div className="relative h-full flex items-end">
-          <div className="relative">
-            {/* Body */}
-            <div className="w-20 md:w-28 h-24 md:h-32 bg-gradient-to-b from-cyan-300 via-blue-400 to-blue-600 rounded-full shadow-xl flex items-center justify-center" style={{
-              clipPath: 'polygon(20% 0%, 80% 0%, 100% 25%, 95% 60%, 85% 85%, 50% 100%, 15% 85%, 5% 60%, 0% 25%)'
-            }}>
-              <div className="text-3xl md:text-5xl">🦖</div>
-            </div>
-            {/* Frill */}
-            <div className="absolute -top-6 md:-top-8 left-1/2 transform -translate-x-1/2 w-24 h-10 md:w-32 md:h-12 bg-gradient-to-b from-blue-200 to-blue-400 rounded-full shadow-md" style={{
-              clipPath: 'polygon(10% 0%, 90% 0%, 100% 50%, 90% 100%, 10% 100%, 0% 50%)'
-            }}></div>
-            {/* Three small horns */}
-            <div className="absolute -top-12 md:-top-16 left-1/2 transform -translate-x-1/2 w-2 h-6 md:h-8 bg-gray-700 rounded-full"></div>
-            <div className="absolute -top-10 md:-top-14 left-1/3 transform -translate-x-1/2 w-1.5 h-4 md:h-6 bg-gray-700 rounded-full"></div>
-            <div className="absolute -top-10 md:-top-14 right-1/3 transform translate-x-1/2 w-1.5 h-4 md:h-6 bg-gray-700 rounded-full"></div>
-            {/* Brown backpack/basket on back */}
-            <div className="absolute top-1/4 -right-6 md:-right-8 w-14 h-18 md:w-18 md:h-22 bg-gradient-to-b from-amber-700 to-amber-900 rounded-lg shadow-xl border-3 border-amber-950 transform rotate-12" style={{
-              borderWidth: '3px'
-            }}>
-              <div className="absolute top-1 left-1/2 transform -translate-x-1/2 w-10 h-1.5 bg-amber-950 rounded"></div>
-              <div className="absolute top-4 left-1 right-1 h-1 bg-amber-800 rounded"></div>
-              <div className="absolute top-7 left-1 right-1 h-1 bg-amber-800 rounded"></div>
-              <div className="absolute top-10 left-1 right-1 h-1 bg-amber-800 rounded"></div>
-            </div>
-          </div>
-        </div>
+        <img 
+          src="/static/dino_2.jpg" 
+          alt="דינוזאור ימני" 
+          className="h-full w-auto object-contain"
+          style={{ 
+            filter: 'drop-shadow(4px 4px 8px rgba(0,0,0,0.3))',
+            mixBlendMode: 'multiply',
+            backgroundColor: 'transparent'
+          }}
+        />
       </div>
 
       {/* Game Scene Container - Centered */}
@@ -424,62 +489,13 @@ function Game({ onLogout }) {
             </h2>
           </div>
 
-          {/* Timer with Visual Progress Bar */}
-          <div className="mb-6 w-full max-w-md mx-auto">
-            <Timer
-              seconds={timeLimit}
-              onTimeUp={handleTimeUp}
-              isPaused={timerPaused}
-              onTimeChange={setRemainingTime}
-            />
-            {/* Visual Timer Bar */}
-            <div className="mt-2 w-full h-4 bg-gray-200 rounded-full overflow-hidden shadow-inner">
-              <div 
-                className="h-full transition-all duration-1000 ease-linear rounded-full"
-                style={{
-                  width: `${(remainingTime / timeLimit) * 100}%`,
-                  background: remainingTime > timeLimit * 0.5 
-                    ? 'linear-gradient(90deg, #22c55e, #10b981)' 
-                    : remainingTime > timeLimit * 0.25
-                    ? 'linear-gradient(90deg, #f59e0b, #f97316)'
-                    : 'linear-gradient(90deg, #ef4444, #dc2626)',
-                  boxShadow: '0 0 10px rgba(34, 197, 94, 0.5)'
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Progress Bar to Victory */}
-          <div className="mb-3 w-full max-w-md mx-auto relative z-10">
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-xs md:text-sm font-semibold" style={{ color: '#654321' }}>התקדמות לניצחון</span>
-              <span className="text-xs md:text-sm font-bold" style={{ color: '#654321' }}>{score} / {winningScore}</span>
-            </div>
-            <div className="w-full h-4 bg-gray-200 rounded-full overflow-hidden shadow-inner border-2 border-gray-300">
-              <div 
-                className="h-full transition-all duration-500 ease-out rounded-full relative"
-                style={{
-                  width: `${Math.min((score / winningScore) * 100, 100)}%`,
-                  background: score >= winningScore 
-                    ? 'linear-gradient(90deg, #fbbf24, #f59e0b, #d97706)'
-                    : 'linear-gradient(90deg, #22c55e, #10b981, #059669)',
-                  boxShadow: '0 0 15px rgba(34, 197, 94, 0.6)'
-                }}
-              >
-                {score >= winningScore && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent animate-pulse opacity-50"></div>
-                )}
-              </div>
-            </div>
-          </div>
-
           {/* Stage and Score */}
           <div className="flex justify-center gap-4 mb-4 relative z-10">
             <div id="stage" className="text-sm md:text-base font-bold px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-100 to-pink-100 border-2 border-purple-300 shadow-md" style={{ color: '#654321' }}>
               🎯 רמה: {stage}
             </div>
             <div id="score" className={`text-sm md:text-base font-bold px-3 py-1.5 rounded-lg border-2 shadow-md transition-all duration-300 relative ${score > 0 ? 'bg-gradient-to-r from-green-100 to-emerald-100 border-green-400 scale-105' : 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-300'}`} style={{ color: '#654321' }}>
-              ⭐ ניקוד: {score}
+              ⭐ ניקוד: {score} / {winningScore}
               {/* Score Popup */}
               {showScorePopup && (
                 <div 
@@ -583,9 +599,9 @@ function Game({ onLogout }) {
           {/* Wrong Questions - Integrated into wooden sign with scroll */}
           {wrongQuestions.length > 0 && (
             <div className="mt-3 mb-2 relative z-10 text-center flex-shrink-0" style={{ maxHeight: '20vh', overflowY: 'auto' }}>
-              <h4 className="text-sm md:text-base font-bold mb-2" style={{ color: '#654321' }}>השאלות שלא ידע לענות עליהן:</h4>
+              <h4 className="text-sm md:text-base font-bold mb-2 text-center" style={{ color: '#654321' }}>השאלות שלא ידע לענות עליהן:</h4>
               <div className="bg-white/50 rounded-lg p-2 border-2 border-amber-300">
-                <ul id="wrong-questions" dir="ltr" className="list-none text-left space-y-0.5">
+                <ul id="wrong-questions" dir="ltr" className="list-none text-center space-y-0.5">
                   {wrongQuestions.map((q, i) => (
                     <li key={i} className="text-xs md:text-sm" style={{ color: '#654321' }}>• {q}</li>
                   ))}

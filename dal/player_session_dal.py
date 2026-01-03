@@ -60,7 +60,8 @@ async def update_score_and_stage_player_session(session: Session, question: Ques
     else:
         if player_session.score > 0:
             player_session.score -= 1
-    if player_session.score > 2:  # TODO:
+    # הרמה עולה רק אחרי 10 תשובות נכונות (score > 9) - הרבה יותר איטי
+    if player_session.score > 9:
         player_session.stage += 1
     session.commit()
     return is_correct
