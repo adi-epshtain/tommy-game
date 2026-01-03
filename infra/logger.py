@@ -27,3 +27,18 @@ def set_log_configurations():
 
 
 log = set_log_configurations()
+
+
+def print_tommy_logo():
+    """
+    Print TOMMY ASCII art in green to the log
+    """
+    tommy_art = """
+######   ######   ##   ##   ##   ##   ##   ##
+  ##     ##  ##   ### ###   ### ###    ## ##
+  ##     ##  ##   ## # ##   ## # ##     ###
+  ##     ##  ##   ##   ##   ##   ##     ###
+  ##     ######   ##   ##   ##   ##     ##
+"""
+    # Use green color for the ASCII art
+    log.info(f"<green>{tommy_art}</green>")

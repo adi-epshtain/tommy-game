@@ -13,6 +13,8 @@ async def lifespan(app):
         await database.connect()
         create_tables()  # Create tables after connection
         log.info("Database connected successfully")
+        from infra.logger import print_tommy_logo
+        print_tommy_logo()
     except Exception as e:
         log.warning(f"Could not connect to database on startup: {e}")
         log.warning("App will continue, but database features may not work until database is available")
