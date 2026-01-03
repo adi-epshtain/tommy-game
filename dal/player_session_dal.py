@@ -130,6 +130,7 @@ async def get_last_player_sessions(
                 session.query(PlayerSession)
                 .options(joinedload(PlayerSession.answers))
                 .filter(PlayerSession.id.in_(ids))
+                .filter(PlayerSession.ended_at.isnot(None))  # Only completed sessions
                 .order_by(desc(PlayerSession.ended_at))
                 .all()
             )
@@ -140,6 +141,7 @@ async def get_last_player_sessions(
         session.query(PlayerSession)
         .options(joinedload(PlayerSession.answers))
         .filter(PlayerSession.player_id == player_id)
+        .filter(PlayerSession.ended_at.isnot(None))  # Only completed sessions
         .order_by(desc(PlayerSession.ended_at))
         .limit(limit_num)
         .all()

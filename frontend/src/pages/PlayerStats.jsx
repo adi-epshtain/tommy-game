@@ -9,6 +9,36 @@ function PlayerStats() {
   const [error, setError] = useState('')
   const navigate = useNavigate()
 
+  // Format UTC timestamp (ISO format) to local time
+  const formatLocalTime = (utcTimestamp) => {
+    if (!utcTimestamp) return ''
+    try {
+      // Parse ISO format timestamp - JavaScript Date automatically handles UTC
+      // If timestamp doesn't have timezone, assume UTC
+      let dateStr = utcTimestamp
+      if (!utcTimestamp.includes('Z') && !utcTimestamp.includes('+') && !utcTimestamp.includes('-', 10)) {
+        // If no timezone indicator, append 'Z' to indicate UTC
+        dateStr = utcTimestamp.endsWith('Z') ? utcTimestamp : utcTimestamp + 'Z'
+      }
+      const date = new Date(dateStr)
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return utcTimestamp // Fallback if invalid
+      }
+      
+      // Format to local time: DD/MM/YYYY HH:MM
+      const day = String(date.getDate()).padStart(2, '0')
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const year = date.getFullYear()
+      const hours = String(date.getHours()).padStart(2, '0')
+      const minutes = String(date.getMinutes()).padStart(2, '0')
+      return `${day}/${month}/${year} ${hours}:${minutes}`
+    } catch (e) {
+      return utcTimestamp // Fallback to original if parsing fails
+    }
+  }
+
   useEffect(() => {
     loadStats()
   }, [])
@@ -107,7 +137,7 @@ function PlayerStats() {
                     🎮 סשן {idx + 1}
                   </h3>
                   <div className="text-sm text-gray-600 bg-white px-3 py-1 rounded-full shadow-sm">
-                    ⏰ {session.started_at}
+                    ⏰ {formatLocalTime(session.started_at)}
                   </div>
                 </div>
                 

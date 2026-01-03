@@ -38,7 +38,21 @@ async def get_wrong_questions(player_session: PlayerSession) -> PlayerSessionAns
         else:
             incorrect_count += 1
             wrong_questions.append(f"{answer.question.text} {answer.player_answer} (תשובה נכונה: {answer.question.correct_answer})")
-    formatted_time = player_session.started_at.strftime("%d/%m/%Y %H:%M") if player_session.started_at else ""
+    
+    # Return ISO format timestamp (UTC) - frontend will format to local time
+    if player_session.started_at:
+        # Ensure UTC timezone and return ISO format string
+        if player_session.started_at.tzinfo is None:
+            # If timezone-naive, assume UTC
+            from datetime import timezone
+            utc_time = player_session.started_at.replace(tzinfo=timezone.utc)
+        else:
+            # Convert to UTC if not already
+            utc_time = player_session.started_at.astimezone(timezone.utc)
+        formatted_time = utc_time.isoformat()
+    else:
+        formatted_time = ""
+    
     return PlayerSessionAnswer(wrong_answer=wrong_questions,
                                correct_count=correct_count,
                                incorrect_count=incorrect_count,

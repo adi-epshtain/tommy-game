@@ -367,18 +367,18 @@ function Game({ onLogout }) {
       {/* Game Scene Container - Centered */}
       <main className="absolute inset-0 flex flex-col items-center justify-center p-4 z-10" style={{ paddingTop: '80px' }}>
         {/* Centered Wooden Sign Card - Large irregular organic shape */}
-        <div className="w-full max-w-3xl relative z-30" style={{
+        <div className="w-full max-w-3xl relative z-30 flex flex-col" style={{
           marginTop: '3vh',
           marginBottom: '3vh',
           background: 'linear-gradient(135deg, #CD853F 0%, #D2691E 20%, #B8860B 40%, #CD853F 60%, #D2691E 80%, #B8860B 100%)',
           padding: '2.5rem 2rem 3rem 2rem',
-          minHeight: 'fit-content',
+          maxHeight: '85vh',
           borderRadius: '50% 40% 55% 45% / 45% 55% 40% 50%',
           boxShadow: '0 25px 50px rgba(0,0,0,0.4), inset 0 3px 6px rgba(255,255,255,0.2), inset 0 -3px 6px rgba(0,0,0,0.3)',
           border: '10px solid #8B4513',
           transform: 'rotate(-0.5deg)',
           position: 'relative',
-          overflow: 'visible'
+          overflow: 'hidden'
         }}>
           {/* Wood grain texture */}
           <div className="absolute inset-0 opacity-25" style={{
@@ -606,19 +606,17 @@ function Game({ onLogout }) {
             </div>
           )}
 
-          {/* Wrong Questions - Integrated into wooden sign */}
+          {/* Wrong Questions - Integrated into wooden sign with scroll */}
           {wrongQuestions.length > 0 && (
-            <div className="mt-6 mb-2 relative z-10 text-center">
+            <div className="mt-6 mb-2 relative z-10 text-center flex-shrink-0" style={{ maxHeight: '30vh', overflowY: 'auto' }}>
               <h4 className="text-lg md:text-xl font-bold mb-3" style={{ color: '#654321' }}>השאלות שלא ידע לענות עליהן:</h4>
-              <ul id="wrong-questions" dir="ltr" className="list-none inline-block text-center" style={{
-                maxHeight: '300px',
-                overflowY: 'auto',
-                padding: '0 1rem'
-              }}>
-                {wrongQuestions.map((q, i) => (
-                  <li key={i} className="text-base md:text-lg mb-2" style={{ color: '#654321' }}>• {q}</li>
-                ))}
-              </ul>
+              <div className="bg-white/50 rounded-lg p-3 border-2 border-amber-300">
+                <ul id="wrong-questions" dir="ltr" className="list-none text-left space-y-1">
+                  {wrongQuestions.map((q, i) => (
+                    <li key={i} className="text-sm md:text-base" style={{ color: '#654321' }}>• {q}</li>
+                  ))}
+                </ul>
+              </div>
             </div>
           )}
         </div>
