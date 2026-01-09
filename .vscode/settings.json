@@ -6,11 +6,10 @@
             "server": "localhost",
             "port": 5432,
             "driver": "PostgreSQL",
-            "password": "postgres",
-            "database": "postgres",
             "name": "Tommy Game DB",
-            "connectionTimeout": 30,
-            "username": "postgres"
+            "database": "tommy_game_db",
+            "username": "postgres",
+            "password": "postgres"
         }
     ]
 }
