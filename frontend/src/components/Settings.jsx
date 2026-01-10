@@ -32,9 +32,9 @@ function Settings({ onSettingsSaved }) {
     try {
       await api.saveSettings(difficulty, winningScore, currentStage)
       setMessage('🎮 ההגדרות נשמרו בהצלחה!')
-      setTimeout(() => setMessage(''), 3000)
+      // Call the callback which will refresh state and close settings
       if (onSettingsSaved) {
-        onSettingsSaved()
+        await onSettingsSaved()
       }
     } catch (err) {
       setMessage('שגיאה בשמירת ההגדרות')

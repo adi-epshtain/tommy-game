@@ -300,6 +300,69 @@ export const api = {
       throw new Error(err.detail || response.statusText)
     }
     return response.json()
+  },
+
+  // Dinosaurs API
+  async getAvailableDinosaurs() {
+    const response = await fetch(`${API_BASE}/dinosaurs/available`, {
+      method: 'GET',
+      headers: getHeaders()
+    })
+    if (!response.ok) {
+      const err = await response.json()
+      throw new Error(err.detail || response.statusText)
+    }
+    return response.json()
+  },
+
+  async getMyDinosaurs() {
+    const response = await fetch(`${API_BASE}/dinosaurs/my-collection`, {
+      method: 'GET',
+      headers: getHeaders()
+    })
+    if (!response.ok) {
+      const err = await response.json()
+      throw new Error(err.detail || response.statusText)
+    }
+    return response.json()
+  },
+
+  async getSelectedDinosaur() {
+    const response = await fetch(`${API_BASE}/dinosaurs/selected`, {
+      method: 'GET',
+      headers: getHeaders()
+    })
+    if (!response.ok) {
+      const err = await response.json()
+      throw new Error(err.detail || response.statusText)
+    }
+    return response.json()
+  },
+
+  async unlockDinosaur(dinosaurId) {
+    const response = await fetch(`${API_BASE}/dinosaurs/unlock`, {
+      method: 'POST',
+      headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dinosaur_id: dinosaurId })
+    })
+    if (!response.ok) {
+      const err = await response.json()
+      throw new Error(err.detail || response.statusText)
+    }
+    return response.json()
+  },
+
+  async selectDinosaur(dinosaurId) {
+    const response = await fetch(`${API_BASE}/dinosaurs/select`, {
+      method: 'POST',
+      headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dinosaur_id: dinosaurId })
+    })
+    if (!response.ok) {
+      const err = await response.json()
+      throw new Error(err.detail || response.statusText)
+    }
+    return response.json()
   }
 }
 

@@ -1,8 +1,17 @@
-from sqlalchemy import Column, Integer, String, Text, Boolean, ForeignKey, TIMESTAMP, JSON
+from sqlalchemy import Column, Integer, String, Text, Boolean, ForeignKey, TIMESTAMP, JSON, Table
 from sqlalchemy.orm import relationship, declarative_base
 from sqlalchemy.sql import func
 
 Base = declarative_base()
+
+# Many-to-many relationship table for players and dinosaurs
+player_dinosaurs = Table(
+    'player_dinosaurs',
+    Base.metadata,
+    Column('player_id', Integer, ForeignKey('players.id'), primary_key=True),
+    Column('dinosaur_id', Integer, ForeignKey('dinosaurs.id'), primary_key=True),
+    Column('unlocked_at', TIMESTAMP, server_default=func.now())
+)
 
 
 class Player(Base):
@@ -14,8 +23,11 @@ class Player(Base):
     created_at = Column(TIMESTAMP, server_default=func.now())
     password = Column(String(255), nullable=False)
     excluded_from_leaderboard = Column(Boolean, default=False)
+    selected_dinosaur_id = Column(Integer, ForeignKey('dinosaurs.id'), nullable=True)
 
     sessions = relationship("PlayerSession", back_populates="player")
+    dinosaurs = relationship("Dinosaur", secondary=player_dinosaurs, back_populates="players")
+    selected_dinosaur = relationship("Dinosaur", foreign_keys=[selected_dinosaur_id], post_update=True)
 
 
 class Game(Base):
@@ -74,3 +86,16 @@ class PlayerAnswer(Base):
 
     session = relationship("PlayerSession", back_populates="answers")
     question = relationship("Question", back_populates="answers")
+
+
+class Dinosaur(Base):
+    __tablename__ = "dinosaurs"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(100), nullable=False, unique=True)
+    image_path = Column(String(255), nullable=False)  # Path to dinosaur image
+    description = Column(Text, nullable=True)
+    rarity = Column(String(20), default='common')  # common, rare, epic, legendary
+    created_at = Column(TIMESTAMP, server_default=func.now())
+
+    players = relationship("Player", secondary=player_dinosaurs, back_populates="dinosaurs")

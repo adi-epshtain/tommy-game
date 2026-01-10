@@ -4,6 +4,7 @@ import { api, removeToken } from '../services/api'
 import Settings from '../components/Settings'
 import Leaderboard from '../components/Leaderboard'
 import Button from '../components/Button'
+import DinosaurSelection from '../components/DinosaurSelection'
 
 const MATH_GAME = 'Math Game'
 
@@ -28,6 +29,9 @@ function Game({ onLogout }) {
   const [questionFade, setQuestionFade] = useState(false)
   const [showAdvanceDialog, setShowAdvanceDialog] = useState(false)
   const [advanceInfo, setAdvanceInfo] = useState(null)
+  const [showDinosaurSelection, setShowDinosaurSelection] = useState(false)
+  const [playerDinosaurs, setPlayerDinosaurs] = useState([]) // All dinosaurs in player's collection
+  const [showDinosaurGallery, setShowDinosaurGallery] = useState(false) // Gallery view
   const navigate = useNavigate()
 
   // Function to play celebration sound (applause/clapping)
@@ -91,74 +95,49 @@ function Game({ onLogout }) {
   const playTop3VictorySound = (rank) => {
     try {
       const audioContext = new (window.AudioContext || window.webkitAudioContext)()
-      const duration = 2.5 // 2.5 seconds for top 3 victory
-      const sampleRate = audioContext.sampleRate
-      const numSamples = duration * sampleRate
-      const buffer = audioContext.createBuffer(2, numSamples, sampleRate) // Stereo
-      const leftChannel = buffer.getChannelData(0)
-      const rightChannel = buffer.getChannelData(1)
-
-      // Generate victory fanfare - different for each rank
-      const baseNotes = rank === 1 ? [329.63, 392.00, 493.88, 659.25, 783.99] : // E, G, B, E, G (major)
-                        rank === 2 ? [293.66, 349.23, 440.00, 587.33, 698.46] : // D, F, A, D, F
-                        [261.63, 329.63, 392.00, 523.25, 659.25] // C, E, G, C, E (less impressive)
-
-      for (let i = 0; i < numSamples; i++) {
-        const t = i / sampleRate
+      const oscillator = audioContext.createOscillator()
+      const gainNode = audioContext.createGain()
+      
+      oscillator.connect(gainNode)
+      gainNode.connect(audioContext.destination)
+      
+      // Create a pleasant victory fanfare
+      const baseFreq = 440 // A4
+      const notes = rank === 1 
+        ? [0, 4, 7, 12, 16, 19, 16, 12] // Major scale - more impressive
+        : rank === 2
+        ? [0, 3, 7, 10, 12] // Less impressive but still nice
+        : [0, 2, 5, 9] // Simple and pleasant
+      
+      const duration = 3.5 // 3.5 seconds total
+      const noteDuration = duration / notes.length
+      const startTime = audioContext.currentTime
+      
+      // Play each note
+      notes.forEach((semitone, index) => {
+        const freq = baseFreq * Math.pow(2, semitone / 12)
+        const noteStart = startTime + index * noteDuration
         
-        let leftSample = 0
-        let rightSample = 0
+        oscillator.frequency.setValueAtTime(freq, noteStart)
         
-        // Fanfare melody - ascending notes with celebration
-        baseNotes.forEach((freq, idx) => {
-          const noteStart = idx * 0.35
-          const noteDuration = 0.3
-          if (t >= noteStart && t < noteStart + noteDuration) {
-            const localTime = t - noteStart
-            const envelope = Math.sin(Math.PI * localTime / noteDuration) * (rank === 1 ? 0.4 : 0.3)
-            const phase = 2 * Math.PI * freq * localTime
-            const sample = Math.sin(phase) * envelope
-            leftSample += sample
-            rightSample += sample * 0.95
-          }
-        })
+        // Volume envelope - quick attack, gentle decay
+        const attackTime = 0.05
+        const sustainTime = noteDuration * 0.6
+        const decayTime = noteDuration * 0.35
+        const volume = rank === 1 ? 0.4 : rank === 2 ? 0.35 : 0.3
         
-        // Add applause/celebration noise (more for rank 1)
-        if (t > 0.8) {
-          const applauseNoise = (Math.random() * 2 - 1) * (rank === 1 ? 0.3 : 0.2) * Math.exp(-(t - 0.8) * 1.5)
-          leftSample += applauseNoise
-          rightSample += applauseNoise * 0.9
-        }
-        
-        // Add sparkle effect (high frequency shimmer)
-        if (t > 1.2) {
-          const sparkleFreq = 2000 + Math.sin(t * 15) * 800
-          const sparkle = Math.sin(2 * Math.PI * sparkleFreq * t) * (rank === 1 ? 0.15 : 0.1) * Math.exp(-(t - 1.2) * 2)
-          leftSample += sparkle
-          rightSample += sparkle
-        }
-        
-        // Victory chord at the end (rank 1 only)
-        if (rank === 1 && t > 2.0) {
-          const chordFreq = 440
-          const chord = Math.sin(2 * Math.PI * chordFreq * (t - 2.0)) * 0.2 * Math.exp(-(t - 2.0) * 3)
-          leftSample += chord
-          rightSample += chord
-        }
-        
-        leftChannel[i] = Math.max(-1, Math.min(1, leftSample))
-        rightChannel[i] = Math.max(-1, Math.min(1, rightSample))
-      }
-
-      const source = audioContext.createBufferSource()
-      source.buffer = buffer
-      source.connect(audioContext.destination)
-      source.start(0)
+        gainNode.gain.setValueAtTime(0, noteStart)
+        gainNode.gain.linearRampToValueAtTime(volume, noteStart + attackTime)
+        gainNode.gain.setValueAtTime(volume, noteStart + attackTime + sustainTime)
+        gainNode.gain.linearRampToValueAtTime(0, noteStart + attackTime + sustainTime + decayTime)
+      })
+      
+      oscillator.type = 'sine' // Smooth sine wave
+      oscillator.start(startTime)
+      oscillator.stop(startTime + duration + 0.1)
     } catch (err) {
-      // Fallback: play multiple celebration sounds
+      // Fallback: play celebration sound
       playCelebrationSound()
-      setTimeout(() => playCelebrationSound(), 300)
-      setTimeout(() => playCelebrationSound(), 600)
     }
   }
 
@@ -232,6 +211,7 @@ function Game({ onLogout }) {
 
   useEffect(() => {
     loadPlayerInfo()
+    loadPlayerDinosaurs()
   }, [])
 
   const loadPlayerInfo = async () => {
@@ -245,8 +225,32 @@ function Game({ onLogout }) {
     }
   }
 
+  const loadPlayerDinosaurs = async () => {
+    try {
+      const dinosaurs = await api.getMyDinosaurs()
+      setPlayerDinosaurs(dinosaurs)
+    } catch (err) {
+      console.error('Failed to load player dinosaurs:', err)
+      // Don't fail completely if dinosaurs fail to load
+    }
+  }
+
   const startGame = async (name, advanceStage = null) => {
     try {
+      // Reset all game-related states first
+      setGameEnded(false)
+      setGameEndData(null)
+      setShowDinosaurSelection(false)
+      setShowTop3Celebration(false)
+      setPlayerRank(null)
+      setShowAdvanceDialog(false)
+      setAdvanceInfo(null)
+      setResult('')
+      setAnswer('')
+      setWrongQuestions([])
+      setScore(0)
+      setShowCelebration(false)
+      
       const data = await api.startGame(5, advanceStage)
       
       // בדוק אם השחקן מוכן לעלות רמה
@@ -259,12 +263,9 @@ function Game({ onLogout }) {
       // אם לא צריך אישור, התחל משחק רגיל
       setQuestion(data.question)
       setCurrentQuestionId(data.question_id)
-      setScore(0)
       setStage(data.stage || 1)
-      setResult('')
-      setWrongQuestions([])
-      setGameEnded(false)
-      setShowCelebration(false)
+      // Reload player's dinosaurs to show any newly unlocked ones
+      await loadPlayerDinosaurs()
       // Load winning score from current game state
       try {
         const state = await api.getCurrentGameState()
@@ -340,24 +341,50 @@ function Game({ onLogout }) {
       const data = await api.getGameEnd()
       setGameEndData(data)
       
-      // בדוק אם השחקן במקום 1-3 בלוח התוצאות
-      const playerRank = data.top_players.findIndex((p, idx) => p.name === data.player_name) + 1
-      if (playerRank >= 1 && playerRank <= 3) {
+      // בדוק אם השחקן במקום 1-3 בלוח התוצאות (מהבאק אנד יש player_rank)
+      const playerRank = data.player_rank
+      if (playerRank && playerRank >= 1 && playerRank <= 3) {
         setPlayerRank(playerRank)
         setShowTop3Celebration(true)
-        playTop3VictorySound(playerRank) // Play special victory sound
-        // לאחר 5 שניות, עבר למסך הסיום הרגיל
+        setGameEnded(false) // Reset כדי שהרקע יוצג במסך החגיגה
+        playTop3VictorySound(playerRank) // Play applause sound
+        // לאחר 2.5 שניות, עבר למסך הסיום הרגיל
         setTimeout(() => {
           setShowTop3Celebration(false)
-          setGameEnded(true)
-        }, 5000)
+          setGameEnded(false) // ודא ש-gameEnded false למסך בחירת דינוזאור
+          setShowDinosaurSelection(true) // הצג בחירת דינוזאור
+        }, 2500)
       } else {
-        setGameEnded(true)
+        // אחרי ניצחון רגיל, הצג בחירת דינוזאור
+        setPlayerRank(null) // ודא שלא נשאר rank ישן
+        setGameEnded(false) // Reset כדי שהרקע יוצג במסך בחירת דינוזאור
+        setShowDinosaurSelection(true)
       }
     } catch (err) {
       alert('אירעה שגיאה בטעינת סיום המשחק')
       console.error(err)
     }
+  }
+
+  const handleDinosaurSelected = async (dinosaurId) => {
+    try {
+      // Reload player's dinosaurs (new one was just unlocked)
+      await loadPlayerDinosaurs()
+      // Close selection screen
+      setShowDinosaurSelection(false)
+      // Start a new game (this will reset all states)
+      await startGame(playerName)
+    } catch (err) {
+      console.error('Failed to handle dinosaur selection:', err)
+      alert('אירעה שגיאה בבחירת הדינוזאור')
+    }
+  }
+
+  const handleDinosaurSkip = async () => {
+    // Close selection screen
+    setShowDinosaurSelection(false)
+    // Start a new game (this will reset all states)
+    await startGame(playerName)
   }
 
   const handleLogout = () => {
@@ -366,12 +393,37 @@ function Game({ onLogout }) {
     navigate('/login')
   }
 
+  // Dinosaur Selection Screen - shows after victory
+  if (showDinosaurSelection) {
+    return (
+      <div 
+        className="min-h-screen w-full relative overflow-hidden flex items-center justify-center" 
+        style={{
+          backgroundImage: 'url(/static/math_dino2.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          backgroundAttachment: 'fixed'
+        }}
+      >
+        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center p-8 z-10">
+          <div className="max-w-4xl w-full">
+            <DinosaurSelection 
+              onSelect={handleDinosaurSelected}
+              onSkip={handleDinosaurSkip}
+            />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   // Top 3 Celebration Screen - shows when player reaches top 3
   if (showTop3Celebration && playerRank && gameEndData) {
     const rankMessages = {
-      1: { emoji: '👑', text: 'מקום ראשון!', color: '#FFD700', size: '8xl' },
-      2: { emoji: '🥈', text: 'מקום שני!', color: '#C0C0C0', size: '7xl' },
-      3: { emoji: '🥉', text: 'מקום שלישי!', color: '#CD7F32', size: '6xl' }
+      1: { emoji: '👑', text: 'מקום ראשון!', color: '#FFD700' },
+      2: { emoji: '🥈', text: 'מקום שני!', color: '#C0C0C0' },
+      3: { emoji: '🥉', text: 'מקום שלישי!', color: '#CD7F32' }
     }
     const rankInfo = rankMessages[playerRank] || rankMessages[3]
 
@@ -379,170 +431,70 @@ function Game({ onLogout }) {
       <div 
         className="min-h-screen w-full relative overflow-hidden flex items-center justify-center" 
         style={{
+          background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 165, 0, 0.1) 50%, rgba(255, 192, 203, 0.1) 100%)',
           backgroundImage: 'url(/static/math_dino2.png)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
-          backgroundAttachment: 'fixed'
+          backgroundBlendMode: 'overlay'
         }}
       >
-        {/* Special Top 3 Victory Effect */}
-        <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
-          {/* Massive sparkles */}
-          {[...Array(150)].map((_, i) => {
-            const angle = (Math.PI * 2 * i) / 150
-            const distance = 300 + Math.random() * 400
-            const tx = Math.cos(angle) * distance
-            const ty = Math.sin(angle) * distance
-            const delay = Math.random() * 0.5
-            const duration = 2 + Math.random() * 1
-            const colors = playerRank === 1 
-              ? ['#FFD700', '#FFA500', '#FF69B4', '#FF1493', '#FFD700', '#FF6347', '#FFD700']
-              : playerRank === 2
-              ? ['#C0C0C0', '#FFD700', '#FFA500', '#C0C0C0']
-              : ['#CD7F32', '#FFA500', '#CD7F32', '#FFD700']
-            const color = colors[Math.floor(Math.random() * colors.length)]
-            const size = playerRank === 1 ? (15 + Math.random() * 20) : (10 + Math.random() * 15)
-            
-            return (
-              <div
-                key={`sparkle-${i}`}
-                className="absolute"
-                style={{
-                  left: '50%',
-                  top: '50%',
-                  width: `${size}px`,
-                  height: `${size}px`,
-                  background: color,
-                  borderRadius: '50%',
-                  boxShadow: `0 0 ${size * 2}px ${color}, 0 0 ${size * 4}px ${color}`,
-                  animationDelay: `${delay}s`,
-                  animationDuration: `${duration}s`,
-                  animation: 'sparkle-fade 2s ease-out forwards',
-                  transform: `translate(${tx}px, ${ty}px) scale(1)`,
-                  opacity: 0
-                }}
-              />
-            )
-          })}
-          
-          {/* Large Stars */}
-          {[...Array(20)].map((_, i) => {
-            const angle = (Math.PI * 2 * i) / 20 + Math.random() * 0.5
-            const distance = 200 + Math.random() * 200
-            const tx = Math.cos(angle) * distance
-            const ty = Math.sin(angle) * distance
-            const delay = Math.random() * 0.5
-            const size = 40 + Math.random() * 30
-            
-            return (
-              <div
-                key={`star-${i}`}
-                className="absolute text-5xl"
-                style={{
-                  left: '50%',
-                  top: '50%',
-                  fontSize: `${size}px`,
-                  animationDelay: `${delay}s`,
-                  animation: 'sparkle-fade 2.5s ease-out forwards',
-                  transform: `translate(${tx}px, ${ty}px) rotate(${Math.random() * 360}deg)`,
-                  opacity: 0,
-                  filter: `drop-shadow(0 0 15px ${rankInfo.color}) drop-shadow(0 0 30px ${rankInfo.color})`
-                }}
-              >
-                ⭐
-              </div>
-            )
-          })}
-        </div>
+        {/* Gentle pulsing glow effect - smooth and pleasant */}
+        <div 
+          className="fixed inset-0 pointer-events-none z-50"
+          style={{
+            background: `radial-gradient(circle at center, ${rankInfo.color}15 0%, transparent 70%)`,
+            animation: 'gentle-pulse 3s ease-in-out infinite',
+          }}
+        />
 
-        {/* Main Celebration Content */}
-        <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/40 via-orange-400/30 to-pink-400/40 backdrop-blur-sm flex items-center justify-center z-40">
-          <div className="text-center relative z-50">
-            {/* Crown for Rank 1 */}
-            {playerRank === 1 && (
-              <div 
-                className="text-9xl mb-4 animate-bounce"
-                style={{
-                  animation: 'crown-glow 2s ease-in-out infinite',
-                  filter: 'drop-shadow(0 0 30px #FFD700) drop-shadow(0 0 60px #FFA500)',
-                  transform: 'scale(1.2)'
-                }}
-              >
-                👑
-              </div>
-            )}
-
-            {/* Rank Emoji and Message */}
+        {/* Main Celebration Content - Simplified */}
+        <div className="absolute inset-0 flex items-center justify-center z-40 backdrop-blur-sm bg-white/20">
+          <div className="text-center relative z-50 bg-white/90 rounded-3xl p-12 shadow-2xl border-4 max-w-2xl mx-4" style={{ borderColor: rankInfo.color }}>
+            {/* Rank Emoji */}
             <div 
-              className={`text-${rankInfo.size} mb-6 font-bold`}
+              className="text-8xl mb-6 animate-bounce-slow"
               style={{
-                color: rankInfo.color,
-                textShadow: `0 0 30px ${rankInfo.color}, 0 0 60px ${rankInfo.color}, 0 0 90px ${rankInfo.color}`,
-                animation: 'bounce 1s ease-in-out infinite, fade-in 0.5s ease-out',
-                filter: 'drop-shadow(0 0 20px rgba(255, 215, 0, 0.8))'
+                animation: 'bounce-slow 2s ease-in-out infinite',
+                filter: `drop-shadow(0 0 20px ${rankInfo.color})`
               }}
             >
               {rankInfo.emoji}
             </div>
 
             <h1 
-              className="text-6xl md:text-8xl font-extrabold mb-4"
+              className="text-5xl md:text-6xl font-extrabold mb-4"
               style={{
                 color: rankInfo.color,
-                textShadow: `0 0 20px ${rankInfo.color}, 0 0 40px ${rankInfo.color}`,
-                animation: 'bounce 1.2s ease-in-out infinite, fade-in 0.5s ease-out'
+                textShadow: '2px 2px 4px rgba(0,0,0,0.2)',
+                animation: 'fade-in 0.5s ease-out'
               }}
             >
               {rankInfo.text}
             </h1>
 
             <h2 
-              className="text-4xl md:text-6xl font-bold mb-8"
+              className="text-3xl md:text-4xl font-bold mb-6"
               style={{
                 color: '#654321',
-                textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
-                animation: 'fade-in 0.8s ease-out'
+                textShadow: '1px 1px 2px rgba(0,0,0,0.2)',
+                animation: 'fade-in 0.7s ease-out'
               }}
             >
               כל הכבוד {gameEndData.player_name}!
             </h2>
 
-            {/* Dinosaur Image */}
-            <div className="mb-8 animate-bounce" style={{ animation: 'bounce 2s ease-in-out infinite' }}>
-              <img 
-                src="/static/dino.png" 
-                alt="דינוזאור חמוד" 
-                className="mx-auto w-48 h-48 md:w-64 md:h-64 object-contain"
-                style={{
-                  filter: 'drop-shadow(0 0 20px rgba(255, 215, 0, 0.6))',
-                  transform: 'scale(1.1)'
-                }}
-              />
-            </div>
-
-            {/* Score Display */}
+            {/* Score Display - Simpler */}
             <div 
-              className="bg-gradient-to-br from-green-100 to-emerald-100 rounded-2xl p-8 border-4 border-green-400 inline-block mb-8"
+              className="bg-gradient-to-br from-green-100 to-emerald-100 rounded-xl p-6 border-3 border-green-400 inline-block"
               style={{
-                boxShadow: `0 0 30px ${rankInfo.color}, 0 0 60px ${rankInfo.color}`,
-                animation: 'pulse-strong 2s ease-in-out infinite, fade-in 1s ease-out'
+                borderColor: rankInfo.color,
+                boxShadow: `0 0 20px ${rankInfo.color}40`,
+                animation: 'fade-in 1s ease-out'
               }}
             >
-              <div className="text-6xl font-bold text-green-700 mb-2">{gameEndData.score}</div>
-              <div className="text-2xl font-semibold text-green-800">ניקוד</div>
-            </div>
-
-            {/* Celebration Message */}
-            <div 
-              className="text-3xl md:text-4xl font-bold mb-6"
-              style={{
-                color: rankInfo.color,
-                textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
-                animation: 'fade-in 1.2s ease-out'
-              }}
-            >
-              {playerRank === 1 ? '🏆 אלוף! 🏆' : playerRank === 2 ? '🌟 מצוין! 🌟' : '⭐ מעולה! ⭐'}
+              <div className="text-5xl font-bold text-green-700 mb-1">{gameEndData.score}</div>
+              <div className="text-xl font-semibold text-green-800">ניקוד</div>
             </div>
           </div>
         </div>
@@ -550,10 +502,11 @@ function Game({ onLogout }) {
     )
   }
 
-  if (gameEnded && gameEndData) {
+  // Game End Screen (only if not showing top 3 celebration or dinosaur selection)
+  if (gameEnded && gameEndData && !showTop3Celebration && !showDinosaurSelection) {
     return (
       <div 
-        className="min-h-screen w-full relative overflow-hidden flex items-center justify-center" 
+        className="min-h-screen w-full relative overflow-hidden" 
         style={{
           backgroundImage: 'url(/static/math_dino2.png)',
           backgroundSize: 'cover',
@@ -562,12 +515,28 @@ function Game({ onLogout }) {
           backgroundAttachment: 'fixed'
         }}
       >
-        <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center p-8 z-10">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex flex-col items-center p-8 z-10">
+          {/* Fixed Header with Play Again Button - Always visible at top */}
+          <div className="fixed top-0 left-0 right-0 z-50 w-full" style={{ background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(10px)', boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }}>
+            <div className="max-w-4xl mx-auto px-4 py-4">
+              <div className="flex justify-between items-center gap-4">
+                <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#654321' }}>
+                  🎉 כל הכבוד {gameEndData.player_name}!
+                </h1>
+                <Button 
+                  onClick={() => window.location.reload()} 
+                  size="lg"
+                  style={{ fontSize: '1.25rem', padding: '0.75rem 1.5rem', fontWeight: 'bold', whiteSpace: 'nowrap' }}
+                >
+                  🎮 שחק שוב
+                </Button>
+              </div>
+            </div>
+          </div>
+          
+          {/* Scrollable Content - with top padding to account for fixed header */}
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-4xl w-full flex-1 overflow-y-auto" style={{ marginTop: '100px' }}>
             <div className="text-center mb-6">
-              <h1 className="text-4xl font-bold mb-4" style={{ color: '#654321' }}>
-                🎉 כל הכבוד {gameEndData.player_name}!
-              </h1>
               <div className="bg-gradient-to-br from-green-100 to-emerald-100 rounded-xl p-6 border-2 border-green-300 inline-block">
                 <div className="text-5xl font-bold text-green-700 mb-2">{gameEndData.score}</div>
                 <div className="text-xl font-semibold text-green-800">ניקוד סופי</div>
@@ -581,12 +550,6 @@ function Game({ onLogout }) {
             
             <div className="text-center my-6">
               <img src="/static/dino.png" alt="דינוזאור חמוד" className="mx-auto w-32 h-32 object-contain" />
-            </div>
-            
-            <div className="text-center">
-              <Button onClick={() => window.location.reload()}>
-                🎮 שחק שוב
-              </Button>
             </div>
           </div>
         </div>
@@ -641,6 +604,98 @@ function Game({ onLogout }) {
     )
   }
 
+  // Dinosaur Gallery Screen
+  if (showDinosaurGallery) {
+    const rarityColors = {
+      common: 'from-gray-100 to-gray-200 border-gray-300',
+      rare: 'from-blue-100 to-blue-200 border-blue-400',
+      epic: 'from-purple-100 to-purple-200 border-purple-500',
+      legendary: 'from-yellow-100 to-yellow-200 border-yellow-500'
+    }
+
+    const rarityLabels = {
+      common: 'רגיל',
+      rare: 'נדיר',
+      epic: 'אפי',
+      legendary: 'אגדי'
+    }
+
+    return (
+      <div className="min-h-screen w-full relative overflow-hidden" style={{
+        backgroundImage: 'url(/static/math_dino2.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed'
+      }}>
+        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center p-8 z-50">
+          <div className="w-full max-w-5xl">
+            <div className="bg-white rounded-xl shadow-lg p-4 mb-6 flex justify-between items-center">
+              <h2 className="text-3xl font-bold" style={{ color: '#654321' }}>🦕 האוסף שלי</h2>
+              <Button onClick={() => setShowDinosaurGallery(false)}>
+                ← חזור למשחק
+              </Button>
+            </div>
+            
+            {playerDinosaurs.length === 0 ? (
+              <div className="bg-white rounded-xl shadow-lg p-8 text-center">
+                <div className="text-6xl mb-4">🦕</div>
+                <h3 className="text-2xl font-bold mb-2" style={{ color: '#654321' }}>עדיין אין דינוזאורים באוסף</h3>
+                <p className="text-lg text-gray-600">נצחי משחקים כדי לאסוף דינוזאורים חדשים!</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[70vh] overflow-y-auto p-4">
+                {playerDinosaurs.map((dino) => (
+                  <div
+                    key={dino.id}
+                    className={`rounded-xl p-4 shadow-lg border-2 bg-gradient-to-br ${rarityColors[dino.rarity] || rarityColors.common}`}
+                  >
+                    <div className="text-center">
+                      <img
+                        src={dino.image_path}
+                        alt={dino.name}
+                        className="mx-auto w-32 h-32 object-contain mb-3"
+                        onError={(e) => {
+                          e.target.src = '/static/dino.png'
+                        }}
+                      />
+                      <div className="font-bold text-lg mb-1" style={{ color: '#654321' }}>
+                        {dino.name}
+                      </div>
+                      <div className="text-xs font-semibold mb-2" style={{ color: '#666' }}>
+                        {rarityLabels[dino.rarity] || 'רגיל'}
+                      </div>
+                      {dino.description && (
+                        <div className="text-xs text-gray-600 mb-2">
+                          {dino.description}
+                        </div>
+                      )}
+                      <Button
+                        size="sm"
+                        onClick={async () => {
+                          try {
+                            await api.selectDinosaur(dino.id)
+                            await loadPlayerDinosaurs()
+                            alert(`דינוזאור ${dino.name} נבחר!`)
+                            setShowDinosaurGallery(false)
+                          } catch (err) {
+                            alert(`שגיאה: ${err.message}`)
+                          }
+                        }}
+                      >
+                        בחר
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   // Settings screen - separate full screen
   if (showSettings) {
     return (
@@ -656,10 +711,10 @@ function Game({ onLogout }) {
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-3xl font-bold" style={{ color: '#654321' }}>⚙️ הגדרות משחק</h2>
               <Button
-                variant="primary"
+                variant="secondary"
                 onClick={() => setShowSettings(false)}
               >
-                ← חזור למשחק
+                ← חזור למשחק (ללא שמירה)
               </Button>
             </div>
             <Settings onSettingsSaved={async () => {
@@ -668,6 +723,8 @@ function Game({ onLogout }) {
                 const state = await api.getCurrentGameState()
                 setStage(state.current_stage)
                 setWinningScore(state.winning_score)
+                // Close settings screen after successful save
+                setShowSettings(false)
               } catch (err) {
                 console.error('Failed to reload game state:', err)
               }
@@ -718,6 +775,13 @@ function Game({ onLogout }) {
           >
             🥇 לוח תוצאות
           </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setShowDinosaurGallery(true)}
+          >
+            🦕 האוסף שלי ({playerDinosaurs.length})
+          </Button>
         </div>
         <h1 className="absolute left-1/2 transform -translate-x-1/2 text-base md:text-lg font-bold text-center" style={{ color: '#2d5016', textShadow: '1px 1px 2px rgba(255,255,255,0.5)' }}>ברוך הבא למשחק של דינו!!!</h1>
         <Button 
@@ -729,7 +793,8 @@ function Game({ onLogout }) {
         </Button>
       </header>
 
-      {/* Left Dinosaur - Image */}
+      {/* Player's Dinosaurs - Display all collected dinosaurs */}
+      {/* Always show default dinos on sides */}
       <div className={`absolute left-2 md:left-4 lg:left-8 bottom-0 z-20 pointer-events-none transition-transform duration-500 ${showCelebration ? 'animate-bounce' : ''}`} style={{ height: '25vh', minHeight: '180px', maxHeight: '250px' }}>
         <img 
           src="/static/dino_1.png" 
@@ -741,8 +806,44 @@ function Game({ onLogout }) {
         />
       </div>
 
-      {/* Right Dinosaur - Image */}
-      <div className={`absolute right-2 md:right-4 lg:right-8 bottom-0 z-20 pointer-events-none transition-transform duration-500 ${showCelebration ? 'animate-bounce' : ''}`} style={{ height: '25vh', minHeight: '180px', maxHeight: '250px' }}>
+      {/* Display player's collected dinosaurs in the center area (max 5 for display) */}
+      {playerDinosaurs.length > 0 && (
+        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 z-20 pointer-events-none flex items-end justify-center gap-2 md:gap-3" style={{ maxWidth: '70vw' }}>
+          {playerDinosaurs.slice(0, 5).map((dino, index) => {
+            // Calculate size based on number of dinosaurs (smaller when more)
+            const baseSize = 180
+            const maxSize = 250
+            const size = Math.min(maxSize, baseSize + (5 - playerDinosaurs.length) * 15)
+            
+            return (
+              <div
+                key={dino.id}
+                className={`transition-transform duration-500 ${showCelebration ? 'animate-bounce' : ''}`}
+                style={{
+                  height: `${size}px`,
+                  width: `${size * 0.8}px`,
+                  flexShrink: 0,
+                  animationDelay: showCelebration ? `${index * 0.1}s` : '0s'
+                }}
+              >
+                <img 
+                  src={dino.image_path} 
+                  alt={dino.name} 
+                  className="h-full w-full object-contain"
+                  style={{ 
+                    filter: 'drop-shadow(4px 4px 8px rgba(0,0,0,0.3))'
+                  }}
+                  onError={(e) => {
+                    e.target.src = '/static/dino.png' // Fallback
+                  }}
+                />
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      <div className={`absolute right-2 md:right-4 lg:right-8 bottom-0 z-20 pointer-events-none transition-transform duration-500 ${showCelebration ? 'animate-bounce' : ''}`} style={{ height: '25vh', minHeight: '180px', maxHeight: '250px', animationDelay: showCelebration ? '0.1s' : '0s' }}>
         <img 
           src="/static/dino_2.png" 
           alt="דינוזאור ימני" 

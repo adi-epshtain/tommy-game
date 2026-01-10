@@ -74,40 +74,40 @@ async def start_game(
     
     advance_stage = req.advance_stage if req else None
     
+    # בדוק מה הרמה הנוכחית של השחקן (הסשן האחרון שלו)
+    from dal.player_session_dal import get_session_by_player_id
+    last_session = await get_session_by_player_id(db, player.id)
+    current_player_stage = last_session.stage if last_session and last_session.stage else 1
+    
+    # בדוק מה הרמה הגבוהה ביותר שהשחקן מוכן לה (על פי ביצועים)
+    max_ready_stage = 1
+    for stage in range(1, 6):  # בודקים עד רמה 5
+        if await should_advance_stage(db, player.id, current_stage=stage):
+            max_ready_stage = stage + 1
+        else:
+            break
+    
     # בדוק אם השחקן מוכן לעלות רמה (רק אם לא התקבל אישור מפורש)
-    if advance_stage is None:
-        # בודקים מה הרמה הגבוהה ביותר שהשחקן מוכן לה
-        next_stage = 1
-        for stage in range(1, 6):  # בודקים עד רמה 5
-            if await should_advance_stage(db, player.id, current_stage=stage):
-                next_stage = stage + 1
-            else:
-                break
-        
-        # אם השחקן מוכן לרמה גבוהה מ-1, מחזירים הודעה לפני יצירת סשן
-        if next_stage > 1:
-            current_stage = next_stage - 1
-            return {
-                "ready_to_advance": True,
-                "current_stage": current_stage,
-                "next_stage": next_stage,
-                "message": f"כל הכבוד! סיימת 3 משחקים ברמה {current_stage} בהצלחה! האם תרצה לעלות לרמה {next_stage}?"
-            }
+    # רק אם הרמה הנוכחית נמוכה מהרמה שהוא מוכן לה
+    if advance_stage is None and max_ready_stage > current_player_stage:
+        return {
+            "ready_to_advance": True,
+            "current_stage": current_player_stage,
+            "next_stage": max_ready_stage,
+            "message": f"כל הכבוד! סיימת 3 משחקים ברמה {current_player_stage} בהצלחה! האם תרצה לעלות לרמה {max_ready_stage}?"
+        }
     
     # יצירת סשן - אם advance_stage=True, יוצר ברמה גבוהה יותר
     if advance_stage is True:
-        # מחשבים את הרמה הרצויה
-        next_stage = 1
-        for stage in range(1, 6):
-            if await should_advance_stage(db, player.id, current_stage=stage):
-                next_stage = stage + 1
-            else:
-                break
-        # יוצרים סשן ברמה הרצויה
+        # יוצרים סשן ברמה שהשחקן מוכן לה
         from dal.player_session_dal import create_player_session_with_stage
-        player_session: PlayerSession = await create_player_session_with_stage(db, player_id=player.id, game_id=game.id, stage=next_stage)
+        player_session: PlayerSession = await create_player_session_with_stage(db, player_id=player.id, game_id=game.id, stage=max_ready_stage)
+    elif advance_stage is False:
+        # אם השחקן דחה את העלייה, יוצר סשן ברמה הנוכחית שלו (לא עולה)
+        from dal.player_session_dal import create_player_session_with_stage
+        player_session: PlayerSession = await create_player_session_with_stage(db, player_id=player.id, game_id=game.id, stage=current_player_stage)
     else:
-        # יוצרים סשן ברמה 1 (או הרמה הקבועה)
+        # יוצרים סשן ברמה שנקבעת לפי ביצועים (create_player_session בודק אוטומטית)
         player_session: PlayerSession = await create_player_session(db, player_id=player.id, game_id=game.id)
     
     question: Question = await get_random_question_by_game(db, game.id, player_session.id)
@@ -186,9 +186,18 @@ async def game_end_data(
         raise HTTPException(status_code=404, detail="No active session found for player")
     # שימוש באותו endpoint של top_players
     top_players: List[PlayerScore] = await get_top_players(db, limit=10)
+    
+    # מצא את המיקום המדויק של השחקן בלוח התוצאות לפי player_id
+    player_rank = None
+    for idx, p in enumerate(top_players):
+        if p.name == player_name:
+            player_rank = idx + 1
+            break
+    
     return {
         "score": player_session.score,
         "player_name": player_name,
+        "player_rank": player_rank,  # המיקום המדויק (או None אם לא בלוח)
         "top_players": [{"name": p.name, "score": p.score} for p in top_players]
     }
 

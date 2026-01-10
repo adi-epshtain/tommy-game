@@ -134,6 +134,36 @@ def add_missing_columns() -> None:
                 # If it's a different error (like table doesn't exist yet), that's fine
                 if "does not exist" not in str(e).lower() and "no such table" not in str(e).lower():
                     log.warning(f"Error checking/adding 'excluded_from_leaderboard' column: {e}")
+            
+            # Check and add 'selected_dinosaur_id' to 'players' table
+            # Note: Foreign key constraint will be added by SQLAlchemy when tables are created
+            try:
+                session.execute(text("SELECT selected_dinosaur_id FROM players LIMIT 1"))
+                log.info("Column 'selected_dinosaur_id' already exists in 'players' table")
+            except OperationalError:
+                log.info("Column 'selected_dinosaur_id' does not exist in 'players' table. Adding it...")
+                session.execute(text("ALTER TABLE players ADD COLUMN selected_dinosaur_id INTEGER"))
+                session.commit()
+                log.info("Column 'selected_dinosaur_id' added successfully to 'players' table")
+            except Exception as e:
+                session.rollback()
+                if "does not exist" not in str(e).lower() and "no such table" not in str(e).lower():
+                    log.warning(f"Error checking/adding 'selected_dinosaur_id' column: {e}")
+            
+            # Check if 'dinosaurs' table exists
+            try:
+                session.execute(text("SELECT 1 FROM dinosaurs LIMIT 1"))
+                log.info("Table 'dinosaurs' already exists")
+            except OperationalError:
+                log.info("Table 'dinosaurs' does not exist. It will be created by Base.metadata.create_all()")
+            
+            # Check if 'player_dinosaurs' table exists
+            try:
+                session.execute(text("SELECT 1 FROM player_dinosaurs LIMIT 1"))
+                log.info("Table 'player_dinosaurs' already exists")
+            except OperationalError:
+                log.info("Table 'player_dinosaurs' does not exist. It will be created by Base.metadata.create_all()")
+                
         log.info("Database schema migration check completed")
     except Exception as e:
         # Don't fail startup if migration check fails - just log it
