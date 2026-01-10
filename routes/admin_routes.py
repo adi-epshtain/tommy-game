@@ -9,7 +9,11 @@ from models import Player
 from dal.player_session_dal import get_last_player_sessions
 from dal.player_answer_dal import get_wrong_questions
 from dal.player_trends_dal import get_player_trends_by_period, compare_player_periods
-from dal.player_dal import delete_player as delete_player_dal
+from dal.player_dal import (
+    delete_player as delete_player_dal,
+    exclude_player_from_leaderboard,
+    include_player_in_leaderboard
+)
 
 router = APIRouter()
 
@@ -24,6 +28,7 @@ class PlayerListItem(BaseModel):
     name: str
     age: Optional[int]
     created_at: str
+    excluded_from_leaderboard: bool
 
 
 class PlayersListResponse(BaseModel):
@@ -85,7 +90,8 @@ async def get_players(
                 id=p.id,
                 name=p.name,
                 age=p.age,
-                created_at=p.created_at.isoformat() if p.created_at else ""
+                created_at=p.created_at.isoformat() if p.created_at else "",
+                excluded_from_leaderboard=p.excluded_from_leaderboard or False
             )
             for p in players
         ],
@@ -224,5 +230,49 @@ async def delete_player_admin(
     return {
         "message": f"Player {deleted_player.name} (ID: {player_id}) deleted successfully",
         "deleted_player_id": player_id
+    }
+
+
+@router.post("/admin/players/{player_id}/exclude-from-leaderboard", tags=["Admin"])
+async def exclude_from_leaderboard(
+    player_id: int,
+    admin: dict = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Exclude player from leaderboard."""
+    player = db.query(Player).filter(Player.id == player_id).first()
+    if not player:
+        raise HTTPException(status_code=404, detail="Player not found")
+    
+    updated_player = await exclude_player_from_leaderboard(db, player_id)
+    if not updated_player:
+        raise HTTPException(status_code=500, detail="Failed to exclude player from leaderboard")
+    
+    return {
+        "message": f"Player {updated_player.name} (ID: {player_id}) excluded from leaderboard",
+        "player_id": player_id,
+        "excluded_from_leaderboard": updated_player.excluded_from_leaderboard
+    }
+
+
+@router.post("/admin/players/{player_id}/include-in-leaderboard", tags=["Admin"])
+async def include_in_leaderboard(
+    player_id: int,
+    admin: dict = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Include player back in leaderboard (remove exclusion)."""
+    player = db.query(Player).filter(Player.id == player_id).first()
+    if not player:
+        raise HTTPException(status_code=404, detail="Player not found")
+    
+    updated_player = await include_player_in_leaderboard(db, player_id)
+    if not updated_player:
+        raise HTTPException(status_code=500, detail="Failed to include player back in leaderboard")
+    
+    return {
+        "message": f"Player {updated_player.name} (ID: {player_id}) included back in leaderboard",
+        "player_id": player_id,
+        "excluded_from_leaderboard": updated_player.excluded_from_leaderboard
     }
 

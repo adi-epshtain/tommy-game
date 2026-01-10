@@ -13,6 +13,7 @@ class Player(Base):
     age = Column(Integer)
     created_at = Column(TIMESTAMP, server_default=func.now())
     password = Column(String(255), nullable=False)
+    excluded_from_leaderboard = Column(Boolean, default=False)
 
     sessions = relationship("PlayerSession", back_populates="player")
 

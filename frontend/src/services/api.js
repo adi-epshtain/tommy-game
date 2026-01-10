@@ -276,6 +276,30 @@ export const api = {
     }
     
     return response.json()
+  },
+
+  async excludePlayerFromLeaderboard(playerId) {
+    const response = await fetch(`${API_BASE}/admin/players/${playerId}/exclude-from-leaderboard`, {
+      method: 'POST',
+      headers: getHeaders()
+    })
+    if (!response.ok) {
+      const err = await response.json()
+      throw new Error(err.detail || response.statusText)
+    }
+    return response.json()
+  },
+
+  async includePlayerInLeaderboard(playerId) {
+    const response = await fetch(`${API_BASE}/admin/players/${playerId}/include-in-leaderboard`, {
+      method: 'POST',
+      headers: getHeaders()
+    })
+    if (!response.ok) {
+      const err = await response.json()
+      throw new Error(err.detail || response.statusText)
+    }
+    return response.json()
   }
 }
 

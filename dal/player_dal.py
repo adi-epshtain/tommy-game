@@ -108,3 +108,59 @@ async def delete_player(session: Session, player_id: int) -> Optional[Player]:
         session.rollback()
         log.error(f"Error deleting player {player_id}: {e}")
         raise
+
+
+async def exclude_player_from_leaderboard(session: Session, player_id: int) -> Optional[Player]:
+    """
+    Exclude player from leaderboard.
+    Returns the updated player if found, None otherwise.
+    """
+    try:
+        player = session.query(Player).filter(Player.id == player_id).first()
+        if not player:
+            return None
+        
+        player.excluded_from_leaderboard = True
+        session.commit()
+        
+        # Clear leaderboard cache since player was excluded
+        try:
+            for limit in [10, 20, 50, 100]:
+                redis_client.delete(f"leaderboard:top:{limit}")
+        except (redis.ConnectionError, redis.TimeoutError, AttributeError):
+            pass  # Redis unavailable, skip cache clearing
+        
+        log.info(f"Excluded player {player_id} ({player.name}) from leaderboard")
+        return player
+    except SQLAlchemyError as e:
+        session.rollback()
+        log.error(f"Error excluding player {player_id} from leaderboard: {e}")
+        raise
+
+
+async def include_player_in_leaderboard(session: Session, player_id: int) -> Optional[Player]:
+    """
+    Include player back in leaderboard (remove exclusion).
+    Returns the updated player if found, None otherwise.
+    """
+    try:
+        player = session.query(Player).filter(Player.id == player_id).first()
+        if not player:
+            return None
+        
+        player.excluded_from_leaderboard = False
+        session.commit()
+        
+        # Clear leaderboard cache since player was included back
+        try:
+            for limit in [10, 20, 50, 100]:
+                redis_client.delete(f"leaderboard:top:{limit}")
+        except (redis.ConnectionError, redis.TimeoutError, AttributeError):
+            pass  # Redis unavailable, skip cache clearing
+        
+        log.info(f"Included player {player_id} ({player.name}) back in leaderboard")
+        return player
+    except SQLAlchemyError as e:
+        session.rollback()
+        log.error(f"Error including player {player_id} back in leaderboard: {e}")
+        raise

@@ -20,6 +20,8 @@ function Game({ onLogout }) {
   const [gameEndData, setGameEndData] = useState(null)
   const [showSettings, setShowSettings] = useState(false)
   const [showCelebration, setShowCelebration] = useState(false)
+  const [showTop3Celebration, setShowTop3Celebration] = useState(false) // Celebration for top 3
+  const [playerRank, setPlayerRank] = useState(null) // Player's rank (1, 2, or 3)
   const [winningScore, setWinningScore] = useState(5) // Default, will be updated from settings
   const [showScorePopup, setShowScorePopup] = useState(false)
   const [scoreChange, setScoreChange] = useState(0)
@@ -82,6 +84,81 @@ function Game({ onLogout }) {
       } catch (e) {
         console.log('Audio not available')
       }
+    }
+  }
+
+  // Function to play top 3 victory sound (special win sound for top 3)
+  const playTop3VictorySound = (rank) => {
+    try {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)()
+      const duration = 2.5 // 2.5 seconds for top 3 victory
+      const sampleRate = audioContext.sampleRate
+      const numSamples = duration * sampleRate
+      const buffer = audioContext.createBuffer(2, numSamples, sampleRate) // Stereo
+      const leftChannel = buffer.getChannelData(0)
+      const rightChannel = buffer.getChannelData(1)
+
+      // Generate victory fanfare - different for each rank
+      const baseNotes = rank === 1 ? [329.63, 392.00, 493.88, 659.25, 783.99] : // E, G, B, E, G (major)
+                        rank === 2 ? [293.66, 349.23, 440.00, 587.33, 698.46] : // D, F, A, D, F
+                        [261.63, 329.63, 392.00, 523.25, 659.25] // C, E, G, C, E (less impressive)
+
+      for (let i = 0; i < numSamples; i++) {
+        const t = i / sampleRate
+        
+        let leftSample = 0
+        let rightSample = 0
+        
+        // Fanfare melody - ascending notes with celebration
+        baseNotes.forEach((freq, idx) => {
+          const noteStart = idx * 0.35
+          const noteDuration = 0.3
+          if (t >= noteStart && t < noteStart + noteDuration) {
+            const localTime = t - noteStart
+            const envelope = Math.sin(Math.PI * localTime / noteDuration) * (rank === 1 ? 0.4 : 0.3)
+            const phase = 2 * Math.PI * freq * localTime
+            const sample = Math.sin(phase) * envelope
+            leftSample += sample
+            rightSample += sample * 0.95
+          }
+        })
+        
+        // Add applause/celebration noise (more for rank 1)
+        if (t > 0.8) {
+          const applauseNoise = (Math.random() * 2 - 1) * (rank === 1 ? 0.3 : 0.2) * Math.exp(-(t - 0.8) * 1.5)
+          leftSample += applauseNoise
+          rightSample += applauseNoise * 0.9
+        }
+        
+        // Add sparkle effect (high frequency shimmer)
+        if (t > 1.2) {
+          const sparkleFreq = 2000 + Math.sin(t * 15) * 800
+          const sparkle = Math.sin(2 * Math.PI * sparkleFreq * t) * (rank === 1 ? 0.15 : 0.1) * Math.exp(-(t - 1.2) * 2)
+          leftSample += sparkle
+          rightSample += sparkle
+        }
+        
+        // Victory chord at the end (rank 1 only)
+        if (rank === 1 && t > 2.0) {
+          const chordFreq = 440
+          const chord = Math.sin(2 * Math.PI * chordFreq * (t - 2.0)) * 0.2 * Math.exp(-(t - 2.0) * 3)
+          leftSample += chord
+          rightSample += chord
+        }
+        
+        leftChannel[i] = Math.max(-1, Math.min(1, leftSample))
+        rightChannel[i] = Math.max(-1, Math.min(1, rightSample))
+      }
+
+      const source = audioContext.createBufferSource()
+      source.buffer = buffer
+      source.connect(audioContext.destination)
+      source.start(0)
+    } catch (err) {
+      // Fallback: play multiple celebration sounds
+      playCelebrationSound()
+      setTimeout(() => playCelebrationSound(), 300)
+      setTimeout(() => playCelebrationSound(), 600)
     }
   }
 
@@ -262,7 +339,21 @@ function Game({ onLogout }) {
     try {
       const data = await api.getGameEnd()
       setGameEndData(data)
-      setGameEnded(true)
+      
+      // בדוק אם השחקן במקום 1-3 בלוח התוצאות
+      const playerRank = data.top_players.findIndex((p, idx) => p.name === data.player_name) + 1
+      if (playerRank >= 1 && playerRank <= 3) {
+        setPlayerRank(playerRank)
+        setShowTop3Celebration(true)
+        playTop3VictorySound(playerRank) // Play special victory sound
+        // לאחר 5 שניות, עבר למסך הסיום הרגיל
+        setTimeout(() => {
+          setShowTop3Celebration(false)
+          setGameEnded(true)
+        }, 5000)
+      } else {
+        setGameEnded(true)
+      }
     } catch (err) {
       alert('אירעה שגיאה בטעינת סיום המשחק')
       console.error(err)
@@ -273,6 +364,190 @@ function Game({ onLogout }) {
     removeToken()
     onLogout()
     navigate('/login')
+  }
+
+  // Top 3 Celebration Screen - shows when player reaches top 3
+  if (showTop3Celebration && playerRank && gameEndData) {
+    const rankMessages = {
+      1: { emoji: '👑', text: 'מקום ראשון!', color: '#FFD700', size: '8xl' },
+      2: { emoji: '🥈', text: 'מקום שני!', color: '#C0C0C0', size: '7xl' },
+      3: { emoji: '🥉', text: 'מקום שלישי!', color: '#CD7F32', size: '6xl' }
+    }
+    const rankInfo = rankMessages[playerRank] || rankMessages[3]
+
+    return (
+      <div 
+        className="min-h-screen w-full relative overflow-hidden flex items-center justify-center" 
+        style={{
+          backgroundImage: 'url(/static/math_dino2.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          backgroundAttachment: 'fixed'
+        }}
+      >
+        {/* Special Top 3 Victory Effect */}
+        <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
+          {/* Massive sparkles */}
+          {[...Array(150)].map((_, i) => {
+            const angle = (Math.PI * 2 * i) / 150
+            const distance = 300 + Math.random() * 400
+            const tx = Math.cos(angle) * distance
+            const ty = Math.sin(angle) * distance
+            const delay = Math.random() * 0.5
+            const duration = 2 + Math.random() * 1
+            const colors = playerRank === 1 
+              ? ['#FFD700', '#FFA500', '#FF69B4', '#FF1493', '#FFD700', '#FF6347', '#FFD700']
+              : playerRank === 2
+              ? ['#C0C0C0', '#FFD700', '#FFA500', '#C0C0C0']
+              : ['#CD7F32', '#FFA500', '#CD7F32', '#FFD700']
+            const color = colors[Math.floor(Math.random() * colors.length)]
+            const size = playerRank === 1 ? (15 + Math.random() * 20) : (10 + Math.random() * 15)
+            
+            return (
+              <div
+                key={`sparkle-${i}`}
+                className="absolute"
+                style={{
+                  left: '50%',
+                  top: '50%',
+                  width: `${size}px`,
+                  height: `${size}px`,
+                  background: color,
+                  borderRadius: '50%',
+                  boxShadow: `0 0 ${size * 2}px ${color}, 0 0 ${size * 4}px ${color}`,
+                  animationDelay: `${delay}s`,
+                  animationDuration: `${duration}s`,
+                  animation: 'sparkle-fade 2s ease-out forwards',
+                  transform: `translate(${tx}px, ${ty}px) scale(1)`,
+                  opacity: 0
+                }}
+              />
+            )
+          })}
+          
+          {/* Large Stars */}
+          {[...Array(20)].map((_, i) => {
+            const angle = (Math.PI * 2 * i) / 20 + Math.random() * 0.5
+            const distance = 200 + Math.random() * 200
+            const tx = Math.cos(angle) * distance
+            const ty = Math.sin(angle) * distance
+            const delay = Math.random() * 0.5
+            const size = 40 + Math.random() * 30
+            
+            return (
+              <div
+                key={`star-${i}`}
+                className="absolute text-5xl"
+                style={{
+                  left: '50%',
+                  top: '50%',
+                  fontSize: `${size}px`,
+                  animationDelay: `${delay}s`,
+                  animation: 'sparkle-fade 2.5s ease-out forwards',
+                  transform: `translate(${tx}px, ${ty}px) rotate(${Math.random() * 360}deg)`,
+                  opacity: 0,
+                  filter: `drop-shadow(0 0 15px ${rankInfo.color}) drop-shadow(0 0 30px ${rankInfo.color})`
+                }}
+              >
+                ⭐
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Main Celebration Content */}
+        <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/40 via-orange-400/30 to-pink-400/40 backdrop-blur-sm flex items-center justify-center z-40">
+          <div className="text-center relative z-50">
+            {/* Crown for Rank 1 */}
+            {playerRank === 1 && (
+              <div 
+                className="text-9xl mb-4 animate-bounce"
+                style={{
+                  animation: 'crown-glow 2s ease-in-out infinite',
+                  filter: 'drop-shadow(0 0 30px #FFD700) drop-shadow(0 0 60px #FFA500)',
+                  transform: 'scale(1.2)'
+                }}
+              >
+                👑
+              </div>
+            )}
+
+            {/* Rank Emoji and Message */}
+            <div 
+              className={`text-${rankInfo.size} mb-6 font-bold`}
+              style={{
+                color: rankInfo.color,
+                textShadow: `0 0 30px ${rankInfo.color}, 0 0 60px ${rankInfo.color}, 0 0 90px ${rankInfo.color}`,
+                animation: 'bounce 1s ease-in-out infinite, fade-in 0.5s ease-out',
+                filter: 'drop-shadow(0 0 20px rgba(255, 215, 0, 0.8))'
+              }}
+            >
+              {rankInfo.emoji}
+            </div>
+
+            <h1 
+              className="text-6xl md:text-8xl font-extrabold mb-4"
+              style={{
+                color: rankInfo.color,
+                textShadow: `0 0 20px ${rankInfo.color}, 0 0 40px ${rankInfo.color}`,
+                animation: 'bounce 1.2s ease-in-out infinite, fade-in 0.5s ease-out'
+              }}
+            >
+              {rankInfo.text}
+            </h1>
+
+            <h2 
+              className="text-4xl md:text-6xl font-bold mb-8"
+              style={{
+                color: '#654321',
+                textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+                animation: 'fade-in 0.8s ease-out'
+              }}
+            >
+              כל הכבוד {gameEndData.player_name}!
+            </h2>
+
+            {/* Dinosaur Image */}
+            <div className="mb-8 animate-bounce" style={{ animation: 'bounce 2s ease-in-out infinite' }}>
+              <img 
+                src="/static/dino.png" 
+                alt="דינוזאור חמוד" 
+                className="mx-auto w-48 h-48 md:w-64 md:h-64 object-contain"
+                style={{
+                  filter: 'drop-shadow(0 0 20px rgba(255, 215, 0, 0.6))',
+                  transform: 'scale(1.1)'
+                }}
+              />
+            </div>
+
+            {/* Score Display */}
+            <div 
+              className="bg-gradient-to-br from-green-100 to-emerald-100 rounded-2xl p-8 border-4 border-green-400 inline-block mb-8"
+              style={{
+                boxShadow: `0 0 30px ${rankInfo.color}, 0 0 60px ${rankInfo.color}`,
+                animation: 'pulse-strong 2s ease-in-out infinite, fade-in 1s ease-out'
+              }}
+            >
+              <div className="text-6xl font-bold text-green-700 mb-2">{gameEndData.score}</div>
+              <div className="text-2xl font-semibold text-green-800">ניקוד</div>
+            </div>
+
+            {/* Celebration Message */}
+            <div 
+              className="text-3xl md:text-4xl font-bold mb-6"
+              style={{
+                color: rankInfo.color,
+                textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+                animation: 'fade-in 1.2s ease-out'
+              }}
+            >
+              {playerRank === 1 ? '🏆 אלוף! 🏆' : playerRank === 2 ? '🌟 מצוין! 🌟' : '⭐ מעולה! ⭐'}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   if (gameEnded && gameEndData) {

@@ -105,10 +105,39 @@ def create_tables() -> None:
         log.info("Creating database tables...")
         Base.metadata.create_all(engine)
         log.info("Database tables created successfully")
+        # Add any missing columns (for schema evolution)
+        add_missing_columns()
     except Exception as e:
         error_msg = f"Failed to create database tables: {e}"
         log.error(error_msg)
         raise RuntimeError(error_msg) from e
+
+
+def add_missing_columns() -> None:
+    """
+    Adds missing columns to existing tables if they don't exist.
+    This acts as a simple migration for new fields.
+    """
+    try:
+        with SessionLocal() as session:
+            # Check and add 'excluded_from_leaderboard' to 'players' table
+            try:
+                session.execute(text("SELECT excluded_from_leaderboard FROM players LIMIT 1"))
+                log.info("Column 'excluded_from_leaderboard' already exists in 'players' table")
+            except OperationalError:
+                log.info("Column 'excluded_from_leaderboard' does not exist in 'players' table. Adding it...")
+                session.execute(text("ALTER TABLE players ADD COLUMN excluded_from_leaderboard BOOLEAN DEFAULT FALSE"))
+                session.commit()
+                log.info("Column 'excluded_from_leaderboard' added successfully to 'players' table")
+            except Exception as e:
+                session.rollback()
+                # If it's a different error (like table doesn't exist yet), that's fine
+                if "does not exist" not in str(e).lower() and "no such table" not in str(e).lower():
+                    log.warning(f"Error checking/adding 'excluded_from_leaderboard' column: {e}")
+        log.info("Database schema migration check completed")
+    except Exception as e:
+        # Don't fail startup if migration check fails - just log it
+        log.warning(f"Error during schema migration check: {e}")
 
 
 def get_db():

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api, removeToken } from '../services/api'
 import Button from '../components/Button'
+import Leaderboard from '../components/Leaderboard'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts'
 
 function AdminDashboard() {
@@ -21,6 +22,9 @@ function AdminDashboard() {
   const [total, setTotal] = useState(0)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [playerToDelete, setPlayerToDelete] = useState(null)
+  const [topPlayers, setTopPlayers] = useState([])
+  const [loadingLeaderboard, setLoadingLeaderboard] = useState(false)
+  const [showLeaderboard, setShowLeaderboard] = useState(false)
   const pageSize = 10
   const navigate = useNavigate()
 
@@ -68,6 +72,24 @@ function AdminDashboard() {
       }
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadTopPlayers = async () => {
+    try {
+      setLoadingLeaderboard(true)
+      setError('')
+      const data = await api.getTopPlayers()
+      setTopPlayers(data.top_players || [])
+      setShowLeaderboard(true)
+    } catch (err) {
+      if (err.message.includes('401') || err.message.includes('403')) {
+        handleLogout()
+      } else {
+        setError(`שגיאה בטעינת לוח התוצאות: ${err.message}`)
+      }
+    } finally {
+      setLoadingLeaderboard(false)
     }
   }
 
@@ -161,6 +183,54 @@ function AdminDashboard() {
     setPlayerStats(null)
     setPlayerTrends(null)
     setViewType('stats')
+  }
+
+  const handleExcludeFromLeaderboard = async (playerId) => {
+    if (!confirm('האם אתה בטוח שברצונך להחריג שחקן זה מלוח התוצאות?')) {
+      return
+    }
+    
+    try {
+      await api.excludePlayerFromLeaderboard(playerId)
+      loadPlayers() // Refresh list to show updated status
+      // Refresh leaderboard if it's currently shown
+      if (showLeaderboard) {
+        await loadTopPlayers()
+      }
+      if (selectedPlayer === playerId) {
+        handleBackToList() // Go back to list to see updated status
+      }
+    } catch (err) {
+      if (err.message.includes('401') || err.message.includes('403')) {
+        handleLogout()
+      } else {
+        setError(`שגיאה בהחרגת שחקן מלוח התוצאות: ${err.message}`)
+      }
+    }
+  }
+
+  const handleIncludeInLeaderboard = async (playerId) => {
+    if (!confirm('האם אתה בטוח שברצונך להחזיר שחקן זה ללוח התוצאות?')) {
+      return
+    }
+    
+    try {
+      await api.includePlayerInLeaderboard(playerId)
+      loadPlayers() // Refresh list to show updated status
+      // Refresh leaderboard if it's currently shown
+      if (showLeaderboard) {
+        await loadTopPlayers()
+      }
+      if (selectedPlayer === playerId) {
+        handleBackToList() // Go back to list to see updated status
+      }
+    } catch (err) {
+      if (err.message.includes('401') || err.message.includes('403')) {
+        handleLogout()
+      } else {
+        setError(`שגיאה בהחזרת שחקן ללוח התוצאות: ${err.message}`)
+      }
+    }
   }
 
   if (loading && !selectedPlayer) {
@@ -469,6 +539,59 @@ function AdminDashboard() {
     )
   }
 
+  // Show leaderboard view
+  if (showLeaderboard) {
+    return (
+      <div 
+        className="min-h-screen w-full relative overflow-hidden" 
+        style={{
+          backgroundImage: 'url(/static/math_dino2.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          backgroundAttachment: 'fixed'
+        }}
+      >
+        <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center p-8 z-10">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white z-20 pb-4 mb-4 border-b-2 border-gray-200">
+              <div className="flex justify-between items-center mb-4">
+                <h1 className="text-3xl font-bold" style={{ color: '#654321' }}>🏆 לוח התוצאות</h1>
+                <div className="flex gap-2">
+                  <Button onClick={() => {
+                    setShowLeaderboard(false)
+                    loadPlayers()
+                  }}>
+                    ← חזרה לרשימת שחקנים
+                  </Button>
+                  <Button onClick={handleLogout}>
+                    התנתק
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {error && (
+              <div className="bg-red-100 border-2 border-red-300 text-red-700 px-4 py-3 rounded-lg mb-4">
+                {error}
+              </div>
+            )}
+
+            {loadingLeaderboard ? (
+              <div className="text-center py-8">
+                <div className="text-xl" style={{ color: '#654321' }}>⏳ טוען לוח תוצאות...</div>
+              </div>
+            ) : (
+              <div className="mb-6">
+                <Leaderboard topPlayers={topPlayers} />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   // Show players list view
   return (
     <div 
@@ -486,9 +609,14 @@ function AdminDashboard() {
           <div className="sticky top-0 bg-white z-20 pb-4 mb-4 border-b-2 border-gray-200">
             <div className="flex justify-between items-center mb-4">
               <h1 className="text-3xl font-bold" style={{ color: '#654321' }}>🔧 לוח בקרת מנהל</h1>
-              <Button onClick={handleLogout}>
-                התנתק
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={loadTopPlayers}>
+                  🏆 לוח תוצאות
+                </Button>
+                <Button onClick={handleLogout}>
+                  התנתק
+                </Button>
+              </div>
             </div>
             
             <div className="flex gap-4 items-center">
@@ -540,9 +668,37 @@ function AdminDashboard() {
                       <div className="text-sm text-gray-600">
                         ID: {player.id} {player.age && `| גיל: ${player.age}`} 
                         {player.created_at && ` | נרשם: ${formatLocalTime(player.created_at)}`}
+                        {player.excluded_from_leaderboard && (
+                          <span className="ml-2 px-2 py-0.5 bg-red-200 text-red-700 rounded-full text-xs font-semibold">
+                            🚫 הוחרג מלוח התוצאות
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
+                      {player.excluded_from_leaderboard ? (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleIncludeInLeaderboard(player.id)
+                          }}
+                          className="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-semibold"
+                          title="החזר ללוח התוצאות"
+                        >
+                          ✅ החזר ללוח
+                        </button>
+                      ) : (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleExcludeFromLeaderboard(player.id)
+                          }}
+                          className="px-3 py-1 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-sm font-semibold"
+                          title="החרג מלוח התוצאות"
+                        >
+                          🚫 החרג מלוח
+                        </button>
+                      )}
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
