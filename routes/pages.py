@@ -15,6 +15,8 @@ REACT_INDEX = REACT_BUILD_DIR / "index.html"
 @router.get("/game", tags=["Pages"])
 @router.get("/player_stats", tags=["Pages"])
 @router.get("/top_players", tags=["Pages"])
+@router.get("/admin/login", tags=["Pages"])
+@router.get("/admin", tags=["Pages"])
 def serve_react_app(request: Request):
     """Serve React app for all frontend routes"""
     if REACT_INDEX.exists():

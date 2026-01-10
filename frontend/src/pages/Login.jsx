@@ -88,6 +88,14 @@ function Login({ onLogin }) {
             </div>
           </form>
           <p className="text-center mt-4">עדיין אין לך משתמש? <Link to="/signup" className="text-green-600 hover:text-green-700 font-semibold">הרשם כאן</Link></p>
+          <div className="text-center mt-3 pt-3 border-t border-gray-200">
+            <Link 
+              to="/admin/login" 
+              className="text-sm text-gray-500 hover:text-amber-600 font-semibold transition-colors"
+            >
+              🔧 התחבר כמנהל
+            </Link>
+          </div>
         </div>
       </div>
     </div>

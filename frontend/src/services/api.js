@@ -174,6 +174,56 @@ export const api = {
     }
     
     return response.json()
+  },
+
+  // Admin APIs
+  async adminLogin(username, password) {
+    const response = await fetch(`${API_BASE}/admin/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    })
+    
+    if (!response.ok) {
+      const err = await response.json()
+      throw new Error(err.detail || response.statusText)
+    }
+    
+    return response.json()
+  },
+
+  async getPlayers(page = 1, pageSize = 10, search = '') {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      page_size: pageSize.toString()
+    })
+    if (search) {
+      params.append('search', search)
+    }
+    
+    const response = await fetch(`${API_BASE}/admin/players?${params}`, {
+      headers: getHeaders()
+    })
+    
+    if (!response.ok) {
+      const err = await response.json()
+      throw new Error(err.detail || response.statusText)
+    }
+    
+    return response.json()
+  },
+
+  async getPlayerStatsAdmin(playerId) {
+    const response = await fetch(`${API_BASE}/admin/players/${playerId}/stats`, {
+      headers: getHeaders()
+    })
+    
+    if (!response.ok) {
+      const err = await response.json()
+      throw new Error(err.detail || response.statusText)
+    }
+    
+    return response.json()
   }
 }
 

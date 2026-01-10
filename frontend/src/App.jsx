@@ -5,6 +5,8 @@ import Signup from './pages/Signup'
 import Game from './pages/Game'
 import PlayerStats from './pages/PlayerStats'
 import TopPlayers from './pages/TopPlayers'
+import AdminLogin from './pages/AdminLogin'
+import AdminDashboard from './pages/AdminDashboard'
 import { getToken } from './services/api'
 
 function App() {
@@ -47,6 +49,15 @@ function App() {
           isAuthenticated ? 
             <TopPlayers /> : 
             <Navigate to="/login" />
+        } 
+      />
+      <Route path="/admin/login" element={<AdminLogin />} />
+      <Route 
+        path="/admin" 
+        element={
+          getToken() ? 
+            <AdminDashboard /> : 
+            <Navigate to="/admin/login" />
         } 
       />
       <Route path="/" element={<Navigate to="/login" />} />
