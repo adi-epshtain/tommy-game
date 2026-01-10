@@ -24,6 +24,8 @@ function Game({ onLogout }) {
   const [showScorePopup, setShowScorePopup] = useState(false)
   const [scoreChange, setScoreChange] = useState(0)
   const [questionFade, setQuestionFade] = useState(false)
+  const [showAdvanceDialog, setShowAdvanceDialog] = useState(false)
+  const [advanceInfo, setAdvanceInfo] = useState(null)
   const navigate = useNavigate()
 
   // Function to play celebration sound (applause/clapping)
@@ -166,13 +168,22 @@ function Game({ onLogout }) {
     }
   }
 
-  const startGame = async (name) => {
+  const startGame = async (name, advanceStage = null) => {
     try {
-      const data = await api.startGame(5)
+      const data = await api.startGame(5, advanceStage)
+      
+      // בדוק אם השחקן מוכן לעלות רמה
+      if (data.ready_to_advance) {
+        setAdvanceInfo(data)
+        setShowAdvanceDialog(true)
+        return
+      }
+      
+      // אם לא צריך אישור, התחל משחק רגיל
       setQuestion(data.question)
       setCurrentQuestionId(data.question_id)
       setScore(0)
-      setStage(1)
+      setStage(data.stage || 1)
       setResult('')
       setWrongQuestions([])
       setGameEnded(false)
@@ -188,6 +199,16 @@ function Game({ onLogout }) {
       alert('אירעה שגיאה בהתחלת המשחק')
       console.error(err)
     }
+  }
+
+  const handleAdvanceConfirm = async () => {
+    setShowAdvanceDialog(false)
+    await startGame(playerName, true) // מאשרים לעלות רמה
+  }
+
+  const handleAdvanceCancel = async () => {
+    setShowAdvanceDialog(false)
+    await startGame(playerName, false) // לא מאשרים - נשארים ברמה הנוכחית
   }
 
   const handleSubmitAnswer = async (e) => {
@@ -290,6 +311,53 @@ function Game({ onLogout }) {
             <div className="text-center">
               <Button onClick={() => window.location.reload()}>
                 🎮 שחק שוב
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Advance stage dialog - shows before starting game if player is ready to advance
+  if (showAdvanceDialog && advanceInfo) {
+    return (
+      <div 
+        className="min-h-screen w-full relative overflow-hidden flex items-center justify-center" 
+        style={{
+          backgroundImage: 'url(/static/math_dino2.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          backgroundAttachment: 'fixed'
+        }}
+      >
+        <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center z-10">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4">
+            <div className="text-center mb-6">
+              <div className="text-6xl mb-4">🎉</div>
+              <h2 className="text-3xl font-bold mb-4" style={{ color: '#654321' }}>
+                כל הכבוד!
+              </h2>
+              <p className="text-lg text-gray-700 mb-2">
+                {advanceInfo.message}
+              </p>
+            </div>
+            
+            <div className="flex gap-4 justify-center">
+              <Button
+                onClick={handleAdvanceCancel}
+                variant="secondary"
+                className="flex-1"
+              >
+                לא, תודה
+              </Button>
+              <Button
+                onClick={handleAdvanceConfirm}
+                variant="primary"
+                className="flex-1"
+              >
+                כן, אני רוצה! 🚀
               </Button>
             </div>
           </div>

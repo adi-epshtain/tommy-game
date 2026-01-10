@@ -2,7 +2,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from infra.redis_client import redis_client
 import redis
 from infra.logger import log
-from models import Player
+from models import Player, PlayerSession, PlayerAnswer
 from sqlalchemy.orm import Session
 from typing import Optional
 
@@ -63,8 +63,48 @@ async def get_player_by_name(
 
 
 async def delete_player(session: Session, player_id: int) -> Optional[Player]:
-    player = session.query(Player).filter(Player.id == player_id).first()
-    if player:
+    """
+    Delete player and all related data (sessions, answers).
+    Returns the deleted player if found, None otherwise.
+    """
+    try:
+        player = session.query(Player).filter(Player.id == player_id).first()
+        if not player:
+            return None
+
+        # Delete all player answers (through sessions)
+        player_sessions = session.query(PlayerSession).filter(
+            PlayerSession.player_id == player_id
+        ).all()
+        
+        for ps in player_sessions:
+            # Delete all answers for this session
+            session.query(PlayerAnswer).filter(
+                PlayerAnswer.session_id == ps.id
+            ).delete()
+
+        # Delete all player sessions
+        session.query(PlayerSession).filter(
+            PlayerSession.player_id == player_id
+        ).delete()
+
+        # Delete the player
         session.delete(player)
         session.commit()
-    return player
+
+        # Clear Redis cache for this player
+        try:
+            redis_client.delete(f"player:name:{player.name}")
+            redis_client.delete(f"player:{player_id}:last_sessions:*")
+            # Clear leaderboard cache
+            for limit in [10, 20, 50, 100]:
+                redis_client.delete(f"leaderboard:top:{limit}")
+        except (redis.ConnectionError, redis.TimeoutError, AttributeError):
+            pass  # Redis unavailable, skip cache clearing
+
+        log.info(f"Deleted player {player_id} ({player.name}) and all related data")
+        return player
+    except SQLAlchemyError as e:
+        session.rollback()
+        log.error(f"Error deleting player {player_id}: {e}")
+        raise

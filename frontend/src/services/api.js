@@ -62,14 +62,19 @@ export const api = {
     return response.json()
   },
 
-  async startGame(playerAge = 5) {
+  async startGame(playerAge = 5, advanceStage = null) {
+    const body = { player_age: parseInt(playerAge) }
+    if (advanceStage !== null) {
+      body.advance_stage = advanceStage
+    }
+    
     const response = await fetch(`${API_BASE}/start`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         ...getHeaders()
       },
-      body: JSON.stringify({ player_age: parseInt(playerAge) })
+      body: JSON.stringify(body)
     })
     
     if (!response.ok) {
@@ -215,6 +220,53 @@ export const api = {
 
   async getPlayerStatsAdmin(playerId) {
     const response = await fetch(`${API_BASE}/admin/players/${playerId}/stats`, {
+      headers: getHeaders()
+    })
+    
+    if (!response.ok) {
+      const err = await response.json()
+      throw new Error(err.detail || response.statusText)
+    }
+    
+    return response.json()
+  },
+
+  async getPlayerTrends(playerId, period = 'week') {
+    const response = await fetch(`${API_BASE}/admin/players/${playerId}/trends?period=${period}`, {
+      headers: getHeaders()
+    })
+    
+    if (!response.ok) {
+      const err = await response.json()
+      throw new Error(err.detail || response.statusText)
+    }
+    
+    return response.json()
+  },
+
+  async comparePlayerPeriods(playerId, period1Start, period1End, period2Start, period2End) {
+    const params = new URLSearchParams({
+      period1_start: period1Start,
+      period1_end: period1End,
+      period2_start: period2Start,
+      period2_end: period2End
+    })
+    
+    const response = await fetch(`${API_BASE}/admin/players/${playerId}/compare?${params}`, {
+      headers: getHeaders()
+    })
+    
+    if (!response.ok) {
+      const err = await response.json()
+      throw new Error(err.detail || response.statusText)
+    }
+    
+    return response.json()
+  },
+
+  async deletePlayer(playerId) {
+    const response = await fetch(`${API_BASE}/admin/players/${playerId}`, {
+      method: 'DELETE',
       headers: getHeaders()
     })
     

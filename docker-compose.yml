@@ -19,7 +19,7 @@ services:
     volumes:
       - .:/app # Link the local code into the container
       - /app/frontend/node_modules # Exclude node_modules from volume mount
-    command: sh -c "cd /app/frontend && npm run build && (npm run build:watch &) && cd /app && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"  # Initial build, then watch for frontend changes and auto-rebuild
+    command: sh -c "cd /app/frontend && npm install && npm run build && (npm run build:watch &) && cd /app && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"  # Install dependencies, initial build, then watch for frontend changes and auto-rebuild
 
   db:
     image: postgres:15

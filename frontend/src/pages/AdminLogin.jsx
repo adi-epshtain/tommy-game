@@ -17,8 +17,15 @@ function AdminLogin() {
 
     try {
       const response = await api.adminLogin(username, password)
-      setToken(response.access_token)
-      navigate('/admin')
+      if (response && response.access_token) {
+        setToken(response.access_token)
+        // Small delay to ensure token is saved to localStorage
+        setTimeout(() => {
+          navigate('/admin', { replace: true })
+        }, 100)
+      } else {
+        setError('תגובה לא תקינה מהשרת - אין access_token')
+      }
     } catch (err) {
       setError(`שגיאה: ${err.message}`)
     } finally {

@@ -70,12 +70,12 @@ function TopPlayers() {
       }}
     >
       <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex flex-col items-center p-8 z-10">
-        {/* Fixed Header with Play Again Button */}
-        <div className="w-full max-w-4xl mb-4 z-30">
+        {/* Sticky Header with Play Again Button - Always visible at top */}
+        <div className="w-full max-w-4xl mb-4 z-30 sticky top-0">
           <div className="bg-white rounded-xl shadow-lg p-4 border-2 border-gray-200">
             <div className="flex justify-between items-center gap-4">
               <h1 className="text-3xl font-bold" style={{ color: '#654321' }}>🏆 לוח התוצאות</h1>
-              <Button onClick={handlePlayAgain}>
+              <Button onClick={handlePlayAgain} size="lg">
                 🎮 שחק שוב
               </Button>
             </div>
@@ -83,7 +83,7 @@ function TopPlayers() {
         </div>
         
         {/* Scrollable Content */}
-        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-4xl w-full max-h-[calc(90vh-120px)] overflow-y-auto">
+        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-4xl w-full flex-1 overflow-y-auto">
           {error ? (
             <div className="bg-red-50 rounded-xl p-6 border-2 border-red-200 text-center">
               <div className="text-2xl font-bold mb-2 text-red-600">❌ שגיאה</div>

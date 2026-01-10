@@ -1,4 +1,5 @@
 from typing import Optional, List
+from fastapi import Query, Body
 from fastapi import APIRouter, Depends, HTTPException, Request
 from starlette.responses import JSONResponse
 from sqlalchemy.orm import Session
@@ -10,9 +11,9 @@ from dal.player_answer_dal import get_wrong_questions, update_player_answer, \
     PlayerSessionAnswer
 from dal.player_dal import get_player_by_name
 from dal.player_session_dal import (
-    create_player_session, update_score_and_stage_player_session, end_session,
+    create_player_session, create_player_session_with_stage, update_score_and_stage_player_session, end_session,
     get_session_by_player_id, get_top_players, PlayerScore,
-    get_last_player_sessions, update_player_stage
+    get_last_player_sessions, update_player_stage, should_advance_stage
 )
 from dal.question_dal import get_random_question_by_game, get_question_by_id
 from infra.database import get_db
@@ -53,8 +54,13 @@ class GameInfo(Enum):
 # Removed - React handles /game route via pages.py
 
 
+class StartGameRequest(BaseModel):
+    advance_stage: Optional[bool] = None
+
+
 @router.post("/start", tags=["Game"])
 async def start_game(
+    req: Optional[StartGameRequest] = Body(None),
     current_player=Depends(get_current_player),
     db: Session = Depends(get_db)
 ):
@@ -65,7 +71,45 @@ async def start_game(
     game: Game = await get_game_by_name(db, GameInfo.MATH_GAME.name)
     if not game:
         game: Game = await create_game(db, name=GameInfo.MATH_GAME.name, winning_score=GameInfo.MATH_GAME.winning_score, description=GameInfo.MATH_GAME.description)
-    player_session: PlayerSession = await create_player_session(db, player_id=player.id, game_id=game.id)
+    
+    advance_stage = req.advance_stage if req else None
+    
+    # בדוק אם השחקן מוכן לעלות רמה (רק אם לא התקבל אישור מפורש)
+    if advance_stage is None:
+        # בודקים מה הרמה הגבוהה ביותר שהשחקן מוכן לה
+        next_stage = 1
+        for stage in range(1, 6):  # בודקים עד רמה 5
+            if await should_advance_stage(db, player.id, current_stage=stage):
+                next_stage = stage + 1
+            else:
+                break
+        
+        # אם השחקן מוכן לרמה גבוהה מ-1, מחזירים הודעה לפני יצירת סשן
+        if next_stage > 1:
+            current_stage = next_stage - 1
+            return {
+                "ready_to_advance": True,
+                "current_stage": current_stage,
+                "next_stage": next_stage,
+                "message": f"כל הכבוד! סיימת 3 משחקים ברמה {current_stage} בהצלחה! האם תרצה לעלות לרמה {next_stage}?"
+            }
+    
+    # יצירת סשן - אם advance_stage=True, יוצר ברמה גבוהה יותר
+    if advance_stage is True:
+        # מחשבים את הרמה הרצויה
+        next_stage = 1
+        for stage in range(1, 6):
+            if await should_advance_stage(db, player.id, current_stage=stage):
+                next_stage = stage + 1
+            else:
+                break
+        # יוצרים סשן ברמה הרצויה
+        from dal.player_session_dal import create_player_session_with_stage
+        player_session: PlayerSession = await create_player_session_with_stage(db, player_id=player.id, game_id=game.id, stage=next_stage)
+    else:
+        # יוצרים סשן ברמה 1 (או הרמה הקבועה)
+        player_session: PlayerSession = await create_player_session(db, player_id=player.id, game_id=game.id)
+    
     question: Question = await get_random_question_by_game(db, game.id, player_session.id)
     if not question:
         try:
@@ -78,7 +122,8 @@ async def start_game(
     return {
         "session_id": player_session.id,
         "question": question.text,
-        "question_id": question.id
+        "question_id": question.id,
+        "stage": player_session.stage
     }
 
 

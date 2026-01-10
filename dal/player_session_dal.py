@@ -10,8 +10,94 @@ from infra.redis_client import redis_client
 import redis
 
 
+async def should_advance_stage(session: Session, player_id: int, current_stage: int) -> bool:
+    """
+    בודק אם השחקן מוכן לעלות רמה לפי ביצועים בסשנים קודמים.
+    תנאים לעלייה ברמה:
+    - לפחות 3 סשנים ברמה הנוכחית
+    - אחוז הצלחה של לפחות 75% בכל הסשנים
+    - רק סשנים שנסיימו (ended_at לא null)
+    """
+    from models import PlayerAnswer
+    
+    # קבל את כל הסשנים שנסיימו ברמה הנוכחית
+    completed_sessions = (
+        session.query(PlayerSession)
+        .filter(
+            PlayerSession.player_id == player_id,
+            PlayerSession.stage == current_stage,
+            PlayerSession.ended_at.isnot(None)
+        )
+        .order_by(PlayerSession.ended_at.desc())
+        .limit(5)  # בודק את 5 הסשנים האחרונים
+        .all()
+    )
+    
+    # צריך לפחות 3 סשנים
+    if len(completed_sessions) < 3:
+        return False
+    
+    # בדוק אחוז הצלחה בכל הסשנים
+    total_correct = 0
+    total_answers = 0
+    
+    for ps in completed_sessions:
+        answers = (
+            session.query(PlayerAnswer)
+            .filter(PlayerAnswer.session_id == ps.id)
+            .all()
+        )
+        
+        for answer in answers:
+            total_answers += 1
+            if answer.is_correct:
+                total_correct += 1
+    
+    if total_answers == 0:
+        return False
+    
+    success_rate = (total_correct / total_answers) * 100
+    
+    # צריך לפחות 75% הצלחה
+    return success_rate >= 75.0
+
+
+async def create_player_session_with_stage(session: Session, player_id: int, game_id: int, stage: int) -> PlayerSession:
+    """
+    יוצר סשן חדש ברמה ספציפית (בשימוששחקן מאשר לעלות רמה).
+    """
+    new_session = PlayerSession(player_id=player_id, game_id=game_id, stage=stage)
+    session.add(new_session)
+    session.commit()
+    session.refresh(new_session)
+    log.info(f"Created session for player {player_id} at stage {stage}")
+    return new_session
+
+
 async def create_player_session(session: Session, player_id: int, game_id: int) -> PlayerSession:
-    new_session = PlayerSession(player_id=player_id, game_id=game_id)
+    """
+    יוצר סשן חדש עם רמה שנקבעת לפי ביצועים בסשנים קודמים.
+    בודק הדרגתית: אם השחקן מוכן לרמה גבוהה יותר, מתחיל ברמה הזו.
+    - מתחיל ברמה 1
+    - אם היו 3+ סשנים טובים ברמה 1 (75%+ הצלחה), הסשן הבא יתחיל ברמה 2
+    - אם היו 3+ סשנים טובים ברמה 2, הסשן הבא יתחיל ברמה 3
+    - וכן הלאה...
+    """
+    initial_stage = 1
+    
+    # בדוק הדרגתית מה הרמה הגבוהה ביותר שהשחקן מוכן לה
+    # מתחילים מרמה 1 ובודקים עד כמה אפשר לעלות
+    max_stage_to_check = 5  # בודקים עד רמה 5
+    
+    for stage in range(1, max_stage_to_check + 1):
+        if await should_advance_stage(session, player_id, current_stage=stage):
+            initial_stage = stage + 1
+            log.info(f"Player {player_id} ready for stage {initial_stage} based on {stage} performance")
+        else:
+            # אם לא מוכן לרמה הבאה, נשארים ברמה הנוכחית
+            break
+    
+    new_session = PlayerSession(player_id=player_id, game_id=game_id, stage=initial_stage)
     session.add(new_session)
     session.commit()
     session.refresh(new_session)
@@ -54,15 +140,20 @@ async def end_session(session: Session, session_id: int) -> Optional[PlayerSessi
 
 async def update_score_and_stage_player_session(session: Session, question: Question,
                                                 player_session: PlayerSession, answer: int) -> bool:
+    """
+    מעדכן ניקוד בלבד - הרמה לא עולה בתוך סשן בודד.
+    הרמה נקבעת רק בתחילת סשן חדש לפי ביצועים בסשנים קודמים.
+    """
     is_correct: bool = question.correct_answer == answer
     if is_correct:
         player_session.score += 1
     else:
         if player_session.score > 0:
             player_session.score -= 1
-    # הרמה עולה רק אחרי 10 תשובות נכונות (score > 9) - הרבה יותר איטי
-    if player_session.score > 9:
-        player_session.stage += 1
+    
+    # לא מעלים רמה בתוך סשן - הרמה נשארת קבועה לכל הסשן
+    # הרמה תיקבע רק בתחילת סשן חדש לפי ביצועים בסשנים קודמים
+    
     session.commit()
     return is_correct
 
