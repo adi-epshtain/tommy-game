@@ -95,7 +95,7 @@ class Dinosaur(Base):
     name = Column(String(100), nullable=False, unique=True)
     image_path = Column(String(255), nullable=False)  # Path to dinosaur image
     description = Column(Text, nullable=True)
-    rarity = Column(String(20), default='common')  # common, rare, epic, legendary
+    level = Column(String(20), default='1')  # 1, 2, 3, 4, 5 (game levels)
     created_at = Column(TIMESTAMP, server_default=func.now())
 
     players = relationship("Player", secondary=player_dinosaurs, back_populates="dinosaurs")

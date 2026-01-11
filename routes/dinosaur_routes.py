@@ -22,7 +22,7 @@ class DinosaurResponse(BaseModel):
     name: str
     image_path: str
     description: str | None
-    rarity: str
+    level: str
 
     class Config:
         from_attributes = True
@@ -51,7 +51,7 @@ async def get_available_dinosaurs(
             name=d.name,
             image_path=d.image_path,
             description=d.description,
-            rarity=d.rarity
+            level=d.level
         ) for d in dinosaurs]
     except Exception as e:
         raise HTTPException(
@@ -80,7 +80,7 @@ async def get_my_dinosaurs(
             name=d.name,
             image_path=d.image_path,
             description=d.description,
-            rarity=d.rarity
+            level=d.level
         ) for d in dinosaurs]
     except HTTPException:
         raise
@@ -114,7 +114,7 @@ async def get_my_selected_dinosaur(
             name=dinosaur.name,
             image_path=dinosaur.image_path,
             description=dinosaur.description,
-            rarity=dinosaur.rarity
+            level=dinosaur.level
         )
     except HTTPException:
         raise

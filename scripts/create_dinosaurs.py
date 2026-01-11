@@ -14,18 +14,19 @@ from infra.database import SessionLocal
 from models import Dinosaur
 from infra.logger import log
 
-# רשימת דינוזאורים עם תמונות (משתמש בתמונות קיימות או דמויות)
+# רשימת דינוזאורים עם תמונות dino_1 עד dino_10
+# חלוקה ל-5 רמות: 2 דינוזאורים לכל רמה
 DINOSAURS = [
-    {"name": "דינו ירוק", "image_path": "/static/dino.png", "description": "דינוזאור ירוק קלאסי", "rarity": "common"},
-    {"name": "דינו כחול", "image_path": "/static/dino_1.png", "description": "דינוזאור כחול שמאלי", "rarity": "common"},
-    {"name": "דינו אדום", "image_path": "/static/dino_2.png", "description": "דינוזאור אדום ימני", "rarity": "common"},
-    {"name": "דינו צהוב", "image_path": "/static/dino.png", "description": "דינוזאור צהוב חמוד", "rarity": "rare"},
-    {"name": "דינו סגול", "image_path": "/static/dino_1.png", "description": "דינוזאור סגול מיוחד", "rarity": "rare"},
-    {"name": "דינו כתום", "image_path": "/static/dino_2.png", "description": "דינוזאור כתום בוהק", "rarity": "rare"},
-    {"name": "דינו זהב", "image_path": "/static/dino.png", "description": "דינוזאור זהב יוקרתי", "rarity": "epic"},
-    {"name": "דינו כסף", "image_path": "/static/dino_1.png", "description": "דינוזאור כסף אלגנטי", "rarity": "epic"},
-    {"name": "דינו יהלום", "image_path": "/static/dino_2.png", "description": "דינוזאור יהלום נדיר", "rarity": "legendary"},
-    {"name": "דינו מלכותי", "image_path": "/static/dino.png", "description": "דינוזאור מלכותי מיוחד", "rarity": "legendary"},
+    {"name": "דינו חוקר", "image_path": "/static/dino_1.png", "description": "סקרן, מגלה, לומד", "level": "1"},
+    {"name": "דינו מהיר", "image_path": "/static/dino_2.png", "description": "זריז, חד, תגובתי", "level": "1"},
+    {"name": "דינו טייס", "image_path": "/static/dino_3.png", "description": "הרפתקן, חופשי, נועז", "level": "2"},
+    {"name": "דינו לוחם", "image_path": "/static/dino_4.png", "description": "חזק, נחוש, מגן", "level": "2"},
+    {"name": "דינו חכם", "image_path": "/static/dino_5.png", "description": "חושב, מנתח, פותר", "level": "3"},
+    {"name": "דינו אמיץ", "image_path": "/static/dino_6.png", "description": "fearless, בטוח, יוזם", "level": "3"},
+    {"name": "דינו רץ", "image_path": "/static/dino_7.png", "description": "תחרותי, אנרגטי, מתמיד", "level": "4"},
+    {"name": "דינו כוכב", "image_path": "/static/dino_8.png", "description": "בולט, בטוח, מוביל", "level": "4"},
+    {"name": "דינו אסטרונאוט", "image_path": "/static/dino_9.png", "description": "חולם, סקרן, מגלה", "level": "5"},
+    {"name": "דינו גיבור", "image_path": "/static/dino_10.png", "description": "עוזר, מוביל, מציל", "level": "5"},
 ]
 
 def create_dinosaurs():
@@ -36,11 +37,27 @@ def create_dinosaurs():
     
     try:
         created_count = 0
+        updated_count = 0
         for dino_data in DINOSAURS:
             # בדוק אם הדינוזאור כבר קיים
             existing = db.query(Dinosaur).filter(Dinosaur.name == dino_data["name"]).first()
             if existing:
-                log.info(f"דינוזאור '{dino_data['name']}' כבר קיים, מדלג...")
+                # עדכן נתיב תמונה ותיאור אם השתנו
+                updated = False
+                if existing.image_path != dino_data["image_path"]:
+                    existing.image_path = dino_data["image_path"]
+                    updated = True
+                if existing.description != dino_data["description"]:
+                    existing.description = dino_data["description"]
+                    updated = True
+                if existing.level != dino_data["level"]:
+                    existing.level = dino_data["level"]
+                    updated = True
+                if updated:
+                    updated_count += 1
+                    log.info(f"עודכן דינוזאור: {dino_data['name']} (image_path: {dino_data['image_path']})")
+                else:
+                    log.info(f"דינוזאור '{dino_data['name']}' כבר קיים ועדכני")
                 continue
             
             # צור דינוזאור חדש
@@ -48,14 +65,16 @@ def create_dinosaurs():
                 name=dino_data["name"],
                 image_path=dino_data["image_path"],
                 description=dino_data["description"],
-                rarity=dino_data["rarity"]
+                level=dino_data["level"]
             )
             db.add(dinosaur)
             created_count += 1
-            log.info(f"נוצר דינוזאור: {dino_data['name']} ({dino_data['rarity']})")
+            log.info(f"נוצר דינוזאור: {dino_data['name']} (רמה {dino_data['level']})")
         
         db.commit()
         log.info(f"נוצרו {created_count} דינוזאורים חדשים!")
+        if updated_count > 0:
+            log.info(f"עודכנו {updated_count} דינוזאורים קיימים!")
         
         # הצג סיכום
         total = db.query(Dinosaur).count()

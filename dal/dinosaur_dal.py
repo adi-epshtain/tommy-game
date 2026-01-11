@@ -108,3 +108,4 @@ async def get_selected_dinosaur(session: Session, player_id: int) -> Optional[Di
         log.error(f"Error fetching selected dinosaur: {e}")
         raise
 
+

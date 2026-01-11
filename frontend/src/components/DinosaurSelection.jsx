@@ -2,13 +2,13 @@ import { useState, useEffect } from 'react'
 import { api } from '../services/api'
 import Button from './Button'
 
-function DinosaurSelection({ onSelect, onSkip }) {
+function DinosaurSelection({ onSelect, onSkip, playerStage = 1, playerDinosaurs = [], viewOnly = false }) {
   const [dinosaurs, setDinosaurs] = useState([])
   const [selectedId, setSelectedId] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [unlocking, setUnlocking] = useState(false)
-
+  
   useEffect(() => {
     loadDinosaurs()
   }, [])
@@ -56,18 +56,12 @@ function DinosaurSelection({ onSelect, onSkip }) {
     }
   }
 
-  const rarityColors = {
-    common: 'from-gray-100 to-gray-200 border-gray-300',
-    rare: 'from-blue-100 to-blue-200 border-blue-400',
-    epic: 'from-purple-100 to-purple-200 border-purple-500',
-    legendary: 'from-yellow-100 to-yellow-200 border-yellow-500'
-  }
-
-  const rarityLabels = {
-    common: 'רגיל',
-    rare: 'נדיר',
-    epic: 'אפי',
-    legendary: 'אגדי'
+  const levelColors = {
+    '1': 'from-gray-100 to-gray-200 border-gray-300',
+    '2': 'from-blue-100 to-blue-200 border-blue-400',
+    '3': 'from-purple-100 to-purple-200 border-purple-500',
+    '4': 'from-yellow-100 to-yellow-200 border-yellow-500',
+    '5': 'from-red-100 to-pink-200 border-red-600'
   }
 
   if (loading) {
@@ -81,7 +75,7 @@ function DinosaurSelection({ onSelect, onSkip }) {
   return (
     <div className="bg-white rounded-2xl shadow-2xl p-6 border-4 border-green-400">
       <h2 className="text-3xl font-bold text-center mb-6" style={{ color: '#654321' }}>
-        🦕 בחר דינוזאור חדש לאוסף שלך!
+        {viewOnly ? '🦕 דינוזאורים זמינים' : '🦕 בחר דינוזאור חדש לאוסף שלך!'}
       </h2>
       
       {error && (
@@ -90,40 +84,74 @@ function DinosaurSelection({ onSelect, onSkip }) {
         </div>
       )}
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6 max-h-96 overflow-y-auto">
-        {dinosaurs.map((dino) => (
-          <div
-            key={dino.id}
-            onClick={() => setSelectedId(dino.id)}
-            className={`rounded-xl p-4 cursor-pointer transition-all border-2 ${
-              selectedId === dino.id
-                ? 'bg-gradient-to-br from-green-200 to-emerald-200 border-green-500 scale-105 shadow-lg'
-                : `bg-gradient-to-br ${rarityColors[dino.rarity] || rarityColors.common} border-gray-300 hover:scale-102`
-            }`}
-          >
-            <div className="text-center">
-              <img
-                src={dino.image_path}
-                alt={dino.name}
-                className="mx-auto w-24 h-24 object-contain mb-2"
-                onError={(e) => {
-                  e.target.src = '/static/dino.png' // Fallback image
-                }}
-              />
-              <div className="font-bold text-lg mb-1" style={{ color: '#654321' }}>
-                {dino.name}
+      <div className="mb-6 max-h-96 overflow-y-auto space-y-6">
+        {[1, 2, 3, 4, 5].map((level) => {
+          const levelDinosaurs = dinosaurs.filter(d => parseInt(d.level) === level)
+          if (levelDinosaurs.length === 0) return null
+          
+          return (
+            <div key={level} className="space-y-2">
+              <h3 className="text-xl font-bold mb-3" style={{ color: '#654321' }}>
+                רמה {level}
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {levelDinosaurs.map((dino) => {
+                  const dinoLevel = parseInt(dino.level) || 1
+                  const isLevelLocked = dinoLevel > playerStage
+                  // Check if dinosaur is owned by comparing IDs
+                  const isOwned = playerDinosaurs.some(ownedDino => ownedDino.id === dino.id)
+                  const isDisabled = isLevelLocked || isOwned
+                  
+                  return (
+                    <div
+                      key={dino.id}
+                      onClick={() => !viewOnly && !isDisabled && setSelectedId(dino.id)}
+                      className={`rounded-xl p-4 transition-all border-2 relative ${
+                        viewOnly || isDisabled
+                          ? 'opacity-50 cursor-default bg-gray-200 border-gray-400'
+                          : selectedId === dino.id
+                          ? 'bg-gradient-to-br from-green-200 to-emerald-200 border-green-500 scale-105 shadow-lg cursor-pointer'
+                          : `bg-gradient-to-br ${levelColors[dino.level] || levelColors['1']} border-gray-300 hover:scale-102 cursor-pointer`
+                      }`}
+                    >
+                      <div className="text-center">
+                        {isLevelLocked && (
+                          <div className="absolute top-2 right-2 text-2xl">🔒</div>
+                        )}
+                        {isOwned && (
+                          <div className="absolute top-2 right-2 text-2xl">✅</div>
+                        )}
+                        <img
+                          src={dino.image_path}
+                          alt={dino.name}
+                          className={`mx-auto w-24 h-24 object-contain mb-2 ${isDisabled ? 'grayscale' : ''}`}
+                        />
+                        <div className="font-bold text-lg mb-1" style={{ color: isDisabled ? '#999' : '#654321' }}>
+                          {dino.name}
+                        </div>
+                        {isLevelLocked && (
+                          <div className="text-xs mt-1 text-red-600 font-semibold">
+                            🔒 חסום - נצח ברמה {dinoLevel} כדי לפתוח
+                          </div>
+                        )}
+                        {isOwned && (
+                          <div className="text-xs mt-1 text-green-600 font-semibold">
+                            ✅ כבר קיים באוסף שלך
+                          </div>
+                        )}
+                        {dino.description && !isDisabled && (
+                          <div className="text-xs mt-1 text-gray-600">
+                            {dino.description}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
-              <div className="text-xs font-semibold" style={{ color: '#666' }}>
-                {rarityLabels[dino.rarity] || 'רגיל'}
-              </div>
-              {dino.description && (
-                <div className="text-xs mt-1 text-gray-600">
-                  {dino.description}
-                </div>
-              )}
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
       {dinosaurs.length === 0 ? (
@@ -132,23 +160,35 @@ function DinosaurSelection({ onSelect, onSkip }) {
         </div>
       ) : (
         <div className="flex gap-4 justify-center">
-          <Button
-            onClick={handleUnlock}
-            disabled={!selectedId || unlocking}
-            variant="primary"
-            style={{ 
-              opacity: (!selectedId || unlocking) ? 0.5 : 1,
-              cursor: (!selectedId || unlocking) ? 'not-allowed' : 'pointer'
-            }}
-          >
-            {unlocking ? 'פותח...' : '🔓 פתח דינוזאור'}
-          </Button>
-          {onSkip && (
+          {!viewOnly && (
+            <>
+              <Button
+                onClick={handleUnlock}
+                disabled={!selectedId || unlocking}
+                variant="primary"
+                style={{ 
+                  opacity: (!selectedId || unlocking) ? 0.5 : 1,
+                  cursor: (!selectedId || unlocking) ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {unlocking ? 'פותח...' : '🔓 פתח דינוזאור'}
+              </Button>
+              {onSkip && (
+                <Button
+                  onClick={onSkip}
+                  variant="secondary"
+                >
+                  דלג
+                </Button>
+              )}
+            </>
+          )}
+          {viewOnly && onSkip && (
             <Button
               onClick={onSkip}
               variant="secondary"
             >
-              דלג
+              ← חזור למשחק
             </Button>
           )}
         </div>

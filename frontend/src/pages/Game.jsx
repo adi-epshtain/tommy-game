@@ -32,6 +32,7 @@ function Game({ onLogout }) {
   const [showDinosaurSelection, setShowDinosaurSelection] = useState(false)
   const [playerDinosaurs, setPlayerDinosaurs] = useState([]) // All dinosaurs in player's collection
   const [showDinosaurGallery, setShowDinosaurGallery] = useState(false) // Gallery view
+  const [showDinosaurViewOnly, setShowDinosaurViewOnly] = useState(false) // View-only mode (browse all dinosaurs)
   const navigate = useNavigate()
 
   // Function to play celebration sound (applause/clapping)
@@ -341,6 +342,9 @@ function Game({ onLogout }) {
       const data = await api.getGameEnd()
       setGameEndData(data)
       
+      // Reload player dinosaurs to get the latest collection
+      await loadPlayerDinosaurs()
+      
       // בדוק אם השחקן במקום 1-3 בלוח התוצאות (מהבאק אנד יש player_rank)
       const playerRank = data.player_rank
       if (playerRank && playerRank >= 1 && playerRank <= 3) {
@@ -372,8 +376,8 @@ function Game({ onLogout }) {
       await loadPlayerDinosaurs()
       // Close selection screen
       setShowDinosaurSelection(false)
-      // Start a new game (this will reset all states)
-      await startGame(playerName)
+      // Show game end screen with leaderboard (don't reset - gameEndData is already set)
+      setGameEnded(true)
     } catch (err) {
       console.error('Failed to handle dinosaur selection:', err)
       alert('אירעה שגיאה בבחירת הדינוזאור')
@@ -383,14 +387,42 @@ function Game({ onLogout }) {
   const handleDinosaurSkip = async () => {
     // Close selection screen
     setShowDinosaurSelection(false)
-    // Start a new game (this will reset all states)
-    await startGame(playerName)
+    // Show game end screen with leaderboard (don't reset - gameEndData is already set)
+    setGameEnded(true)
   }
 
   const handleLogout = () => {
     removeToken()
     onLogout()
     navigate('/login')
+  }
+
+  // Dinosaur View-Only Screen - shows all available dinosaurs (browse only)
+  if (showDinosaurViewOnly) {
+    return (
+      <div 
+        className="min-h-screen w-full relative overflow-hidden flex items-center justify-center" 
+        style={{
+          backgroundImage: 'url(/static/math_dino2.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          backgroundAttachment: 'fixed'
+        }}
+      >
+        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center p-8 z-10">
+          <div className="max-w-4xl w-full">
+            <DinosaurSelection
+              viewOnly={true}
+              onSelect={null}
+              onSkip={() => setShowDinosaurViewOnly(false)}
+              playerStage={stage}
+              playerDinosaurs={playerDinosaurs}
+            />
+          </div>
+        </div>
+      </div>
+    )
   }
 
   // Dinosaur Selection Screen - shows after victory
@@ -408,9 +440,11 @@ function Game({ onLogout }) {
       >
         <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center p-8 z-10">
           <div className="max-w-4xl w-full">
-            <DinosaurSelection 
+            <DinosaurSelection
               onSelect={handleDinosaurSelected}
               onSkip={handleDinosaurSkip}
+              playerStage={stage}
+              playerDinosaurs={playerDinosaurs}
             />
           </div>
         </div>
@@ -548,9 +582,6 @@ function Game({ onLogout }) {
               <Leaderboard topPlayers={gameEndData.top_players} />
             </div>
             
-            <div className="text-center my-6">
-              <img src="/static/dino.png" alt="דינוזאור חמוד" className="mx-auto w-32 h-32 object-contain" />
-            </div>
           </div>
         </div>
       </div>
@@ -606,18 +637,12 @@ function Game({ onLogout }) {
 
   // Dinosaur Gallery Screen
   if (showDinosaurGallery) {
-    const rarityColors = {
-      common: 'from-gray-100 to-gray-200 border-gray-300',
-      rare: 'from-blue-100 to-blue-200 border-blue-400',
-      epic: 'from-purple-100 to-purple-200 border-purple-500',
-      legendary: 'from-yellow-100 to-yellow-200 border-yellow-500'
-    }
-
-    const rarityLabels = {
-      common: 'רגיל',
-      rare: 'נדיר',
-      epic: 'אפי',
-      legendary: 'אגדי'
+    const levelColors = {
+      '1': 'from-gray-100 to-gray-200 border-gray-300',
+      '2': 'from-blue-100 to-blue-200 border-blue-400',
+      '3': 'from-purple-100 to-purple-200 border-purple-500',
+      '4': 'from-yellow-100 to-yellow-200 border-yellow-500',
+      '5': 'from-red-100 to-pink-200 border-red-600'
     }
 
     return (
@@ -644,50 +669,43 @@ function Game({ onLogout }) {
                 <p className="text-lg text-gray-600">נצחי משחקים כדי לאסוף דינוזאורים חדשים!</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[70vh] overflow-y-auto p-4">
-                {playerDinosaurs.map((dino) => (
-                  <div
-                    key={dino.id}
-                    className={`rounded-xl p-4 shadow-lg border-2 bg-gradient-to-br ${rarityColors[dino.rarity] || rarityColors.common}`}
-                  >
-                    <div className="text-center">
-                      <img
-                        src={dino.image_path}
-                        alt={dino.name}
-                        className="mx-auto w-32 h-32 object-contain mb-3"
-                        onError={(e) => {
-                          e.target.src = '/static/dino.png'
-                        }}
-                      />
-                      <div className="font-bold text-lg mb-1" style={{ color: '#654321' }}>
-                        {dino.name}
+              <div className="max-h-[70vh] overflow-y-auto p-4 space-y-6">
+                {[1, 2, 3, 4, 5].map((level) => {
+                  const levelDinosaurs = playerDinosaurs.filter(d => parseInt(d.level) === level)
+                  if (levelDinosaurs.length === 0) return null
+                  
+                  return (
+                    <div key={level} className="space-y-2">
+                      <h3 className="text-xl font-bold mb-3" style={{ color: '#654321' }}>
+                        רמה {level}
+                      </h3>
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {levelDinosaurs.map((dino) => (
+                          <div
+                            key={dino.id}
+                            className={`rounded-xl p-4 shadow-lg border-2 bg-gradient-to-br ${levelColors[dino.level] || levelColors['1']}`}
+                          >
+                            <div className="text-center">
+                              <img
+                                src={dino.image_path}
+                                alt={dino.name}
+                                className="mx-auto w-32 h-32 object-contain mb-3"
+                              />
+                              <div className="font-bold text-lg mb-1" style={{ color: '#654321' }}>
+                                {dino.name}
+                              </div>
+                              {dino.description && (
+                                <div className="text-xs text-gray-600 mb-2">
+                                  {dino.description}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                      <div className="text-xs font-semibold mb-2" style={{ color: '#666' }}>
-                        {rarityLabels[dino.rarity] || 'רגיל'}
-                      </div>
-                      {dino.description && (
-                        <div className="text-xs text-gray-600 mb-2">
-                          {dino.description}
-                        </div>
-                      )}
-                      <Button
-                        size="sm"
-                        onClick={async () => {
-                          try {
-                            await api.selectDinosaur(dino.id)
-                            await loadPlayerDinosaurs()
-                            alert(`דינוזאור ${dino.name} נבחר!`)
-                            setShowDinosaurGallery(false)
-                          } catch (err) {
-                            alert(`שגיאה: ${err.message}`)
-                          }
-                        }}
-                      >
-                        בחר
-                      </Button>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </div>
@@ -782,6 +800,13 @@ function Game({ onLogout }) {
           >
             🦕 האוסף שלי ({playerDinosaurs.length})
           </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setShowDinosaurViewOnly(true)}
+          >
+            👀 דינוזאורים זמינים
+          </Button>
         </div>
         <h1 className="absolute left-1/2 transform -translate-x-1/2 text-base md:text-lg font-bold text-center" style={{ color: '#2d5016', textShadow: '1px 1px 2px rgba(255,255,255,0.5)' }}>ברוך הבא למשחק של דינו!!!</h1>
         <Button 
@@ -793,27 +818,14 @@ function Game({ onLogout }) {
         </Button>
       </header>
 
-      {/* Player's Dinosaurs - Display all collected dinosaurs */}
-      {/* Always show default dinos on sides */}
-      <div className={`absolute left-2 md:left-4 lg:left-8 bottom-0 z-20 pointer-events-none transition-transform duration-500 ${showCelebration ? 'animate-bounce' : ''}`} style={{ height: '25vh', minHeight: '180px', maxHeight: '250px' }}>
-        <img 
-          src="/static/dino_1.png" 
-          alt="דינוזאור שמאלי" 
-          className="h-full w-auto object-contain"
-          style={{ 
-            filter: 'drop-shadow(4px 4px 8px rgba(0,0,0,0.3))'
-          }}
-        />
-      </div>
-
       {/* Display player's collected dinosaurs in the center area (max 5 for display) */}
       {playerDinosaurs.length > 0 && (
-        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 z-20 pointer-events-none flex items-end justify-center gap-2 md:gap-3" style={{ maxWidth: '70vw' }}>
+        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 z-20 pointer-events-none flex items-end justify-center gap-3 md:gap-4" style={{ maxWidth: '80vw' }}>
           {playerDinosaurs.slice(0, 5).map((dino, index) => {
-            // Calculate size based on number of dinosaurs (smaller when more)
-            const baseSize = 180
-            const maxSize = 250
-            const size = Math.min(maxSize, baseSize + (5 - playerDinosaurs.length) * 15)
+            // Calculate size based on number of dinosaurs (larger than before)
+            const baseSize = 220
+            const maxSize = 300
+            const size = Math.min(maxSize, baseSize + (5 - playerDinosaurs.length) * 20)
             
             return (
               <div
@@ -833,26 +845,12 @@ function Game({ onLogout }) {
                   style={{ 
                     filter: 'drop-shadow(4px 4px 8px rgba(0,0,0,0.3))'
                   }}
-                  onError={(e) => {
-                    e.target.src = '/static/dino.png' // Fallback
-                  }}
                 />
               </div>
             )
           })}
         </div>
       )}
-
-      <div className={`absolute right-2 md:right-4 lg:right-8 bottom-0 z-20 pointer-events-none transition-transform duration-500 ${showCelebration ? 'animate-bounce' : ''}`} style={{ height: '25vh', minHeight: '180px', maxHeight: '250px', animationDelay: showCelebration ? '0.1s' : '0s' }}>
-        <img 
-          src="/static/dino_2.png" 
-          alt="דינוזאור ימני" 
-          className="h-full w-auto object-contain"
-          style={{ 
-            filter: 'drop-shadow(4px 4px 8px rgba(0,0,0,0.3))'
-          }}
-        />
-      </div>
 
       {/* Game Scene Container - Centered */}
       <main className="absolute inset-0 flex flex-col items-center justify-center p-4 z-10" style={{ paddingTop: '80px' }}>
