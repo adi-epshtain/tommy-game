@@ -33,7 +33,11 @@ function Game({ onLogout }) {
   const [playerDinosaurs, setPlayerDinosaurs] = useState([]) // All dinosaurs in player's collection
   const [showDinosaurGallery, setShowDinosaurGallery] = useState(false) // Gallery view
   const [showDinosaurViewOnly, setShowDinosaurViewOnly] = useState(false) // View-only mode (browse all dinosaurs)
-  const [isMuted, setIsMuted] = useState(false) // Mute state for sound effects
+  // Load mute state from localStorage, default to false
+  const [isMuted, setIsMuted] = useState(() => {
+    const savedMuteState = localStorage.getItem('gameMuted')
+    return savedMuteState === 'true'
+  })
   const navigate = useNavigate()
 
   // Function to play celebration sound (applause/clapping)
@@ -218,6 +222,11 @@ function Game({ onLogout }) {
     loadPlayerInfo()
     loadPlayerDinosaurs()
   }, [])
+
+  // Save mute state to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('gameMuted', isMuted.toString())
+  }, [isMuted])
 
   const loadPlayerInfo = async () => {
     try {
@@ -887,11 +896,11 @@ function Game({ onLogout }) {
             <div 
               className="relative"
               style={{
-                width: '30px',
+                width: '40px',
                 height: '300px',
                 background: '#E3F2FD',
-                borderRadius: '15px',
-                border: '2px solid #90CAF9',
+                borderRadius: '20px',
+                border: '3px solid #90CAF9',
                 boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)',
                 overflow: 'hidden'
               }}
@@ -899,15 +908,18 @@ function Game({ onLogout }) {
               {/* Progress Fill - Light Blue */}
               {(() => {
                 const progressPercent = Math.min(Math.max((score / winningScore) * 100, 0), 100)
+                const actualHeight = Math.max(progressPercent, score > 0 ? 2 : 0) // Minimum 2% when score > 0
                 return (
                   <>
                     <div 
                       className="absolute bottom-0 left-0 right-0 transition-all duration-700 ease-out"
                       style={{
-                        height: `${progressPercent}%`,
-                        minHeight: score > 0 ? '4px' : '0px',
+                        height: `${actualHeight}%`,
+                        minHeight: score > 0 ? '8px' : '0px',
                         background: 'linear-gradient(180deg, #64B5F6 0%, #42A5F5 50%, #2196F3 100%)',
-                        borderRadius: '15px',
+                        borderRadius: '17px',
+                        border: '2px solid #1976D2',
+                        boxShadow: '0 2px 8px rgba(25, 118, 210, 0.4)',
                         willChange: 'height'
                       }}
                     />
@@ -917,38 +929,23 @@ function Game({ onLogout }) {
               })()}
             </div>
             
-            {/* Growing Dinosaur */}
+            {/* Dinosaur - Fixed Size */}
             <div className="flex flex-col items-center justify-end" style={{ height: '300px' }}>
-              {(() => {
-                const progressRatio = winningScore > 0 ? Math.min(Math.max(score / winningScore, 0), 1) : 0
-                const dinoSize = 60 + progressRatio * 140
-                
-                return (
-                  <div
-                    className="transition-all duration-700 ease-out flex items-center justify-center"
-                    style={{
-                      width: `${dinoSize}px`,
-                      height: `${dinoSize}px`,
-                      minWidth: '60px',
-                      minHeight: '60px',
-                      maxWidth: '200px',
-                      maxHeight: '200px',
-                      filter: `drop-shadow(0 ${3 + progressRatio * 5}px ${5 + progressRatio * 10}px rgba(0,0,0,0.2))`,
-                      animation: score >= winningScore ? 'bounce 1s ease-in-out infinite' : 'none',
-                      willChange: 'width, height, filter'
-                    }}
-                  >
-                    <img 
-                      src="/static/dino_progress.png" 
-                      alt="Progress Dinosaur"
-                      className="w-full h-full object-contain"
-                      style={{
-                        transition: 'all 0.7s ease-out'
-                      }}
-                    />
-                  </div>
-                )
-              })()}
+              <div
+                className="flex items-center justify-center"
+                style={{
+                  width: '120px',
+                  height: '120px',
+                  filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))',
+                  animation: score >= winningScore ? 'bounce 1s ease-in-out infinite' : 'none'
+                }}
+              >
+                <img 
+                  src="/static/dino_progress.png" 
+                  alt="Progress Dinosaur"
+                  className="w-full h-full object-contain"
+                />
+              </div>
             </div>
             
             {/* Score Display */}

@@ -95,7 +95,7 @@ function DinosaurSelection({ onSelect, onSkip, playerStage = 1, playerDinosaurs 
                 רמה {level}
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {levelDinosaurs.map((dino) => {
+                {levelDinosaurs.map((dino, index) => {
                   const dinoLevel = parseInt(dino.level) || 1
                   const isLevelLocked = dinoLevel > playerStage
                   // Check if dinosaur is owned by comparing IDs
@@ -107,12 +107,12 @@ function DinosaurSelection({ onSelect, onSkip, playerStage = 1, playerDinosaurs 
                     <div
                       key={dino.id}
                       onClick={() => isClickable && setSelectedId(dino.id)}
-                      className={`rounded-xl p-4 transition-all border-2 relative ${
+                      className={`dino-card rounded-xl p-4 transition-all border-2 relative ${
                         isDisabled
                           ? 'opacity-50 cursor-not-allowed bg-gray-200 border-gray-400'
                           : selectedId === dino.id
                           ? 'bg-gradient-to-br from-green-200 to-emerald-200 border-green-500 scale-105 shadow-lg cursor-pointer'
-                          : `bg-gradient-to-br ${levelColors[dino.level] || levelColors['1']} border-gray-300 ${viewOnly ? 'cursor-default' : 'hover:scale-102 cursor-pointer'}`
+                          : `bg-gradient-to-br ${levelColors[dino.level] || levelColors['1']} border-gray-300 ${viewOnly ? 'cursor-default' : 'cursor-pointer'}`
                       }`}
                     >
                       <div className="text-center">
@@ -125,7 +125,15 @@ function DinosaurSelection({ onSelect, onSkip, playerStage = 1, playerDinosaurs 
                         <img
                           src={dino.image_path}
                           alt={dino.name}
-                          className={`mx-auto w-24 h-24 object-contain mb-2 ${isDisabled ? 'grayscale' : ''}`}
+                          className={`dino-image mx-auto w-24 h-24 object-contain mb-2 ${isDisabled ? 'grayscale' : ''}`}
+                          style={{
+                            filter: isDisabled 
+                              ? 'grayscale(100%)' 
+                              : selectedId === dino.id
+                              ? 'drop-shadow(6px 6px 12px rgba(34, 197, 94, 0.6))'
+                              : 'drop-shadow(4px 4px 8px rgba(0,0,0,0.3))',
+                            transition: 'all 0.3s ease'
+                          }}
                         />
                         <div className="font-bold text-lg mb-1" style={{ color: isDisabled ? '#999' : '#654321' }}>
                           {dino.name}
