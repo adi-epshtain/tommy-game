@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { api, removeToken } from '../services/api'
 import Button from '../components/Button'
 import Leaderboard from '../components/Leaderboard'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 
 function AdminDashboard() {
   const [players, setPlayers] = useState([])
@@ -287,7 +287,7 @@ function AdminDashboard() {
                 </div>
               </div>
               <h2 className="text-2xl font-semibold text-center" style={{ color: '#654321' }}>
-                שחקן: {playerStats.player_name} (ID: {playerStats.player_id})
+                שחקן: {playerStats.player_name}
               </h2>
               
               {/* Tabs */}
@@ -418,31 +418,6 @@ function AdminDashboard() {
                 ) : playerTrends && playerTrends.trends && playerTrends.trends.length > 0 ? (
                   <>
                     {/* Charts */}
-                    <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-6 shadow-lg border-2 border-blue-200 mb-6">
-                      <h3 className="text-2xl font-bold mb-4 text-center" style={{ color: '#654321' }}>
-                        ממוצע ציונים לפי תקופה
-                      </h3>
-                      <ResponsiveContainer width="100%" height={300}>
-                        <LineChart data={playerTrends.trends}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis 
-                            dataKey="period_label" 
-                            style={{ fontSize: '12px' }}
-                          />
-                          <YAxis style={{ fontSize: '12px' }} />
-                          <Tooltip />
-                          <Legend />
-                          <Line 
-                            type="monotone" 
-                            dataKey="avg_score" 
-                            stroke="#f59e0b" 
-                            strokeWidth={2}
-                            name="ממוצע ציון"
-                          />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </div>
-
                     <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 shadow-lg border-2 border-green-200 mb-6">
                       <h3 className="text-2xl font-bold mb-4 text-center" style={{ color: '#654321' }}>
                         אחוז הצלחה לפי תקופה
@@ -473,7 +448,7 @@ function AdminDashboard() {
                         מספר משחקים לפי תקופה
                       </h3>
                       <ResponsiveContainer width="100%" height={300}>
-                        <BarChart data={playerTrends.trends}>
+                        <LineChart data={playerTrends.trends}>
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis 
                             dataKey="period_label" 
@@ -482,12 +457,14 @@ function AdminDashboard() {
                           <YAxis style={{ fontSize: '12px' }} />
                           <Tooltip />
                           <Legend />
-                          <Bar 
+                          <Line 
+                            type="monotone" 
                             dataKey="total_games" 
-                            fill="#a855f7"
+                            stroke="#a855f7" 
+                            strokeWidth={2}
                             name="מספר משחקים"
                           />
-                        </BarChart>
+                        </LineChart>
                       </ResponsiveContainer>
                     </div>
 
@@ -502,7 +479,6 @@ function AdminDashboard() {
                             <tr className="bg-amber-100">
                               <th className="border-2 border-gray-300 px-4 py-2">תקופה</th>
                               <th className="border-2 border-gray-300 px-4 py-2">מספר משחקים</th>
-                              <th className="border-2 border-gray-300 px-4 py-2">ממוצע ציון</th>
                               <th className="border-2 border-gray-300 px-4 py-2">אחוז הצלחה</th>
                               <th className="border-2 border-gray-300 px-4 py-2">תשובות נכונות</th>
                               <th className="border-2 border-gray-300 px-4 py-2">תשובות שגויות</th>
@@ -513,7 +489,6 @@ function AdminDashboard() {
                               <tr key={idx} className={idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
                                 <td className="border-2 border-gray-300 px-4 py-2 font-semibold">{trend.period_label}</td>
                                 <td className="border-2 border-gray-300 px-4 py-2">{trend.total_games}</td>
-                                <td className="border-2 border-gray-300 px-4 py-2">{trend.avg_score}</td>
                                 <td className="border-2 border-gray-300 px-4 py-2">{trend.success_rate}%</td>
                                 <td className="border-2 border-gray-300 px-4 py-2 text-green-700 font-semibold">{trend.total_correct}</td>
                                 <td className="border-2 border-gray-300 px-4 py-2 text-red-700 font-semibold">{trend.total_incorrect}</td>

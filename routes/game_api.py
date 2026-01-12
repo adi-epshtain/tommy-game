@@ -13,7 +13,7 @@ from dal.player_dal import get_player_by_name
 from dal.player_session_dal import (
     create_player_session, create_player_session_with_stage, update_score_and_stage_player_session, end_session,
     get_session_by_player_id, get_top_players, PlayerScore,
-    get_last_player_sessions, update_player_stage, should_advance_stage
+    get_last_player_sessions, update_player_stage, should_advance_stage, get_player_rank
 )
 from dal.question_dal import get_random_question_by_game, get_question_by_id
 from infra.database import get_db
@@ -187,12 +187,8 @@ async def game_end_data(
     # שימוש באותו endpoint של top_players
     top_players: List[PlayerScore] = await get_top_players(db, limit=10)
     
-    # מצא את המיקום המדויק של השחקן בלוח התוצאות לפי player_id
-    player_rank = None
-    for idx, p in enumerate(top_players):
-        if p.name == player_name:
-            player_rank = idx + 1
-            break
+    # חשב את הדירוג של השחקן לפי הניקוד הגבוה ביותר שלו
+    player_rank = await get_player_rank(db, player.id)
     
     return {
         "score": player_session.score,

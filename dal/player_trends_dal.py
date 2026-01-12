@@ -9,7 +9,7 @@ from dal.player_answer_dal import get_wrong_questions
 
 @dataclass
 class PeriodStats:
-    period_label: str  # "2024-W01" or "2024-01"
+    period_label: str  # "01/01/2024" (week) or "01/2024" (month)
     start_date: datetime
     end_date: datetime
     total_games: int
@@ -52,15 +52,13 @@ async def get_player_trends_by_period(
             continue
 
         if period_type == "week":
-            # ISO week format: YYYY-WNN
+            # ISO week format: YYYY-WNN (for grouping)
             year, week, _ = ps.ended_at.isocalendar()
             period_key = f"{year}-W{week:02d}"
-            period_label = f"{year}-W{week:02d}"
         else:  # month
             year = ps.ended_at.year
             month = ps.ended_at.month
             period_key = f"{year}-{month:02d}"
-            period_label = f"{year}-{month:02d}"
 
         if period_key not in period_groups:
             period_groups[period_key] = []
@@ -101,8 +99,16 @@ async def get_player_trends_by_period(
         success_rate = (total_correct / total_answers * 100) if total_answers > 0 else 0.0
         avg_score = total_score / len(sessions) if sessions else 0.0
 
+        # Format period_label as readable date
+        if period_type == "week":
+            # Format: DD/MM/YYYY (start date of week)
+            period_label = start_date.strftime("%d/%m/%Y")
+        else:  # month
+            # Format: MM/YYYY (month/year)
+            period_label = start_date.strftime("%m/%Y")
+
         result.append(PeriodStats(
-            period_label=period_key,
+            period_label=period_label,
             start_date=start_date,
             end_date=end_date,
             total_games=len(sessions),

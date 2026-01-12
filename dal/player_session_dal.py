@@ -1,6 +1,6 @@
 from dataclasses import asdict, dataclass
 import json
-from sqlalchemy import desc
+from sqlalchemy import desc, func
 from infra.logger import log
 from models import PlayerSession, Question, Player
 from sqlalchemy.orm import Session, joinedload
@@ -182,13 +182,24 @@ async def get_top_players(session: Session, limit: int = 10) -> List[PlayerScore
     except (redis.ConnectionError, redis.TimeoutError, AttributeError):
         pass  # Redis unavailable, skip caching and continue with database query
     
-    # מסנן רק sessions שנסיימו ומשפר את הביצועים
-    top_players: List[tuple[str, int]] = (
-        session.query(Player.name, PlayerSession.score)
-        .join(Player, Player.id == PlayerSession.player_id)  # type: ignore
+    # Get max score per player (only for completed sessions and non-excluded players)
+    subquery = (
+        session.query(
+            PlayerSession.player_id,
+            func.max(PlayerSession.score).label('max_score')
+        )
+        .join(Player, Player.id == PlayerSession.player_id)
         .filter(PlayerSession.ended_at.isnot(None))  # רק sessions שנסיימו
-        .order_by(PlayerSession.score.desc(),
-                  PlayerSession.ended_at.desc())
+        .filter(Player.excluded_from_leaderboard == False)  # רק שחקנים שלא הוחרגו
+        .group_by(PlayerSession.player_id)
+        .subquery()
+    )
+    
+    # Join with players to get names and order by max score
+    top_players: List[tuple[str, int]] = (
+        session.query(Player.name, subquery.c.max_score)
+        .join(subquery, Player.id == subquery.c.player_id)
+        .order_by(subquery.c.max_score.desc(), Player.name.asc())
         .limit(limit)
         .all()
     )
@@ -205,6 +216,51 @@ async def get_top_players(session: Session, limit: int = 10) -> List[PlayerScore
         pass  # Redis unavailable, skip caching
 
     return result
+
+
+async def get_player_rank(session: Session, player_id: int) -> Optional[int]:
+    """
+    מחשב את הדירוג של שחקן לפי הניקוד הגבוה ביותר שלו.
+    מחזיר None אם השחקן לא נמצא בלוח התוצאות (למשל אם הוחרג או אין לו sessions שנסיימו).
+    """
+    # Get max score for this player
+    player_max_score = (
+        session.query(func.max(PlayerSession.score))
+        .filter(PlayerSession.player_id == player_id)
+        .filter(PlayerSession.ended_at.isnot(None))
+        .scalar()
+    )
+    
+    if player_max_score is None:
+        return None
+    
+    # Check if player is excluded from leaderboard
+    player = session.query(Player).filter(Player.id == player_id).first()
+    if player and player.excluded_from_leaderboard:
+        return None
+    
+    # Count how many players have a higher max score
+    # Get max score per player (only for completed sessions and non-excluded players)
+    subquery = (
+        session.query(
+            PlayerSession.player_id,
+            func.max(PlayerSession.score).label('max_score')
+        )
+        .join(Player, Player.id == PlayerSession.player_id)
+        .filter(PlayerSession.ended_at.isnot(None))
+        .filter(Player.excluded_from_leaderboard == False)
+        .group_by(PlayerSession.player_id)
+        .subquery()
+    )
+    
+    # Count players with higher or equal max score, then add 1 for rank
+    rank = (
+        session.query(func.count(subquery.c.player_id))
+        .filter(subquery.c.max_score > player_max_score)
+        .scalar()
+    ) or 0
+    
+    return rank + 1
 
 async def get_last_player_sessions(
     session: Session,

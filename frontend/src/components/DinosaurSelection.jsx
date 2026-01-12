@@ -100,25 +100,26 @@ function DinosaurSelection({ onSelect, onSkip, playerStage = 1, playerDinosaurs 
                   const isLevelLocked = dinoLevel > playerStage
                   // Check if dinosaur is owned by comparing IDs
                   const isOwned = playerDinosaurs.some(ownedDino => ownedDino.id === dino.id)
-                  const isDisabled = isLevelLocked || isOwned
+                  const isDisabled = (!viewOnly && (isLevelLocked || isOwned))
+                  const isClickable = !viewOnly && !isDisabled
                   
                   return (
                     <div
                       key={dino.id}
-                      onClick={() => !viewOnly && !isDisabled && setSelectedId(dino.id)}
+                      onClick={() => isClickable && setSelectedId(dino.id)}
                       className={`rounded-xl p-4 transition-all border-2 relative ${
-                        viewOnly || isDisabled
-                          ? 'opacity-50 cursor-default bg-gray-200 border-gray-400'
+                        isDisabled
+                          ? 'opacity-50 cursor-not-allowed bg-gray-200 border-gray-400'
                           : selectedId === dino.id
                           ? 'bg-gradient-to-br from-green-200 to-emerald-200 border-green-500 scale-105 shadow-lg cursor-pointer'
-                          : `bg-gradient-to-br ${levelColors[dino.level] || levelColors['1']} border-gray-300 hover:scale-102 cursor-pointer`
+                          : `bg-gradient-to-br ${levelColors[dino.level] || levelColors['1']} border-gray-300 ${viewOnly ? 'cursor-default' : 'hover:scale-102 cursor-pointer'}`
                       }`}
                     >
                       <div className="text-center">
                         {isLevelLocked && (
                           <div className="absolute top-2 right-2 text-2xl">🔒</div>
                         )}
-                        {isOwned && (
+                        {isOwned && !isLevelLocked && (
                           <div className="absolute top-2 right-2 text-2xl">✅</div>
                         )}
                         <img
@@ -134,7 +135,7 @@ function DinosaurSelection({ onSelect, onSkip, playerStage = 1, playerDinosaurs 
                             🔒 חסום - נצח ברמה {dinoLevel} כדי לפתוח
                           </div>
                         )}
-                        {isOwned && (
+                        {isOwned && !isLevelLocked && (
                           <div className="text-xs mt-1 text-green-600 font-semibold">
                             ✅ כבר קיים באוסף שלך
                           </div>

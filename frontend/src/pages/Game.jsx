@@ -372,10 +372,12 @@ function Game({ onLogout }) {
 
   const handleDinosaurSelected = async (dinosaurId) => {
     try {
-      // Reload player's dinosaurs (new one was just unlocked)
-      await loadPlayerDinosaurs()
-      // Close selection screen
+      // Close selection screen first
       setShowDinosaurSelection(false)
+      // Reload player's dinosaurs (new one was just unlocked) - do this after closing selection screen
+      await loadPlayerDinosaurs()
+      // Small delay to ensure state updates
+      await new Promise(resolve => setTimeout(resolve, 100))
       // Show game end screen with leaderboard (don't reset - gameEndData is already set)
       setGameEnded(true)
     } catch (err) {
@@ -808,7 +810,7 @@ function Game({ onLogout }) {
             👀 דינוזאורים זמינים
           </Button>
         </div>
-        <h1 className="absolute left-1/2 transform -translate-x-1/2 text-base md:text-lg font-bold text-center" style={{ color: '#2d5016', textShadow: '1px 1px 2px rgba(255,255,255,0.5)' }}>ברוך הבא למשחק של דינו!!!</h1>
+        <h1 className="absolute left-1/2 transform -translate-x-1/2 text-xl md:text-2xl font-bold text-center" style={{ color: '#2d5016', textShadow: '1px 1px 2px rgba(255,255,255,0.5)' }}>ברוך הבא למשחק של דינו וטומי!!!</h1>
         <Button 
           variant="secondary"
           size="sm"
@@ -823,8 +825,8 @@ function Game({ onLogout }) {
         <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 z-20 pointer-events-none flex items-end justify-center gap-3 md:gap-4" style={{ maxWidth: '80vw' }}>
           {playerDinosaurs.slice(0, 5).map((dino, index) => {
             // Calculate size based on number of dinosaurs (larger than before)
-            const baseSize = 220
-            const maxSize = 300
+            const baseSize = 280
+            const maxSize = 380
             const size = Math.min(maxSize, baseSize + (5 - playerDinosaurs.length) * 20)
             
             return (
@@ -887,7 +889,7 @@ function Game({ onLogout }) {
           
           {/* Player Greeting */}
           {playerName && (
-            <h2 className="text-lg md:text-xl mb-3 text-center relative z-10 font-bold" style={{
+            <h2 className="text-2xl md:text-3xl mb-3 text-center relative z-10 font-bold" style={{
               color: '#654321',
               textShadow: '2px 2px 4px rgba(0,0,0,0.2)'
             }}>

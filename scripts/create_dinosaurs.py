@@ -19,14 +19,19 @@ from infra.logger import log
 DINOSAURS = [
     {"name": "דינו חוקר", "image_path": "/static/dino_1.png", "description": "סקרן, מגלה, לומד", "level": "1"},
     {"name": "דינו מהיר", "image_path": "/static/dino_2.png", "description": "זריז, חד, תגובתי", "level": "1"},
+    {"name": "דינו תייר", "image_path": "/static/dino_11.png", "description": "נוסע, מגלה, סקרן", "level": "1"},
     {"name": "דינו טייס", "image_path": "/static/dino_3.png", "description": "הרפתקן, חופשי, נועז", "level": "2"},
     {"name": "דינו לוחם", "image_path": "/static/dino_4.png", "description": "חזק, נחוש, מגן", "level": "2"},
+    {"name": "דינו חייכן", "image_path": "/static/dino_12.png", "description": "שמח, עליז, אופטימי", "level": "2"},
     {"name": "דינו חכם", "image_path": "/static/dino_5.png", "description": "חושב, מנתח, פותר", "level": "3"},
     {"name": "דינו אמיץ", "image_path": "/static/dino_6.png", "description": "fearless, בטוח, יוזם", "level": "3"},
+    {"name": "דינו נדיר", "image_path": "/static/dino_13.png", "description": "מיוחד, ייחודי, נדיר", "level": "3"},
     {"name": "דינו רץ", "image_path": "/static/dino_7.png", "description": "תחרותי, אנרגטי, מתמיד", "level": "4"},
     {"name": "דינו כוכב", "image_path": "/static/dino_8.png", "description": "בולט, בטוח, מוביל", "level": "4"},
+    {"name": "דינו מנצח", "image_path": "/static/dino_14.png", "description": "מנצח, מצליח, מעולה", "level": "4"},
     {"name": "דינו אסטרונאוט", "image_path": "/static/dino_9.png", "description": "חולם, סקרן, מגלה", "level": "5"},
     {"name": "דינו גיבור", "image_path": "/static/dino_10.png", "description": "עוזר, מוביל, מציל", "level": "5"},
+    {"name": "דינו על", "image_path": "/static/dino_15.png", "description": "עליון, מעולה, מושלם", "level": "5"},
 ]
 
 def create_dinosaurs():
