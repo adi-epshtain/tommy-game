@@ -33,10 +33,12 @@ function Game({ onLogout }) {
   const [playerDinosaurs, setPlayerDinosaurs] = useState([]) // All dinosaurs in player's collection
   const [showDinosaurGallery, setShowDinosaurGallery] = useState(false) // Gallery view
   const [showDinosaurViewOnly, setShowDinosaurViewOnly] = useState(false) // View-only mode (browse all dinosaurs)
+  const [isMuted, setIsMuted] = useState(false) // Mute state for sound effects
   const navigate = useNavigate()
 
   // Function to play celebration sound (applause/clapping)
   const playCelebrationSound = () => {
+    if (isMuted) return // Don't play if muted
     try {
       // Create a simple applause-like sound using Web Audio API
       const audioContext = new (window.AudioContext || window.webkitAudioContext)()
@@ -94,6 +96,7 @@ function Game({ onLogout }) {
 
   // Function to play top 3 victory sound (special win sound for top 3)
   const playTop3VictorySound = (rank) => {
+    if (isMuted) return // Don't play if muted
     try {
       const audioContext = new (window.AudioContext || window.webkitAudioContext)()
       const oscillator = audioContext.createOscillator()
@@ -144,6 +147,7 @@ function Game({ onLogout }) {
 
   // Function to play error sound ("אוי אוי אוי" - sad/disappointed sound)
   const playErrorSound = () => {
+    if (isMuted) return // Don't play if muted
     try {
       const audioContext = new (window.AudioContext || window.webkitAudioContext)()
       const duration = 0.6 // 600ms
@@ -773,7 +777,7 @@ function Game({ onLogout }) {
         backdropFilter: 'blur(8px)',
         boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
       }}>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-shrink-0">
           <Button
             variant="secondary"
             size="sm"
@@ -810,24 +814,45 @@ function Game({ onLogout }) {
             👀 דינוזאורים זמינים
           </Button>
         </div>
-        <h1 className="absolute left-1/2 transform -translate-x-1/2 text-xl md:text-2xl font-bold text-center" style={{ color: '#2d5016', textShadow: '1px 1px 2px rgba(255,255,255,0.5)' }}>ברוך הבא למשחק של דינו וטומי!!!</h1>
-        <Button 
-          variant="secondary"
-          size="sm"
-          onClick={handleLogout}
-        >
-          🔒 התנתקות
-        </Button>
+        <h1 className="flex-1 text-center text-xl md:text-2xl font-bold px-4" style={{ color: '#2d5016', textShadow: '1px 1px 2px rgba(255,255,255,0.5)' }}>ברוך הבא למשחק של דינו וטומי!!!</h1>
+        <div className="flex gap-2 flex-shrink-0">
+          <button
+            onClick={() => setIsMuted(!isMuted)}
+            className="px-3 py-2 rounded-lg border-2 font-semibold text-sm transition-all duration-200 flex items-center gap-2"
+            style={{ 
+              backgroundColor: isMuted ? '#ff6b6b' : '#4ade80',
+              borderColor: isMuted ? '#dc2626' : '#22c55e',
+              color: 'white',
+              boxShadow: isMuted ? '0 2px 8px rgba(220, 38, 38, 0.3)' : '0 2px 8px rgba(34, 197, 94, 0.3)',
+              transform: 'scale(1)',
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          >
+            <span className="text-lg">{isMuted ? '🔇' : '🔊'}</span>
+            <span>{isMuted ? 'מושתק' : 'פעיל'}</span>
+          </button>
+          <Button 
+            variant="secondary"
+            size="sm"
+            onClick={handleLogout}
+          >
+            🔒 התנתקות
+          </Button>
+        </div>
       </header>
 
-      {/* Display player's collected dinosaurs in the center area (max 5 for display) */}
+      {/* Display player's collected dinosaurs - positioned at bottom to avoid the question card */}
       {playerDinosaurs.length > 0 && (
-        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 z-20 pointer-events-none flex items-end justify-center gap-3 md:gap-4" style={{ maxWidth: '80vw' }}>
-          {playerDinosaurs.slice(0, 5).map((dino, index) => {
-            // Calculate size based on number of dinosaurs (larger than before)
-            const baseSize = 280
-            const maxSize = 380
-            const size = Math.min(maxSize, baseSize + (5 - playerDinosaurs.length) * 20)
+        <div className="absolute bottom-0 left-0 right-0 z-15 pointer-events-none flex items-end justify-center gap-2 md:gap-3 flex-wrap px-4 py-2" style={{ maxHeight: 'calc(40vh)', overflowY: 'auto' }}>
+          {playerDinosaurs.map((dino, index) => {
+            // Calculate size based on number of dinosaurs - smaller when there are more
+            const baseSize = 240
+            const minSize = 150
+            const totalDinosaurs = playerDinosaurs.length
+            // Reduce size as more dinosaurs are added, but keep minimum size
+            const sizeReduction = Math.max(0, (totalDinosaurs - 5) * 12)
+            const size = Math.max(minSize, baseSize - sizeReduction)
             
             return (
               <div
@@ -851,6 +876,97 @@ function Game({ onLogout }) {
               </div>
             )
           })}
+        </div>
+      )}
+
+      {/* Growing Dinosaur Progress Bar - Right Side */}
+      {!gameEnded && !showDinosaurSelection && !showTop3Celebration && !showAdvanceDialog && !showSettings && !showDinosaurGallery && !showDinosaurViewOnly && winningScore > 0 && (
+        <div className="absolute right-4 top-1/2 transform -translate-y-1/2 z-25 flex flex-col items-center" style={{ marginTop: '40px' }}>
+          <div className="relative flex items-end gap-4" style={{ width: '150px', height: '400px' }}>
+            {/* Progress Bar Track - Vertical (Blue Style) */}
+            <div 
+              className="relative"
+              style={{
+                width: '30px',
+                height: '300px',
+                background: '#E3F2FD',
+                borderRadius: '15px',
+                border: '2px solid #90CAF9',
+                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)',
+                overflow: 'hidden'
+              }}
+            >
+              {/* Progress Fill - Light Blue */}
+              {(() => {
+                const progressPercent = Math.min(Math.max((score / winningScore) * 100, 0), 100)
+                return (
+                  <>
+                    <div 
+                      className="absolute bottom-0 left-0 right-0 transition-all duration-700 ease-out"
+                      style={{
+                        height: `${progressPercent}%`,
+                        minHeight: score > 0 ? '4px' : '0px',
+                        background: 'linear-gradient(180deg, #64B5F6 0%, #42A5F5 50%, #2196F3 100%)',
+                        borderRadius: '15px',
+                        willChange: 'height'
+                      }}
+                    />
+                    
+                  </>
+                )
+              })()}
+            </div>
+            
+            {/* Growing Dinosaur */}
+            <div className="flex flex-col items-center justify-end" style={{ height: '300px' }}>
+              {(() => {
+                const progressRatio = winningScore > 0 ? Math.min(Math.max(score / winningScore, 0), 1) : 0
+                const dinoSize = 60 + progressRatio * 140
+                
+                return (
+                  <div
+                    className="transition-all duration-700 ease-out flex items-center justify-center"
+                    style={{
+                      width: `${dinoSize}px`,
+                      height: `${dinoSize}px`,
+                      minWidth: '60px',
+                      minHeight: '60px',
+                      maxWidth: '200px',
+                      maxHeight: '200px',
+                      filter: `drop-shadow(0 ${3 + progressRatio * 5}px ${5 + progressRatio * 10}px rgba(0,0,0,0.2))`,
+                      animation: score >= winningScore ? 'bounce 1s ease-in-out infinite' : 'none',
+                      willChange: 'width, height, filter'
+                    }}
+                  >
+                    <img 
+                      src="/static/dino_progress.png" 
+                      alt="Progress Dinosaur"
+                      className="w-full h-full object-contain"
+                      style={{
+                        transition: 'all 0.7s ease-out'
+                      }}
+                    />
+                  </div>
+                )
+              })()}
+            </div>
+            
+            {/* Score Display */}
+            <div 
+              className="absolute top-0 left-1/2 transform -translate-x-1/2 text-center"
+              style={{ width: '150px' }}
+            >
+              <div 
+                className="text-lg font-bold"
+                style={{ 
+                  color: '#1976D2',
+                  textShadow: '1px 1px 2px rgba(255,255,255,0.8)'
+                }}
+              >
+                {winningScore} / {score}
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -929,26 +1045,10 @@ function Game({ onLogout }) {
             </h2>
           </div>
 
-          {/* Stage and Score */}
+          {/* Stage */}
           <div className="flex justify-center gap-4 mb-4 relative z-10">
             <div id="stage" className="text-sm md:text-base font-bold px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-100 to-pink-100 border-2 border-purple-300 shadow-md" style={{ color: '#654321' }}>
               🎯 רמה: {stage}
-            </div>
-            <div id="score" className={`text-sm md:text-base font-bold px-3 py-1.5 rounded-lg border-2 shadow-md transition-all duration-300 relative ${score > 0 ? 'bg-gradient-to-r from-green-100 to-emerald-100 border-green-400 scale-105' : 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-300'}`} style={{ color: '#654321' }}>
-              ⭐ ניקוד: {score} / {winningScore}
-              {/* Score Popup */}
-              {showScorePopup && (
-                <div 
-                  className="absolute -top-8 left-1/2 transform -translate-x-1/2 text-lg font-bold animate-bounce"
-                  style={{ 
-                    color: scoreChange > 0 ? '#22c55e' : '#ef4444',
-                    textShadow: '1px 1px 2px rgba(0,0,0,0.3)',
-                    animation: 'bounce 1s ease-out forwards'
-                  }}
-                >
-                  {scoreChange > 0 ? `+${scoreChange} ⭐` : `${scoreChange} ⭐`}
-                </div>
-              )}
             </div>
           </div>
 

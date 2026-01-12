@@ -172,7 +172,7 @@ function DinosaurSelection({ onSelect, onSkip, playerStage = 1, playerDinosaurs 
                   cursor: (!selectedId || unlocking) ? 'not-allowed' : 'pointer'
                 }}
               >
-                {unlocking ? 'פותח...' : '🔓 פתח דינוזאור'}
+                {unlocking ? 'בוחר...' : '✅ בחר דינוזאור'}
               </Button>
               {onSkip && (
                 <Button
