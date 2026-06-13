@@ -14,8 +14,8 @@ async def rate_limit(request: Request, redis_client: Optional[redis.Redis] = Non
     key = f"rate_limit:{ip}"
 
     if not redis_client:
-        log.error("Redis client is not configured for rate limiting.")
-        raise HTTPException(status_code=500, detail="Internal Server Error (rate limiting unavailable)")
+        log.warning("Redis not configured — skipping rate limiting.")
+        return
 
     try:
         current = redis_client.incr(key)
@@ -27,5 +27,5 @@ async def rate_limit(request: Request, redis_client: Optional[redis.Redis] = Non
             raise HTTPException(status_code=429, detail=RATE_LIMIT_MSG)
         return
     except (redis.ConnectionError, redis.TimeoutError, AttributeError) as e:
-        log.error(f"Redis unavailable for rate limiting: {e}")
-        raise HTTPException(status_code=500, detail="Internal Server Error (rate limiting unavailable)")
+        log.warning(f"Redis unavailable — skipping rate limiting: {e}")
+        return
