@@ -1,5 +1,7 @@
 # Tommy Game - Math Quiz Platform
 
+🎮 **[שחק עכשיו](https://tommy-game.onrender.com/game)**
+
 A web-based math quiz game platform built with FastAPI and PostgreSQL. Players solve math problems, progress through difficulty stages, and compete for high scores.
 
 ## Features
