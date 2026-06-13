@@ -12,38 +12,44 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-DB_NAME = os.getenv("DB_NAME", "tommy_game_db")
-DB_USER = os.getenv("DB_USER", "postgres")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "postgres")
-# Override DB_HOST if it's set to "db" (Docker) and we're running locally
-DB_HOST = os.getenv("DB_HOST", "localhost")
-if DB_HOST == "db":
-    # Check if we're actually in Docker by checking if "db" hostname resolves
-    # If not, default to 127.0.0.1 for local development (avoids IPv6 issues)
-    import socket
-    try:
-        socket.gethostbyname("db")
-        # If we get here, "db" resolves, so we're probably in Docker
-    except socket.gaierror:
-        # "db" doesn't resolve, we're running locally
-        DB_HOST = "127.0.0.1"
-        log.info("DB_HOST was set to 'db' but hostname doesn't resolve. Using '127.0.0.1' instead.")
-elif DB_HOST == "localhost":
-    # Use 127.0.0.1 instead of localhost to avoid IPv6 connection issues on Windows
-    DB_HOST = "127.0.0.1"
-DB_PORT = os.getenv("DB_PORT", "5432")
+_DATABASE_URL_ENV = os.getenv("DATABASE_URL")
 
-DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+if _DATABASE_URL_ENV:
+    # Cloud deployment (Render + Supabase) — use the full URL directly
+    DATABASE_URL = _DATABASE_URL_ENV
+    DB_NAME = DATABASE_URL.rsplit("/", 1)[-1].split("?")[0]
+    DB_USER = DB_HOST = DB_PORT = DB_PASSWORD = ""
+    _is_external_db = True
+else:
+    # Local development — build URL from individual vars
+    DB_NAME = os.getenv("DB_NAME", "tommy_game_db")
+    DB_USER = os.getenv("DB_USER", "postgres")
+    DB_PASSWORD = os.getenv("DB_PASSWORD", "postgres")
+    DB_HOST = os.getenv("DB_HOST", "localhost")
+    if DB_HOST == "db":
+        import socket
+        try:
+            socket.gethostbyname("db")
+        except socket.gaierror:
+            DB_HOST = "127.0.0.1"
+            log.info("DB_HOST was set to 'db' but hostname doesn't resolve. Using '127.0.0.1' instead.")
+    elif DB_HOST == "localhost":
+        DB_HOST = "127.0.0.1"
+    DB_PORT = os.getenv("DB_PORT", "5432")
+    DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    _is_external_db = False
 
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def ensure_database_exists() -> None:
     """
-    Ensure the database exists. Creates it if it doesn't exist.
-    Raises exception if PostgreSQL server is unreachable.
+    Ensure the database exists. Skipped for external DBs (Supabase) where it already exists.
     """
-    # Connect to default 'postgres' database to check/create target database
+    if _is_external_db:
+        log.info("External DB (DATABASE_URL set) — skipping database creation check")
+        return
+
     postgres_url = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/postgres"
     postgres_engine = create_engine(postgres_url, pool_pre_ping=True)
     
