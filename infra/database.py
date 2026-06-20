@@ -156,6 +156,20 @@ def add_missing_columns() -> None:
                 if "does not exist" not in str(e).lower() and "no such table" not in str(e).lower():
                     log.warning(f"Error checking/adding 'selected_dinosaur_id' column: {e}")
             
+            # Check and add 'winning_score' to 'player_sessions' table
+            try:
+                session.execute(text("SELECT winning_score FROM player_sessions LIMIT 1"))
+                log.info("Column 'winning_score' already exists in 'player_sessions' table")
+            except Exception as e:
+                session.rollback()
+                if "does not exist" in str(e).lower() or "no such column" in str(e).lower() or "undefined column" in str(e).lower():
+                    log.info("Column 'winning_score' does not exist in 'player_sessions' table. Adding it...")
+                    session.execute(text("ALTER TABLE player_sessions ADD COLUMN winning_score INTEGER NOT NULL DEFAULT 2"))
+                    session.commit()
+                    log.info("Column 'winning_score' added successfully to 'player_sessions' table")
+                else:
+                    log.warning(f"Error checking/adding 'winning_score' column: {e}")
+
             # Check if 'dinosaurs' table exists
             try:
                 session.execute(text("SELECT 1 FROM dinosaurs LIMIT 1"))
@@ -184,17 +198,15 @@ def get_db():
         yield db
     except OperationalError as e:
         db.close()
+        # Log the full error server-side; never leak connection details to the client.
         error_msg = str(e)
         if "could not translate host name" in error_msg or "No such host is known" in error_msg:
             log.error(f"Database host not found. DB_HOST={DB_HOST}. Please ensure PostgreSQL is running or set DB_HOST=localhost")
-            raise HTTPException(
-                status_code=503,
-                detail=f"Database is not available. Please ensure PostgreSQL is running on {DB_HOST}:{DB_PORT} or set DB_HOST=localhost in your environment."
-            )
-        log.error(f"Database connection error: {e}")
+        else:
+            log.error(f"Database connection error: {e}")
         raise HTTPException(
             status_code=503,
-            detail=f"Database is not available. Please ensure PostgreSQL is running. Error: {error_msg}"
+            detail="Service temporarily unavailable. Please try again shortly."
         )
     except HTTPException:
         # Re-raise HTTPExceptions (like 404 Invalid player) - these are intentional
@@ -206,7 +218,7 @@ def get_db():
         log.error(f"Database error: {e}")
         raise HTTPException(
             status_code=503,
-            detail=f"Database error: {str(e)}"
+            detail="Service temporarily unavailable. Please try again shortly."
         )
     finally:
         db.close()

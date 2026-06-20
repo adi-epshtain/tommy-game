@@ -53,18 +53,25 @@ A fun dinosaur-themed math quiz game for kids ages 5-9. Players solve math probl
 - Docker and Docker Compose installed
 - Python 3.11+ (for local development)
 
-### Using Docker (Recommended)
+### Running locally with Docker
 
-1.**Start the application** ( Builds Docker images and starts containers)
+1. **Start the app**
    ```bash
-   docker system prune -a --volumes (only if you want to remove all unused data)
-   docker-compose build --no-cache
    docker-compose up
    ```
 
-2. **Access the application**
-   - Web UI: http://localhost:8000
-   - API Docs: http://localhost:8000/docs
+2. **Open in browser** - http://localhost:8000
+
+3. **If you made code changes and need to rebuild**
+   ```bash
+   docker-compose up --build
+   ```
+
+4. **Full clean rebuild** (if something is broken or dependencies changed)
+   ```bash
+   docker-compose build --no-cache
+   docker-compose up
+   ```
 
 ### Local Development
 

@@ -66,6 +66,9 @@ class PlayerSession(Base):
     game_id = Column(Integer, ForeignKey("games.id"))
     score = Column(Integer, default=0)
     stage = Column(Integer, default=1)
+    # Per-session win target. Stored here (not on the shared Game row) so one
+    # player's settings never affect other players.
+    winning_score = Column(Integer, nullable=False, default=2, server_default="2")
     started_at = Column(TIMESTAMP, server_default=func.now())
     ended_at = Column(TIMESTAMP, nullable=True)
 

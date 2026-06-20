@@ -6,14 +6,15 @@ from sqlalchemy.orm import Session
 from enum import Enum
 from pydantic import BaseModel
 from auth_utils import get_current_player
-from dal.game_dal import get_game_by_name, create_game, update_winning_score
+from dal.game_dal import get_game_by_name, create_game
 from dal.player_answer_dal import get_wrong_questions, update_player_answer, \
     PlayerSessionAnswer
 from dal.player_dal import get_player_by_name
 from dal.player_session_dal import (
     create_player_session, create_player_session_with_stage, update_score_and_stage_player_session, end_session,
     get_session_by_player_id, get_top_players, PlayerScore,
-    get_last_player_sessions, update_player_stage, should_advance_stage, get_player_rank
+    get_last_player_sessions, update_player_stage, should_advance_stage, get_player_rank,
+    update_session_winning_score
 )
 from dal.question_dal import get_random_question_by_game, get_question_by_id
 from infra.database import get_db
@@ -151,11 +152,12 @@ async def submit_answer(
         raise HTTPException(status_code=404, detail=f"No active session found for player: {player.name}")
     is_correct: bool = await update_score_and_stage_player_session(db, question, player_session, req.answer)
     await update_player_answer(db, player_session.id, question.id, req.answer, is_correct)
-    game: Game = await get_game_by_name(db, req.game_name)
-    if player_session.score >= game.winning_score:
+    # Win target is per-session (not global) so one player's settings can't affect others.
+    winning_score = player_session.winning_score or 2
+    if player_session.score >= winning_score:
         await end_session(db, player_session.id)
         return JSONResponse({"redirect": "/end"})
-    new_question: Question = await get_random_question_by_game(db, game.id, player_session.id)
+    new_question: Question = await get_random_question_by_game(db, player_session.game_id, player_session.id)
     if not new_question:
         raise HTTPException(status_code=404, detail="Question not found")
     player_session_answers: PlayerSessionAnswer = await get_wrong_questions(player_session)
@@ -247,15 +249,11 @@ async def get_current_game_state(
     player_session = await get_session_by_player_id(db, player.id)
     if not player_session:
         raise HTTPException(status_code=404, detail="No active session")
-    
-    game: Game = await get_game_by_name(db, GameInfo.MATH_GAME.name)
-    if not game:
-        game: Game = await create_game(db, name=GameInfo.MATH_GAME.name, winning_score=GameInfo.MATH_GAME.winning_score, description=GameInfo.MATH_GAME.description)
-    
+
     return {
         "current_stage": player_session.stage,
         "current_score": player_session.score,
-        "winning_score": game.winning_score
+        "winning_score": player_session.winning_score or 2
     }
 
 
@@ -282,8 +280,9 @@ async def set_game_settings(
         # Otherwise use difficulty as starting stage (for new games)
         await update_player_stage(session=db, player_session=player_session,
                                   new_stage=req.difficulty)
-    
-    await update_winning_score(session=db, game_id=player_session.game_id,
-                               new_winning_score=req.winning_score)
+
+    # Win target is stored per-session so it never affects other players.
+    await update_session_winning_score(session=db, player_session=player_session,
+                                       new_winning_score=req.winning_score)
 
     return {"message": "Settings updated successfully"}

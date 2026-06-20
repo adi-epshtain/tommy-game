@@ -1,5 +1,7 @@
 # React Frontend Setup
 
+> Designed with [Claude Design](https://claude.ai/design) by Anthropic.
+
 ## Installation
 
 ```bash

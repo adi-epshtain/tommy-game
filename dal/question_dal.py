@@ -39,22 +39,48 @@ async def get_random_question_by_game(session: Session, game_id: int,
         .scalar()
     )
 
-    # Select a random question matching the stage (difficulty)
+    answered_subquery = (
+        session.query(PlayerAnswer.question_id)
+        .filter(PlayerAnswer.session_id == player_session_id)
+    )
+
+    # 1. Preferred: a question at the player's stage they haven't answered yet.
     question = (
         session.query(Question)
         .filter(
             Question.game_id == game_id,
-            Question.difficulty == player_stage,  # match stage difficulty
-            ~Question.id.in_(
-                session.query(PlayerAnswer.question_id)
-                .filter(PlayerAnswer.session_id == player_session_id)
-            ),
+            Question.difficulty == player_stage,
+            ~Question.id.in_(answered_subquery),
         )
         .order_by(func.random())
         .first()
     )
+    if question:
+        return question
 
-    return question
+    # 2. Fallback: the player exhausted the unique questions at this stage before
+    #    winning. Recycle questions at the same stage (repeats allowed) so the
+    #    game never dead-ends mid-play.
+    question = (
+        session.query(Question)
+        .filter(
+            Question.game_id == game_id,
+            Question.difficulty == player_stage,
+        )
+        .order_by(func.random())
+        .first()
+    )
+    if question:
+        return question
+
+    # 3. Last resort: this stage has no questions at all. Fall back to any
+    #    question for the game so the player can keep playing.
+    return (
+        session.query(Question)
+        .filter(Question.game_id == game_id)
+        .order_by(func.random())
+        .first()
+    )
 
 
 async def delete_question(session: Session, question_id: int) -> Optional[Question]:

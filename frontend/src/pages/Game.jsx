@@ -5,6 +5,7 @@ import Settings from '../components/Settings'
 import Leaderboard from '../components/Leaderboard'
 import Button from '../components/Button'
 import DinosaurSelection from '../components/DinosaurSelection'
+import { useSounds } from '../hooks/useSounds'
 
 const MATH_GAME = 'Math Game'
 
@@ -35,184 +36,9 @@ function Game({ onLogout }) {
   const [showDinosaurViewOnly, setShowDinosaurViewOnly] = useState(false) // View-only mode (browse all dinosaurs)
   const [isMuted, setIsMuted] = useState(false) // Mute state for sound effects
   const navigate = useNavigate()
+  const { playCelebrationSound, playErrorSound, playTop3VictorySound } = useSounds(isMuted)
 
-  // Function to play celebration sound (applause/clapping)
-  const playCelebrationSound = () => {
-    if (isMuted) return // Don't play if muted
-    try {
-      // Create a simple applause-like sound using Web Audio API
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)()
-      const duration = 0.5 // 500ms
-      const sampleRate = audioContext.sampleRate
-      const numSamples = duration * sampleRate
-      const buffer = audioContext.createBuffer(1, numSamples, sampleRate)
-      const data = buffer.getChannelData(0)
 
-      // Generate applause-like sound (multiple claps)
-      for (let i = 0; i < numSamples; i++) {
-        const t = i / sampleRate
-        // Multiple overlapping claps with different frequencies
-        let sample = 0
-        for (let clap = 0; clap < 5; clap++) {
-          const clapTime = t - clap * 0.1
-          if (clapTime >= 0 && clapTime < 0.3) {
-            const freq = 200 + clap * 50 + Math.random() * 100
-            const envelope = Math.exp(-clapTime * 10) * (1 - clapTime / 0.3)
-            sample += Math.sin(2 * Math.PI * freq * clapTime) * envelope * 0.3
-          }
-        }
-        // Add some noise for texture
-        sample += (Math.random() * 2 - 1) * 0.1 * Math.exp(-t * 5)
-        data[i] = Math.max(-1, Math.min(1, sample))
-      }
-
-      const source = audioContext.createBufferSource()
-      source.buffer = buffer
-      source.connect(audioContext.destination)
-      source.start(0)
-    } catch (err) {
-      // Fallback: try to play a simple beep if Web Audio API fails
-      try {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)()
-        const oscillator = audioContext.createOscillator()
-        const gainNode = audioContext.createGain()
-        
-        oscillator.connect(gainNode)
-        gainNode.connect(audioContext.destination)
-        
-        oscillator.frequency.value = 800
-        oscillator.type = 'sine'
-        
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime)
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3)
-        
-        oscillator.start(audioContext.currentTime)
-        oscillator.stop(audioContext.currentTime + 0.3)
-      } catch (e) {
-        console.log('Audio not available')
-      }
-    }
-  }
-
-  // Function to play top 3 victory sound (special win sound for top 3)
-  const playTop3VictorySound = (rank) => {
-    if (isMuted) return // Don't play if muted
-    try {
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)()
-      const oscillator = audioContext.createOscillator()
-      const gainNode = audioContext.createGain()
-      
-      oscillator.connect(gainNode)
-      gainNode.connect(audioContext.destination)
-      
-      // Create a pleasant victory fanfare
-      const baseFreq = 440 // A4
-      const notes = rank === 1 
-        ? [0, 4, 7, 12, 16, 19, 16, 12] // Major scale - more impressive
-        : rank === 2
-        ? [0, 3, 7, 10, 12] // Less impressive but still nice
-        : [0, 2, 5, 9] // Simple and pleasant
-      
-      const duration = 3.5 // 3.5 seconds total
-      const noteDuration = duration / notes.length
-      const startTime = audioContext.currentTime
-      
-      // Play each note
-      notes.forEach((semitone, index) => {
-        const freq = baseFreq * Math.pow(2, semitone / 12)
-        const noteStart = startTime + index * noteDuration
-        
-        oscillator.frequency.setValueAtTime(freq, noteStart)
-        
-        // Volume envelope - quick attack, gentle decay
-        const attackTime = 0.05
-        const sustainTime = noteDuration * 0.6
-        const decayTime = noteDuration * 0.35
-        const volume = rank === 1 ? 0.4 : rank === 2 ? 0.35 : 0.3
-        
-        gainNode.gain.setValueAtTime(0, noteStart)
-        gainNode.gain.linearRampToValueAtTime(volume, noteStart + attackTime)
-        gainNode.gain.setValueAtTime(volume, noteStart + attackTime + sustainTime)
-        gainNode.gain.linearRampToValueAtTime(0, noteStart + attackTime + sustainTime + decayTime)
-      })
-      
-      oscillator.type = 'sine' // Smooth sine wave
-      oscillator.start(startTime)
-      oscillator.stop(startTime + duration + 0.1)
-    } catch (err) {
-      // Fallback: play celebration sound
-      playCelebrationSound()
-    }
-  }
-
-  // Function to play error sound ("אוי אוי אוי" - sad/disappointed sound)
-  const playErrorSound = () => {
-    if (isMuted) return // Don't play if muted
-    try {
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)()
-      const duration = 0.6 // 600ms
-      const sampleRate = audioContext.sampleRate
-      const numSamples = duration * sampleRate
-      const buffer = audioContext.createBuffer(1, numSamples, sampleRate)
-      const data = buffer.getChannelData(0)
-
-      // Generate "אוי אוי אוי" sound - descending sad tones
-      for (let i = 0; i < numSamples; i++) {
-        const t = i / sampleRate
-        let sample = 0
-        
-        // Three descending "אוי" sounds
-        for (let oy = 0; oy < 3; oy++) {
-          const oyStart = oy * 0.15
-          const oyDuration = 0.12
-          if (t >= oyStart && t < oyStart + oyDuration) {
-            const localTime = t - oyStart
-            // Descending frequency for each "אוי"
-            const startFreq = 300 - oy * 30
-            const endFreq = 200 - oy * 20
-            const freq = startFreq + (endFreq - startFreq) * (localTime / oyDuration)
-            const envelope = Math.sin(Math.PI * localTime / oyDuration) * 0.4
-            sample += Math.sin(2 * Math.PI * freq * localTime) * envelope
-          }
-        }
-        
-        // Add some low-frequency rumble for disappointment
-        if (t < 0.5) {
-          sample += Math.sin(2 * Math.PI * 80 * t) * 0.1 * Math.exp(-t * 3)
-        }
-        
-        data[i] = Math.max(-1, Math.min(1, sample))
-      }
-
-      const source = audioContext.createBufferSource()
-      source.buffer = buffer
-      source.connect(audioContext.destination)
-      source.start(0)
-    } catch (err) {
-      // Fallback: try to play a low sad beep
-      try {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)()
-        const oscillator = audioContext.createOscillator()
-        const gainNode = audioContext.createGain()
-        
-        oscillator.connect(gainNode)
-        gainNode.connect(audioContext.destination)
-        
-        // Low descending frequency for sad sound
-        oscillator.frequency.setValueAtTime(300, audioContext.currentTime)
-        oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.4)
-        oscillator.type = 'sine'
-        
-        gainNode.gain.setValueAtTime(0.25, audioContext.currentTime)
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4)
-        
-        oscillator.start(audioContext.currentTime)
-        oscillator.stop(audioContext.currentTime + 0.4)
-      } catch (e) {
-        console.log('Audio not available')
-      }
-    }
-  }
 
   useEffect(() => {
     loadPlayerInfo()
@@ -255,7 +81,7 @@ function Game({ onLogout }) {
       setWrongQuestions([])
       setScore(0)
       setShowCelebration(false)
-      
+
       const data = await api.startGame(5, advanceStage)
       
       // בדוק אם השחקן מוכן לעלות רמה
@@ -338,6 +164,9 @@ function Game({ onLogout }) {
       }
     } catch (err) {
       console.error('Failed to submit answer:', err)
+      // Don't leave the child stuck on a frozen screen — give feedback and let them retry.
+      setResult('😅 אופס! משהו השתבש. נסו שוב')
+      setAnswer('')
     }
   }
 
@@ -417,7 +246,7 @@ function Game({ onLogout }) {
         }}
       >
         <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center p-8 z-10">
-          <div className="max-w-4xl w-full">
+          <div className="max-w-6xl w-full">
             <DinosaurSelection
               viewOnly={true}
               onSelect={null}
@@ -434,18 +263,12 @@ function Game({ onLogout }) {
   // Dinosaur Selection Screen - shows after victory
   if (showDinosaurSelection) {
     return (
-      <div 
-        className="min-h-screen w-full relative overflow-hidden flex items-center justify-center" 
-        style={{
-          backgroundImage: 'url(/static/math_dino2.png)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-          backgroundAttachment: 'fixed'
-        }}
+      <div
+        className="min-h-screen w-full relative overflow-hidden flex items-center justify-center"
+        style={{ background: 'linear-gradient(180deg, #B6E2F2 0%, #D6F0C4 48%, #A9DE84 100%)' }}
       >
         <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center p-8 z-10">
-          <div className="max-w-4xl w-full">
+          <div className="max-w-6xl w-full">
             <DinosaurSelection
               onSelect={handleDinosaurSelected}
               onSkip={handleDinosaurSkip}
@@ -653,11 +476,7 @@ function Game({ onLogout }) {
 
     return (
       <div className="min-h-screen w-full relative overflow-hidden" style={{
-        backgroundImage: 'url(/static/math_dino2.png)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        backgroundAttachment: 'fixed'
+        background: 'linear-gradient(180deg, #B6E2F2 0%, #D6F0C4 48%, #A9DE84 100%)'
       }}>
         <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center p-8 z-50">
           <div className="w-full max-w-5xl">
@@ -675,43 +494,37 @@ function Game({ onLogout }) {
                 <p className="text-lg text-gray-600">נצחי משחקים כדי לאסוף דינוזאורים חדשים!</p>
               </div>
             ) : (
-              <div className="max-h-[70vh] overflow-y-auto p-4 space-y-6">
-                {[1, 2, 3, 4, 5].map((level) => {
-                  const levelDinosaurs = playerDinosaurs.filter(d => parseInt(d.level) === level)
-                  if (levelDinosaurs.length === 0) return null
-                  
-                  return (
-                    <div key={level} className="space-y-2">
-                      <h3 className="text-xl font-bold mb-3" style={{ color: '#654321' }}>
-                        רמה {level}
-                      </h3>
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {levelDinosaurs.map((dino) => (
-                          <div
-                            key={dino.id}
-                            className={`rounded-xl p-4 shadow-lg border-2 bg-gradient-to-br ${levelColors[dino.level] || levelColors['1']}`}
-                          >
-                            <div className="text-center">
-                              <img
-                                src={dino.image_path}
-                                alt={dino.name}
-                                className="mx-auto w-32 h-32 object-contain mb-3"
-                              />
-                              <div className="font-bold text-lg mb-1" style={{ color: '#654321' }}>
-                                {dino.name}
-                              </div>
-                              {dino.description && (
-                                <div className="text-xs text-gray-600 mb-2">
-                                  {dino.description}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        ))}
+              <div className="max-h-[75vh] overflow-y-auto p-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
+                  {playerDinosaurs.map((dino) => (
+                    <div
+                      key={dino.id}
+                      style={{
+                        background: '#F4FFF4',
+                        border: '2px solid #CDE8A8',
+                        borderRadius: 24,
+                        padding: '20px 16px',
+                        textAlign: 'center',
+                        boxShadow: '0 6px 16px rgba(110,170,90,.14)',
+                      }}
+                    >
+                      <img
+                        src={dino.image_path}
+                        alt={dino.name}
+                        className="mx-auto object-contain mb-3"
+                        style={{ width: 120, height: 120 }}
+                      />
+                      <div style={{ fontWeight: 700, fontSize: 16, color: '#4E8C3A' }}>
+                        {dino.name}
                       </div>
+                      {dino.description && (
+                        <div style={{ fontSize: 13, color: '#7AB85A', marginTop: 5 }}>
+                          {dino.description}
+                        </div>
+                      )}
                     </div>
-                  )
-                })}
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -724,11 +537,7 @@ function Game({ onLogout }) {
   if (showSettings) {
     return (
       <div className="min-h-screen w-full relative overflow-hidden" style={{
-        backgroundImage: 'url(/static/math_dino2.png)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        backgroundAttachment: 'fixed'
+        background: 'linear-gradient(180deg, #B6E2F2 0%, #D6F0C4 48%, #A9DE84 100%)'
       }}>
         <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex flex-col items-center justify-center p-8 z-50">
           <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl p-8">
@@ -760,153 +569,87 @@ function Game({ onLogout }) {
   }
 
   return (
-    <div 
-      className="min-h-screen w-full relative overflow-hidden" 
+    <div
+      className="w-full overflow-hidden"
       style={{
-        backgroundImage: 'url(/static/math_dino2.png)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        backgroundAttachment: 'fixed'
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100vh',
+        background: 'linear-gradient(180deg, #B6E2F2 0%, #D6F0C4 48%, #A9DE84 100%)',
       }}
     >
-      
-      {/* Top Header - Light green semi-transparent */}
-      <header className="absolute top-0 left-0 right-0 w-full p-3 md:p-4 flex justify-between items-center z-30" style={{
-        background: 'rgba(144, 238, 144, 0.85)',
-        backdropFilter: 'blur(8px)',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+
+      {/* Top Header */}
+      <header className="flex justify-between items-center z-30" style={{
+        flex: '0 0 auto',
+        margin: '16px 16px 0',
+        padding: '10px 16px',
+        background: 'rgba(255,255,255,0.72)',
+        backdropFilter: 'blur(14px)',
+        border: '2px solid rgba(255,255,255,.9)',
+        borderRadius: 30,
+        boxShadow: '0 10px 28px rgba(110,170,90,.28)',
+        fontFamily: "'Varela Round', 'Heebo', sans-serif",
       }}>
-        <div className="flex gap-2 flex-shrink-0">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setShowSettings(!showSettings)}
-          >
-            ⚙️ הגדרות
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => navigate('/player_stats')}
-          >
-            📊 סטטיסטיקות
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => navigate('/top_players')}
-          >
-            🥇 לוח תוצאות
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setShowDinosaurGallery(true)}
-          >
-            🦕 האוסף שלי ({playerDinosaurs.length})
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setShowDinosaurViewOnly(true)}
-          >
-            👀 דינוזאורים זמינים
-          </Button>
+        <div style={{ display: 'flex', gap: 6, flexShrink: 0, flexWrap: 'wrap' }}>
+          {[
+            { label: '🎮 חזרה', action: () => navigate('/game-select') },
+            { label: '⚙️ הגדרות', action: () => setShowSettings(!showSettings) },
+            { label: '📊 סטטיסטיקות', action: () => navigate('/player_stats') },
+            { label: '🥇 דירוג', action: () => navigate('/top_players') },
+            { label: `🦕 אוסף (${playerDinosaurs.length})`, action: () => setShowDinosaurGallery(true) },
+            { label: '👀 דינוזאורים', action: () => setShowDinosaurViewOnly(true) },
+          ].map(btn => (
+            <button key={btn.label} onClick={btn.action} style={gameNavBtnStyle}>{btn.label}</button>
+          ))}
         </div>
-        <h1 className="flex-1 text-center text-xl md:text-2xl font-bold px-4" style={{ color: '#2d5016', textShadow: '1px 1px 2px rgba(255,255,255,0.5)' }}>ברוך הבא למשחק של דינו וטומי!!!</h1>
-        <div className="flex gap-2 flex-shrink-0">
+        <div style={{ fontFamily: "'Fredoka', sans-serif", fontSize: 26, fontWeight: 700, color: '#4E8C3A', position: 'absolute', left: '50%', transform: 'translateX(-50%)', pointerEvents: 'none' }}>
+          משחק החשבון
+        </div>
+        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
           <button
             onClick={() => setIsMuted(!isMuted)}
-            className="px-3 py-2 rounded-lg border-2 font-semibold text-sm transition-all duration-200 flex items-center gap-2"
-            style={{ 
-              backgroundColor: isMuted ? '#ff6b6b' : '#4ade80',
-              borderColor: isMuted ? '#dc2626' : '#22c55e',
-              color: 'white',
-              boxShadow: isMuted ? '0 2px 8px rgba(220, 38, 38, 0.3)' : '0 2px 8px rgba(34, 197, 94, 0.3)',
-              transform: 'scale(1)',
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            title={isMuted ? 'בטל השתקה' : 'השתק'}
+            style={{ ...gameNavBtnStyle, padding: '7px 12px', fontSize: 17 }}
           >
-            <span className="text-lg">{isMuted ? '🔇' : '🔊'}</span>
-            <span>{isMuted ? 'מושתק' : 'פעיל'}</span>
+            {isMuted ? '🔇' : '🔊'}
           </button>
-          <Button 
-            variant="secondary"
-            size="sm"
-            onClick={handleLogout}
-          >
-            🔒 התנתקות
-          </Button>
+          <button onClick={handleLogout} style={gameNavBtnStyle}>
+            התנתק
+          </button>
         </div>
       </header>
 
-      {/* Display player's collected dinosaurs - positioned at bottom to avoid the question card */}
-      {playerDinosaurs.length > 0 && (
-        <div className="absolute bottom-0 left-0 right-0 z-15 pointer-events-none flex items-end justify-center gap-2 md:gap-3 flex-wrap px-4 py-2" style={{ maxHeight: 'calc(40vh)', overflowY: 'auto' }}>
-          {playerDinosaurs.map((dino, index) => {
-            // Calculate size based on number of dinosaurs - smaller when there are more
-            const baseSize = 240
-            const minSize = 150
-            const totalDinosaurs = playerDinosaurs.length
-            // Reduce size as more dinosaurs are added, but keep minimum size
-            const sizeReduction = Math.max(0, (totalDinosaurs - 5) * 12)
-            const size = Math.max(minSize, baseSize - sizeReduction)
-            
-            return (
-              <div
-                key={dino.id}
-                className={`transition-transform duration-500 ${showCelebration ? 'animate-bounce' : ''}`}
-                style={{
-                  height: `${size}px`,
-                  width: `${size * 0.8}px`,
-                  flexShrink: 0,
-                  animationDelay: showCelebration ? `${index * 0.1}s` : '0s'
-                }}
-              >
-                <img 
-                  src={dino.image_path} 
-                  alt={dino.name} 
-                  className="h-full w-full object-contain"
-                  style={{ 
-                    filter: 'drop-shadow(4px 4px 8px rgba(0,0,0,0.3))'
-                  }}
-                />
-              </div>
-            )
-          })}
-        </div>
-      )}
+      {/* placeholder - dinosaur strip moved to bottom flex child */}
 
       {/* Growing Dinosaur Progress Bar - Right Side */}
       {!gameEnded && !showDinosaurSelection && !showTop3Celebration && !showAdvanceDialog && !showSettings && !showDinosaurGallery && !showDinosaurViewOnly && winningScore > 0 && (
         <div className="absolute right-4 top-1/2 transform -translate-y-1/2 z-25 flex flex-col items-center" style={{ marginTop: '40px' }}>
           <div className="relative flex items-end gap-4" style={{ width: '150px', height: '400px' }}>
-            {/* Progress Bar Track - Vertical (Blue Style) */}
-            <div 
+            {/* Progress Bar Track */}
+            <div
               className="relative"
               style={{
                 width: '30px',
                 height: '300px',
-                background: '#E3F2FD',
+                background: '#E8F5DB',
                 borderRadius: '15px',
-                border: '2px solid #90CAF9',
-                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)',
+                border: '2px solid #CDE8A8',
+                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.08)',
                 overflow: 'hidden'
               }}
             >
-              {/* Progress Fill - Light Blue */}
+              {/* Progress Fill */}
               {(() => {
                 const progressPercent = Math.min(Math.max((score / winningScore) * 100, 0), 100)
                 return (
                   <>
-                    <div 
+                    <div
                       className="absolute bottom-0 left-0 right-0 transition-all duration-700 ease-out"
                       style={{
                         height: `${progressPercent}%`,
                         minHeight: score > 0 ? '4px' : '0px',
-                        background: 'linear-gradient(180deg, #64B5F6 0%, #42A5F5 50%, #2196F3 100%)',
+                        background: 'linear-gradient(180deg, #90D060 0%, #6AB840 50%, #4E8C3A 100%)',
                         borderRadius: '15px',
                         willChange: 'height'
                       }}
@@ -952,93 +695,71 @@ function Game({ onLogout }) {
             </div>
             
             {/* Score Display */}
-            <div 
+            <div
               className="absolute top-0 left-1/2 transform -translate-x-1/2 text-center"
               style={{ width: '150px' }}
             >
-              <div 
+              <div
                 className="text-lg font-bold"
-                style={{ 
-                  color: '#1976D2',
-                  textShadow: '1px 1px 2px rgba(255,255,255,0.8)'
+                style={{
+                  color: '#4E8C3A',
+                  textShadow: '1px 1px 2px rgba(255,255,255,0.8)',
+                  fontFamily: "'Fredoka', sans-serif",
                 }}
               >
-                {winningScore} / {score}
+                {score} / {winningScore}
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Game Scene Container - Centered */}
-      <main className="absolute inset-0 flex flex-col items-center justify-center p-4 z-10" style={{ paddingTop: '80px' }}>
-        {/* Centered Wooden Sign Card - Large irregular organic shape */}
-        <div className="w-full max-w-2xl relative z-30 flex flex-col" style={{
+      {/* Game Scene Container */}
+      <main className="flex flex-col items-center justify-center p-4 z-10" style={{
+        flex: '1 1 auto',
+        minHeight: 0,
+        position: 'relative',
+      }}>
+        {/* Main Game Card */}
+        <div className="w-full max-w-lg relative z-30 flex flex-col" style={{
           marginTop: '2vh',
           marginBottom: '2vh',
-          background: 'linear-gradient(135deg, #CD853F 0%, #D2691E 20%, #B8860B 40%, #CD853F 60%, #D2691E 80%, #B8860B 100%)',
-          padding: '1.5rem 1.5rem 2rem 1.5rem',
+          background: 'rgba(255,255,255,0.96)',
+          padding: '28px 32px 32px',
           maxHeight: '90vh',
-          borderRadius: '50% 40% 55% 45% / 45% 55% 40% 50%',
-          boxShadow: '0 25px 50px rgba(0,0,0,0.4), inset 0 3px 6px rgba(255,255,255,0.2), inset 0 -3px 6px rgba(0,0,0,0.3)',
-          border: '10px solid #8B4513',
-          transform: 'rotate(-0.5deg)',
+          borderRadius: 40,
+          boxShadow: '0 22px 48px rgba(110,170,90,.24), 0 8px 20px rgba(0,0,0,.06)',
+          border: '2px solid rgba(255,255,255,.9)',
           position: 'relative',
           overflow: 'hidden'
         }}>
-          {/* Wood grain texture */}
-          <div className="absolute inset-0 opacity-25" style={{
-            backgroundImage: `
-              repeating-linear-gradient(90deg, transparent, transparent 3px, rgba(139, 69, 19, 0.4) 3px, rgba(139, 69, 19, 0.4) 6px),
-              repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(160, 82, 45, 0.3) 4px, rgba(160, 82, 45, 0.3) 8px),
-              repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(139, 69, 19, 0.2) 8px, rgba(139, 69, 19, 0.2) 16px)
-            `,
-            borderRadius: 'inherit',
-            pointerEvents: 'none'
-          }}></div>
-          
-          {/* Dark decorative nails at corners */}
-          <div className="absolute top-3 left-3 w-4 h-4 bg-gray-800 rounded-full shadow-inner border border-gray-900"></div>
-          <div className="absolute top-3 right-3 w-4 h-4 bg-gray-800 rounded-full shadow-inner border border-gray-900"></div>
-          <div className="absolute bottom-3 left-3 w-4 h-4 bg-gray-800 rounded-full shadow-inner border border-gray-900"></div>
-          <div className="absolute bottom-3 right-3 w-4 h-4 bg-gray-800 rounded-full shadow-inner border border-gray-900"></div>
           
           {/* Player Greeting */}
           {playerName && (
             <h2 className="text-2xl md:text-3xl mb-3 text-center relative z-10 font-bold" style={{
-              color: '#654321',
-              textShadow: '2px 2px 4px rgba(0,0,0,0.2)'
+              color: '#4E8C3A',
+              fontFamily: "'Fredoka', 'Varela Round', sans-serif",
             }}>
-              שלום {playerName}
+              שלום {playerName} 👋
             </h2>
           )}
           
-          {/* Question Display - Cream colored paper area */}
+          {/* Question Display */}
           <div className="relative z-10 mb-4" style={{
-            background: 'linear-gradient(135deg, #FFF8DC 0%, #F5E6D3 50%, #FFF8DC 100%)',
-            padding: '1.5rem 2rem',
-            borderRadius: '30% 70% 25% 75% / 60% 40% 60% 40%',
-            boxShadow: 'inset 0 3px 10px rgba(0,0,0,0.08), 0 5px 15px rgba(0,0,0,0.15)',
-            position: 'relative'
+            background: 'linear-gradient(135deg, #D4F4E0 0%, #C2EEF2 100%)',
+            padding: '20px 24px',
+            borderRadius: 24,
+            boxShadow: '0 6px 0 #9ED8C8, 0 8px 20px rgba(110,170,90,.18)',
           }}>
-            {/* Subtle paper texture */}
-            <div className="absolute inset-0 opacity-10" style={{
-              backgroundImage: `
-                repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(139, 105, 20, 0.15) 2px, rgba(139, 105, 20, 0.15) 4px)
-              `,
-              borderRadius: 'inherit',
-              pointerEvents: 'none'
-            }}></div>
-            
-            <h2 
-              className={`question text-4xl md:text-5xl font-extrabold text-center relative z-10 transition-opacity duration-300 ${questionFade ? 'opacity-0' : 'opacity-100'}`}
-              dir="ltr" 
+            <h2
+              className={`question text-4xl md:text-5xl font-extrabold text-center transition-opacity duration-300 ${questionFade ? 'opacity-0' : 'opacity-100'}`}
+              dir="ltr"
               style={{
-                color: '#DC143C',
-                textShadow: '2px 2px 0px rgba(255,255,255,0.6), 3px 3px 8px rgba(0,0,0,0.2)',
-                letterSpacing: '0.05em',
-                fontFamily: 'Arial, "Helvetica Neue", sans-serif',
-                lineHeight: '1.2'
+                margin: 0,
+                color: '#1E6B4A',
+                fontFamily: "'Fredoka', 'Varela Round', Arial, sans-serif",
+                lineHeight: '1.2',
+                textShadow: '0 3px 0 rgba(255,255,255,.6)',
               }}
             >
               {question}
@@ -1047,34 +768,67 @@ function Game({ onLogout }) {
 
           {/* Stage */}
           <div className="flex justify-center gap-4 mb-4 relative z-10">
-            <div id="stage" className="text-sm md:text-base font-bold px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-100 to-pink-100 border-2 border-purple-300 shadow-md" style={{ color: '#654321' }}>
+            <div id="stage" style={{
+              display: 'inline-block',
+              padding: '6px 20px',
+              background: '#E8F5DB',
+              color: '#4E8C3A',
+              borderRadius: 999,
+              fontSize: 14,
+              fontWeight: 700,
+              border: '2px solid #CDE8A8',
+            }}>
               🎯 רמה: {stage}
             </div>
           </div>
 
-          {/* Input + Submit Grouped Together */}
-          <form onSubmit={handleSubmitAnswer} className="flex gap-2 justify-center items-center mb-4">
+          {/* Input + Submit */}
+          <form onSubmit={handleSubmitAnswer} style={{ display: 'flex', gap: 12, justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
             <input
               type="number"
               id="answer"
               value={answer}
               onChange={(e) => setAnswer(e.target.value)}
-              placeholder="התשובה שלך"
+              placeholder="תשובה"
               required
               autoFocus
-              className="flex-1 max-w-xs px-4 py-3 text-xl text-center rounded-full focus:outline-none focus:ring-4 focus:ring-green-300"
               style={{
-                background: '#FFF8DC',
-                boxShadow: 'inset 0 2px 5px rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.15)'
+                flex: 1,
+                maxWidth: 200,
+                padding: '12px 20px',
+                fontSize: 28,
+                fontWeight: 700,
+                textAlign: 'center',
+                borderRadius: 20,
+                border: '2.5px solid #CDE8A8',
+                background: '#F4FFF4',
+                color: '#1E6B4A',
+                outline: 'none',
+                boxShadow: 'inset 0 2px 6px rgba(110,170,90,.12)',
+                fontFamily: "'Fredoka', sans-serif",
               }}
             />
-            <Button 
+            <button
               type="submit"
-              variant="secondary"
-              size="sm"
+              style={{
+                padding: '12px 28px',
+                fontSize: 18,
+                fontWeight: 700,
+                borderRadius: 999,
+                border: '2px solid #CDE8A8',
+                background: '#fff',
+                color: '#4E8C3A',
+                cursor: 'pointer',
+                boxShadow: '0 7px 0 #CDE8A8',
+                fontFamily: "'Varela Round', sans-serif",
+                transition: 'transform .1s, box-shadow .1s',
+              }}
+              onMouseDown={e => { e.currentTarget.style.transform = 'translateY(4px)'; e.currentTarget.style.boxShadow = '0 3px 0 #CDE8A8' }}
+              onMouseUp={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 7px 0 #CDE8A8' }}
+              onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 7px 0 #CDE8A8' }}
             >
-              🚀 שלח
-            </Button>
+              🔥 שלח
+            </button>
           </form>
 
           {/* Result Feedback */}
@@ -1128,22 +882,22 @@ function Game({ onLogout }) {
           {/* Stage Progress Indicator */}
           {stage > 1 && (
             <div className="mb-4 text-center relative z-10">
-              <div className="inline-block bg-gradient-to-r from-purple-200 to-pink-200 rounded-full px-6 py-2 border-2 border-purple-400 shadow-lg">
-                <span className="text-lg font-bold" style={{ color: '#654321' }}>
+              <div style={{ display: 'inline-block', background: '#E8F5DB', borderRadius: 999, padding: '8px 24px', border: '2px solid #CDE8A8', boxShadow: '0 4px 0 #CDE8A8' }}>
+                <span style={{ fontSize: 16, fontWeight: 700, color: '#4E8C3A' }}>
                   🎯 עלית לשלב {stage}! כל הכבוד!
                 </span>
               </div>
             </div>
           )}
 
-          {/* Wrong Questions - Integrated into wooden sign with scroll */}
+          {/* Wrong Questions */}
           {wrongQuestions.length > 0 && (
-            <div className="mt-3 mb-2 relative z-10 text-center flex-shrink-0" style={{ maxHeight: '20vh', overflowY: 'auto' }}>
-              <h4 className="text-sm md:text-base font-bold mb-2 text-center" style={{ color: '#654321' }}>השאלות האחרונות שלא ידע לענות עליהן:</h4>
-              <div className="bg-white/50 rounded-lg p-2 border-2 border-amber-300">
-                <ul id="wrong-questions" dir="ltr" className="list-none text-center space-y-0.5">
+            <div className="relative z-10 flex-shrink-0" style={{ marginTop: 16, maxHeight: '20vh', overflowY: 'auto' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#4E8C3A', marginBottom: 8, textAlign: 'center' }}>שאלות לתרגול:</div>
+              <div style={{ background: '#F4FFF4', borderRadius: 16, padding: '8px 16px', border: '1.5px solid #CDE8A8' }}>
+                <ul id="wrong-questions" dir="ltr" style={{ listStyle: 'none', margin: 0, padding: 0, textAlign: 'center' }}>
                   {wrongQuestions.map((q, i) => (
-                    <li key={i} className="text-xs md:text-sm" style={{ color: '#654321' }}>• {q}</li>
+                    <li key={i} style={{ fontSize: 13, color: '#4E8C3A', padding: '2px 0' }}>• {q}</li>
                   ))}
                 </ul>
               </div>
@@ -1152,9 +906,60 @@ function Game({ onLogout }) {
         </div>
 
       </main>
+
+      {/* Dinosaur strip - fixed flex area at bottom */}
+      <div style={{
+        flex: '0 0 auto',
+        minHeight: 140,
+        height: 170,
+        display: 'flex',
+        alignItems: 'flex-end',
+        justifyContent: 'center',
+        gap: 8,
+        padding: '0 8px 6px',
+        pointerEvents: 'none',
+        overflow: 'hidden',
+      }}>
+        {playerDinosaurs.map((dino, index) => {
+          const baseSize = 150
+          const minSize = 90
+          const sizeReduction = Math.max(0, (playerDinosaurs.length - 5) * 10)
+          const size = Math.max(minSize, baseSize - sizeReduction)
+          return (
+            <img
+              key={dino.id}
+              src={dino.image_path}
+              alt={dino.name}
+              className={showCelebration ? 'animate-bounce' : ''}
+              style={{
+                height: size,
+                width: size * 0.8,
+                objectFit: 'contain',
+                flexShrink: 0,
+                filter: 'drop-shadow(3px 3px 6px rgba(0,0,0,0.25))',
+                animationDelay: showCelebration ? `${index * 0.1}s` : '0s',
+              }}
+            />
+          )
+        })}
+      </div>
     </div>
   )
 }
 
 export default Game
+
+const gameNavBtnStyle = {
+  background: '#fff',
+  border: '2px solid #CDE8A8',
+  borderRadius: 999,
+  padding: '7px 14px',
+  fontSize: 13,
+  fontWeight: 700,
+  color: '#4E8C3A',
+  cursor: 'pointer',
+  boxShadow: '0 4px 0 #CDE8A8',
+  fontFamily: "'Varela Round', sans-serif",
+  whiteSpace: 'nowrap',
+}
 

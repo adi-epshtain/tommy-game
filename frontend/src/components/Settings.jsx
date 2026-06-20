@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react'
 import { api } from '../services/api'
-import Button from '../components/Button'
 
 function Settings({ onSettingsSaved }) {
-  const [difficulty, setDifficulty] = useState(1)
   const [currentStage, setCurrentStage] = useState(1)
   const [winningScore, setWinningScore] = useState(5)
   const [loading, setLoading] = useState(false)
@@ -28,15 +26,11 @@ function Settings({ onSettingsSaved }) {
   const handleSave = async () => {
     setLoading(true)
     setMessage('')
-    
     try {
-      await api.saveSettings(difficulty, winningScore, currentStage)
-      setMessage('🎮 ההגדרות נשמרו בהצלחה!')
-      // Call the callback which will refresh state and close settings
-      if (onSettingsSaved) {
-        await onSettingsSaved()
-      }
-    } catch (err) {
+      await api.saveSettings(1, winningScore, currentStage)
+      setMessage('✅ ההגדרות נשמרו!')
+      if (onSettingsSaved) await onSettingsSaved()
+    } catch {
       setMessage('שגיאה בשמירת ההגדרות')
     } finally {
       setLoading(false)
@@ -45,58 +39,109 @@ function Settings({ onSettingsSaved }) {
 
   if (loadingState) {
     return (
-      <div className="bg-white rounded-xl p-6 shadow-lg border-2 border-amber-300">
-        <div className="text-center">טוען...</div>
+      <div style={{ textAlign: 'center', padding: '24px 0', color: '#4E8C3A', fontFamily: "'Varela Round', sans-serif", fontSize: 18 }}>
+        ⏳ טוען...
       </div>
     )
   }
 
+  const fieldStyle = {
+    display: 'block',
+    width: '100%',
+    maxWidth: 160,
+    margin: '0 auto',
+    padding: '10px 16px',
+    fontSize: 22,
+    fontWeight: 700,
+    textAlign: 'center',
+    border: '2.5px solid #CDE8A8',
+    borderRadius: 16,
+    background: '#FAFFF6',
+    color: '#4E8C3A',
+    outline: 'none',
+    fontFamily: "'Fredoka', sans-serif",
+    boxSizing: 'border-box',
+  }
+
   return (
-    <div id="settings" className="bg-white rounded-xl p-6 shadow-lg border-2 border-amber-300">
-      <div className="space-y-4">
-        <div>
-          <label className="block text-lg font-semibold mb-2">רמה נוכחית (למשחק הנוכחי):</label>
+    <div style={{ fontFamily: "'Varela Round', 'Heebo', sans-serif" }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
+
+        {/* Stage */}
+        <div style={{ background: '#F4FFF4', borderRadius: 18, padding: '18px 22px', border: '1.5px solid #CDE8A8' }}>
+          <label style={{ display: 'block', fontSize: 16, fontWeight: 700, color: '#4E8C3A', marginBottom: 10, textAlign: 'center' }}>
+            🎯 רמה נוכחית
+          </label>
           <input
             type="number"
-            id="current_stage"
             min="1"
             max="5"
             value={currentStage}
             onChange={(e) => setCurrentStage(parseInt(e.target.value))}
-            className="w-full max-w-xs mx-auto px-4 py-2 text-center border-2 border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
+            style={fieldStyle}
+            onFocus={e => { e.target.style.borderColor = '#6AB840' }}
+            onBlur={e => { e.target.style.borderColor = '#CDE8A8' }}
           />
-          <p className="text-sm text-gray-600 mt-1 text-center">שינוי הרמה הנוכחית ישפיע מיד על המשחק</p>
+          <p style={{ textAlign: 'center', fontSize: 13, color: '#7AB85A', marginTop: 8 }}>
+            1 - קל, 5 - מאתגר
+          </p>
         </div>
-        <div>
-          <label className="block text-lg font-semibold mb-2">ניקוד לניצחון:</label>
+
+        {/* Winning score */}
+        <div style={{ background: '#F4FFF4', borderRadius: 18, padding: '18px 22px', border: '1.5px solid #CDE8A8' }}>
+          <label style={{ display: 'block', fontSize: 16, fontWeight: 700, color: '#4E8C3A', marginBottom: 10, textAlign: 'center' }}>
+            🏆 ניקוד לניצחון
+          </label>
           <input
             type="number"
-            id="winning_score"
             min="2"
-            max="10"
+            max="20"
             value={winningScore}
             onChange={(e) => setWinningScore(parseInt(e.target.value))}
-            className="w-full max-w-xs mx-auto px-4 py-2 text-center border-2 border-amber-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-300"
+            style={fieldStyle}
+            onFocus={e => { e.target.style.borderColor = '#6AB840' }}
+            onBlur={e => { e.target.style.borderColor = '#CDE8A8' }}
           />
-        </div>
-        {message && (
-          <p className={`text-center font-semibold ${message.includes('שגיאה') ? 'text-red-600' : 'text-green-600'}`}>
-            {message}
+          <p style={{ textAlign: 'center', fontSize: 13, color: '#7AB85A', marginTop: 8 }}>
+            כמה נקודות נדרשות לניצחון
           </p>
-        )}
-        <div className="text-center">
-          <Button 
-            variant="info"
-            onClick={handleSave} 
-            disabled={loading}
-          >
-            {loading ? 'שומר...' : 'שמור הגדרות'}
-          </Button>
         </div>
+
+        {/* Message */}
+        {message && (
+          <div style={{
+            textAlign: 'center', fontWeight: 700, fontSize: 15,
+            color: message.includes('שגיאה') ? '#C0392B' : '#4E8C3A',
+            background: message.includes('שגיאה') ? '#FFF0F0' : '#E8F5DB',
+            border: `2px solid ${message.includes('שגיאה') ? '#FFB0B0' : '#CDE8A8'}`,
+            borderRadius: 14, padding: '10px 16px',
+          }}>
+            {message}
+          </div>
+        )}
+
+        {/* Save button */}
+        <button
+          onClick={handleSave}
+          disabled={loading}
+          style={{
+            padding: '13px 24px', fontSize: 17, fontWeight: 700, color: '#fff',
+            background: loading ? '#88C87A' : '#52C36E',
+            border: 'none', borderRadius: 999,
+            boxShadow: loading ? 'none' : '0 7px 0 #36A452',
+            cursor: loading ? 'not-allowed' : 'pointer',
+            fontFamily: "'Fredoka', 'Varela Round', sans-serif",
+            transition: 'transform .1s, box-shadow .1s',
+          }}
+          onMouseDown={e => { if (!loading) { e.currentTarget.style.transform = 'translateY(4px)'; e.currentTarget.style.boxShadow = '0 3px 0 #36A452' }}}
+          onMouseUp={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = loading ? 'none' : '0 7px 0 #36A452' }}
+          onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = loading ? 'none' : '0 7px 0 #36A452' }}
+        >
+          {loading ? '⏳ שומר...' : '💾 שמור הגדרות'}
+        </button>
       </div>
     </div>
   )
 }
 
 export default Settings
-

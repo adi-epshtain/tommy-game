@@ -9,6 +9,21 @@ from datetime import datetime
 from infra.redis_client import redis_client
 import redis
 
+# Default win target for a brand-new player who has no prior session to inherit from.
+DEFAULT_WINNING_SCORE = 2
+
+
+def _resolve_winning_score(session: Session, player_id: int) -> int:
+    """Carry the player's last chosen win target forward to their new session."""
+    last_winning_score = (
+        session.query(PlayerSession.winning_score)
+        .filter(PlayerSession.player_id == player_id)
+        .order_by(PlayerSession.id.desc())
+        .limit(1)
+        .scalar()
+    )
+    return last_winning_score or DEFAULT_WINNING_SCORE
+
 
 async def should_advance_stage(session: Session, player_id: int, current_stage: int) -> bool:
     """
@@ -66,7 +81,12 @@ async def create_player_session_with_stage(session: Session, player_id: int, gam
     """
     יוצר סשן חדש ברמה ספציפית (בשימוששחקן מאשר לעלות רמה).
     """
-    new_session = PlayerSession(player_id=player_id, game_id=game_id, stage=stage)
+    new_session = PlayerSession(
+        player_id=player_id,
+        game_id=game_id,
+        stage=stage,
+        winning_score=_resolve_winning_score(session, player_id),
+    )
     session.add(new_session)
     session.commit()
     session.refresh(new_session)
@@ -97,7 +117,12 @@ async def create_player_session(session: Session, player_id: int, game_id: int) 
             # אם לא מוכן לרמה הבאה, נשארים ברמה הנוכחית
             break
     
-    new_session = PlayerSession(player_id=player_id, game_id=game_id, stage=initial_stage)
+    new_session = PlayerSession(
+        player_id=player_id,
+        game_id=game_id,
+        stage=initial_stage,
+        winning_score=_resolve_winning_score(session, player_id),
+    )
     session.add(new_session)
     session.commit()
     session.refresh(new_session)
@@ -162,6 +187,13 @@ async def update_player_stage(session: Session, player_session: PlayerSession, n
     player_session.stage = new_stage
     session.commit()
     log.info(f"player session update stage : {new_stage}")
+
+
+async def update_session_winning_score(session: Session, player_session: PlayerSession, new_winning_score: int):
+    """Set the win target on this player's own session only (never global)."""
+    player_session.winning_score = new_winning_score
+    session.commit()
+    log.info(f"player session {player_session.id} winning_score set to {new_winning_score}")
 
 
 @dataclass

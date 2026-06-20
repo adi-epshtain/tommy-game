@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../services/api'
-import Button from '../components/Button'
 
 function PlayerStats() {
   const [stats, setStats] = useState(null)
@@ -9,39 +8,27 @@ function PlayerStats() {
   const [error, setError] = useState('')
   const navigate = useNavigate()
 
-  // Format UTC timestamp (ISO format) to local time
   const formatLocalTime = (utcTimestamp) => {
     if (!utcTimestamp) return ''
     try {
-      // Parse ISO format timestamp - JavaScript Date automatically handles UTC
-      // If timestamp doesn't have timezone, assume UTC
       let dateStr = utcTimestamp
       if (!utcTimestamp.includes('Z') && !utcTimestamp.includes('+') && !utcTimestamp.includes('-', 10)) {
-        // If no timezone indicator, append 'Z' to indicate UTC
         dateStr = utcTimestamp.endsWith('Z') ? utcTimestamp : utcTimestamp + 'Z'
       }
       const date = new Date(dateStr)
-      
-      // Check if date is valid
-      if (isNaN(date.getTime())) {
-        return utcTimestamp // Fallback if invalid
-      }
-      
-      // Format to local time: DD/MM/YYYY HH:MM
+      if (isNaN(date.getTime())) return utcTimestamp
       const day = String(date.getDate()).padStart(2, '0')
       const month = String(date.getMonth() + 1).padStart(2, '0')
       const year = date.getFullYear()
       const hours = String(date.getHours()).padStart(2, '0')
       const minutes = String(date.getMinutes()).padStart(2, '0')
       return `${day}/${month}/${year} ${hours}:${minutes}`
-    } catch (e) {
-      return utcTimestamp // Fallback to original if parsing fails
+    } catch {
+      return utcTimestamp
     }
   }
 
-  useEffect(() => {
-    loadStats()
-  }, [])
+  useEffect(() => { loadStats() }, [])
 
   const loadStats = async () => {
     try {
@@ -54,24 +41,13 @@ function PlayerStats() {
     }
   }
 
+  const bg = 'linear-gradient(180deg, #B6E2F2 0%, #D6F0C4 48%, #A9DE84 100%)'
+
   if (loading) {
     return (
-      <div 
-        className="min-h-screen w-full relative overflow-hidden flex items-center justify-center" 
-        style={{
-          backgroundImage: 'url(/static/math_dino2.png)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-          backgroundAttachment: 'fixed'
-        }}
-      >
-        <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center z-10">
-          <div className="bg-white rounded-2xl shadow-2xl p-8">
-            <div className="text-2xl font-bold text-center" style={{ color: '#654321' }}>
-              ⏳ טוען נתונים...
-            </div>
-          </div>
+      <div style={{ minHeight: '100vh', background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Varela Round', 'Heebo', sans-serif" }}>
+        <div style={{ background: 'rgba(255,255,255,0.92)', borderRadius: 32, padding: '40px 48px', boxShadow: '0 16px 48px rgba(110,170,90,.2)', fontSize: 22, fontWeight: 700, color: '#4E8C3A' }}>
+          ⏳ טוען נתונים...
         </div>
       </div>
     )
@@ -79,115 +55,100 @@ function PlayerStats() {
 
   if (error) {
     return (
-      <div 
-        className="min-h-screen w-full relative overflow-hidden flex items-center justify-center" 
-        style={{
-          backgroundImage: 'url(/static/math_dino2.png)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-          backgroundAttachment: 'fixed'
-        }}
-      >
-        <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center z-10">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
-            <div className="text-2xl font-bold mb-4 text-red-600">❌ שגיאה</div>
-            <p className="text-lg text-gray-700 mb-6">{error}</p>
-            <Button onClick={() => navigate('/game')}>
-              ← חזור למשחק
-            </Button>
-          </div>
+      <div style={{ minHeight: '100vh', background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Varela Round', 'Heebo', sans-serif" }}>
+        <div style={{ background: 'rgba(255,255,255,0.92)', borderRadius: 32, padding: 40, boxShadow: '0 16px 48px rgba(110,170,90,.2)', textAlign: 'center', maxWidth: 400 }}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>❌</div>
+          <div style={{ fontSize: 18, color: '#C0392B', fontWeight: 700, marginBottom: 20 }}>{error}</div>
+          <button onClick={() => navigate('/game')} style={navBtn}>← חזרה למשחק</button>
         </div>
       </div>
     )
   }
 
   return (
-    <div 
-      className="min-h-screen w-full relative overflow-hidden" 
+    <div
+      dir="rtl"
       style={{
-        backgroundImage: 'url(/static/math_dino2.png)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        backgroundAttachment: 'fixed'
+        minHeight: '100vh',
+        background: bg,
+        fontFamily: "'Varela Round', 'Heebo', sans-serif",
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
-      <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center p-8 z-10">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto relative">
-          <div className="sticky top-0 bg-white z-20 pb-4 mb-4 border-b-2 border-gray-200">
-            <div className="flex justify-between items-center mb-4">
-              <h1 className="text-3xl font-bold" style={{ color: '#654321' }}>סטטיסטיקות שחקן</h1>
-              <Button onClick={() => navigate('/game')}>
-                ← חזור למשחק
-              </Button>
-            </div>
-            <h2 className="text-2xl font-semibold text-center" style={{ color: '#654321' }}>שחקן: {stats?.player_name}</h2>
-          </div>
-      
-          <div className="space-y-6">
-            {stats?.player_stats && stats.player_stats.length > 0 ? (
-              stats.player_stats.map((session, idx) => (
-              <div 
-                key={idx} 
-                className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-6 shadow-lg border-2 border-amber-200 hover:shadow-xl transition-shadow"
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-2xl font-bold" style={{ color: '#654321' }}>
+      {/* Header pill */}
+      <header style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        margin: '16px 16px 0', padding: '10px 18px',
+        background: 'rgba(255,255,255,0.72)', backdropFilter: 'blur(14px)',
+        border: '2px solid rgba(255,255,255,.9)', borderRadius: 30,
+        boxShadow: '0 10px 28px rgba(110,170,90,.28)',
+        position: 'sticky', top: 16, zIndex: 10,
+      }}>
+        <button onClick={() => navigate('/game')} style={navBtn}>🎮 חזרה</button>
+        <div style={{ fontFamily: "'Fredoka', sans-serif", fontSize: 24, fontWeight: 700, color: '#4E8C3A', position: 'absolute', left: '50%', transform: 'translateX(-50%)', pointerEvents: 'none', whiteSpace: 'nowrap' }}>
+          📊 סטטיסטיקות
+        </div>
+        <div style={{ fontFamily: "'Fredoka', sans-serif", fontSize: 16, fontWeight: 700, color: '#4E8C3A' }}>
+          {stats?.player_name}
+        </div>
+      </header>
+
+      {/* Content */}
+      <div style={{ flex: 1, padding: '20px 16px 32px', maxWidth: 760, width: '100%', margin: '0 auto', boxSizing: 'border-box' }}>
+        {stats?.player_stats && stats.player_stats.length > 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {stats.player_stats.map((session, idx) => (
+              <div key={idx} style={{
+                background: 'rgba(255,255,255,0.92)',
+                borderRadius: 24,
+                padding: '22px 24px',
+                boxShadow: '0 8px 28px rgba(110,170,90,.14)',
+                border: '2px solid rgba(255,255,255,.9)',
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                  <div style={{ fontFamily: "'Fredoka', sans-serif", fontSize: 22, fontWeight: 700, color: '#4E8C3A' }}>
                     🎮 סשן {idx + 1}
-                  </h3>
-                  <div className="text-sm text-gray-600 bg-white px-3 py-1 rounded-full shadow-sm">
+                  </div>
+                  <div style={{ fontSize: 13, color: '#7AB85A', background: '#E8F5DB', borderRadius: 999, padding: '4px 14px', border: '1.5px solid #CDE8A8', fontWeight: 600 }}>
                     ⏰ {formatLocalTime(session.started_at)}
                   </div>
                 </div>
-                
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div className="bg-green-100 rounded-lg p-4 text-center border-2 border-green-300">
-                    <div className="text-3xl font-bold text-green-700">{session.correct_count}</div>
-                    <div className="text-sm font-semibold text-green-800">✅ תשובות נכונות</div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: session.wrong_answer?.length > 0 ? 16 : 0 }}>
+                  <div style={{ background: 'linear-gradient(135deg, #E8F5DB, #D4F0BE)', borderRadius: 18, padding: '16px 12px', textAlign: 'center', border: '2px solid #CDE8A8' }}>
+                    <div style={{ fontFamily: "'Fredoka', sans-serif", fontSize: 36, fontWeight: 700, color: '#4E8C3A' }}>{session.correct_count}</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#5A9A40' }}>✅ תשובות נכונות</div>
                   </div>
-                  <div className="bg-red-100 rounded-lg p-4 text-center border-2 border-red-300">
-                    <div className="text-3xl font-bold text-red-700">{session.incorrect_count}</div>
-                    <div className="text-sm font-semibold text-red-800">❌ תשובות שגויות</div>
+                  <div style={{ background: 'linear-gradient(135deg, #FFE8E8, #FFD0D0)', borderRadius: 18, padding: '16px 12px', textAlign: 'center', border: '2px solid #FFBBBB' }}>
+                    <div style={{ fontFamily: "'Fredoka', sans-serif", fontSize: 36, fontWeight: 700, color: '#C0392B' }}>{session.incorrect_count}</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#B03030' }}>❌ תשובות שגויות</div>
                   </div>
                 </div>
-                
+
                 {session.wrong_answer && session.wrong_answer.length > 0 && (
-                  <div className="mt-4">
-                    <h4 className="text-lg font-bold mb-3" style={{ color: '#654321' }}>
-                      📝 שאלות שגויות:
-                    </h4>
-                    <div className="bg-white rounded-lg p-4 border-2 border-gray-200">
-                      <ul className="space-y-2">
-                        {session.wrong_answer.map((q, i) => (
-                          <li 
-                            key={i} 
-                            className="flex items-center gap-2 text-gray-700"
-                            dir="ltr"
-                          >
-                            <span className="text-red-500 font-bold">•</span>
-                            <span className="text-lg">{q}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+                  <div style={{ background: '#FAFFF6', borderRadius: 16, padding: '14px 18px', border: '1.5px solid #CDE8A8' }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: '#4E8C3A', marginBottom: 8 }}>📝 שאלות לתרגול:</div>
+                    <ul dir="ltr" style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                      {session.wrong_answer.map((q, i) => (
+                        <li key={i} style={{ background: '#fff', border: '1.5px solid #E0EDD8', borderRadius: 10, padding: '4px 12px', fontSize: 14, color: '#4E8C3A', fontWeight: 600 }}>
+                          {q}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 )}
               </div>
-              ))
-            ) : (
-              <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-8 text-center border-2 border-blue-200 shadow-lg">
-                <div className="text-6xl mb-4">📊</div>
-                <h3 className="text-2xl font-bold mb-2" style={{ color: '#654321' }}>אין עדיין סטטיסטיקות</h3>
-                <p className="text-lg text-gray-600 mb-6">עדיין לא שיחקת משחקים. התחל לשחק כדי לראות את הסטטיסטיקות שלך!</p>
-                <Button onClick={() => navigate('/game')}>
-                  🎮 התחל לשחק
-                </Button>
-              </div>
-            )}
+            ))}
           </div>
-      
-        </div>
+        ) : (
+          <div style={{ background: 'rgba(255,255,255,0.92)', borderRadius: 28, padding: '48px 32px', textAlign: 'center', boxShadow: '0 8px 28px rgba(110,170,90,.14)', border: '2px solid rgba(255,255,255,.9)' }}>
+            <div style={{ fontSize: 56, marginBottom: 16 }}>📊</div>
+            <div style={{ fontFamily: "'Fredoka', sans-serif", fontSize: 26, fontWeight: 700, color: '#4E8C3A', marginBottom: 10 }}>אין עדיין סטטיסטיקות</div>
+            <p style={{ color: '#7AB85A', fontSize: 16, marginBottom: 24 }}>שחק כדי לראות את ההתקדמות שלך!</p>
+            <button onClick={() => navigate('/game')} style={{ ...navBtn, padding: '12px 32px', fontSize: 16 }}>🎮 התחל לשחק</button>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -195,3 +156,16 @@ function PlayerStats() {
 
 export default PlayerStats
 
+const navBtn = {
+  background: '#fff',
+  border: '2px solid #CDE8A8',
+  borderRadius: 999,
+  padding: '7px 16px',
+  fontSize: 13,
+  fontWeight: 700,
+  color: '#4E8C3A',
+  cursor: 'pointer',
+  boxShadow: '0 4px 0 #CDE8A8',
+  fontFamily: "'Varela Round', sans-serif",
+  whiteSpace: 'nowrap',
+}

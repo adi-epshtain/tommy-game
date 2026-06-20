@@ -1,5 +1,7 @@
 # React Migration Guide
 
+> The Tommy Game UI was designed with [Claude Design](https://claude.ai/design) by Anthropic.
+
 The UI has been reorganized using React. Here's what changed:
 
 ## Structure

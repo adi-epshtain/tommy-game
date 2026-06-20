@@ -4,6 +4,7 @@ from typing import List
 from pydantic import BaseModel
 
 from infra.database import get_db
+from infra.logger import log
 from auth_utils import get_current_player
 from dal.dinosaur_dal import (
     get_all_dinosaurs,
@@ -54,9 +55,10 @@ async def get_available_dinosaurs(
             level=d.level
         ) for d in dinosaurs]
     except Exception as e:
+        log.error(f"Error fetching dinosaurs: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error fetching dinosaurs: {str(e)}"
+            detail="Failed to fetch dinosaurs"
         )
 
 
@@ -85,9 +87,10 @@ async def get_my_dinosaurs(
     except HTTPException:
         raise
     except Exception as e:
+        log.error(f"Error fetching player dinosaurs: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error fetching player dinosaurs: {str(e)}"
+            detail="Failed to fetch player dinosaurs"
         )
 
 
@@ -119,9 +122,10 @@ async def get_my_selected_dinosaur(
     except HTTPException:
         raise
     except Exception as e:
+        log.error(f"Error fetching selected dinosaur: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error fetching selected dinosaur: {str(e)}"
+            detail="Failed to fetch selected dinosaur"
         )
 
 
@@ -175,9 +179,10 @@ async def unlock_dinosaur(
     except HTTPException:
         raise
     except Exception as e:
+        log.error(f"Error unlocking dinosaur: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error unlocking dinosaur: {str(e)}"
+            detail="Failed to unlock dinosaur"
         )
 
 
@@ -208,8 +213,9 @@ async def select_dinosaur(
     except HTTPException:
         raise
     except Exception as e:
+        log.error(f"Error selecting dinosaur: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error selecting dinosaur: {str(e)}"
+            detail="Failed to select dinosaur"
         )
 
