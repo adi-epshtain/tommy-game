@@ -1,8 +1,27 @@
 # Tommy Game - Math Quiz Platform
 
-🎮 **[שחק עכשיו](https://tommy-game.onrender.com/game)**
+🎮 **[Play Now](https://tommy-game.onrender.com/game)**
 
-A web-based math quiz game platform built with FastAPI and PostgreSQL. Players solve math problems, progress through difficulty stages, and compete for high scores.
+A fun dinosaur-themed math quiz game for kids ages 5-9. Players solve math problems, collect dinosaurs, and compete for high scores.
+
+> **About this project:** This was built as a learning exercise - primarily to explore AI-assisted development with [Cursor](https://cursor.sh) and [Claude](https://claude.ai). Some technology and architectural choices were made for educational purposes rather than purely for the needs of this specific app.
+
+**Example questions:**
+- `2 + 2 =` (beginner)
+- `20 - 8 =` (advanced)
+
+<p align="center">
+  <img src="static/dino_15.png" alt="Dino Hero" width="200"/>
+  <br/>
+  <em>Win rounds to collect dinosaurs like this one!</em>
+</p>
+
+## Hosting & Infrastructure (Free Tier)
+
+| Service | Role | Free Limits |
+|---------|------|-------------|
+| **Render** | App hosting | 512MB RAM, 0.1 CPU - sleeps after 15min inactivity |
+| **Neon** | PostgreSQL DB | 0.5GB storage - free forever |
 
 ## Features
 
