@@ -245,7 +245,7 @@ function Game({ onLogout }) {
           backgroundAttachment: 'fixed'
         }}
       >
-        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center p-8 z-10">
+        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 md:p-8 z-10 overflow-y-auto">
           <div className="max-w-6xl w-full">
             <DinosaurSelection
               viewOnly={true}
@@ -267,7 +267,7 @@ function Game({ onLogout }) {
         className="min-h-screen w-full relative overflow-hidden flex items-center justify-center"
         style={{ background: 'linear-gradient(180deg, #B6E2F2 0%, #D6F0C4 48%, #A9DE84 100%)' }}
       >
-        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center p-8 z-10">
+        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 md:p-8 z-10 overflow-y-auto">
           <div className="max-w-6xl w-full">
             <DinosaurSelection
               onSelect={handleDinosaurSelected}
@@ -378,18 +378,18 @@ function Game({ onLogout }) {
           backgroundAttachment: 'fixed'
         }}
       >
-        <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex flex-col items-center p-8 z-10">
+        <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex flex-col items-center p-4 sm:p-6 md:p-8 z-10">
           {/* Fixed Header with Play Again Button - Always visible at top */}
           <div className="fixed top-0 left-0 right-0 z-50 w-full" style={{ background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(10px)', boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }}>
-            <div className="max-w-4xl mx-auto px-4 py-4">
-              <div className="flex justify-between items-center gap-4">
-                <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#654321' }}>
+            <div className="max-w-4xl mx-auto px-4 py-3">
+              <div className="flex flex-wrap justify-between items-center gap-3">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold" style={{ color: '#654321' }}>
                   🎉 כל הכבוד {gameEndData.player_name}!
                 </h1>
-                <Button 
-                  onClick={() => window.location.reload()} 
+                <Button
+                  onClick={() => window.location.reload()}
                   size="lg"
-                  style={{ fontSize: '1.25rem', padding: '0.75rem 1.5rem', fontWeight: 'bold', whiteSpace: 'nowrap' }}
+                  style={{ fontSize: '1.1rem', padding: '0.6rem 1.25rem', fontWeight: 'bold', whiteSpace: 'nowrap' }}
                 >
                   🎮 שחק שוב
                 </Button>
@@ -398,7 +398,7 @@ function Game({ onLogout }) {
           </div>
           
           {/* Scrollable Content - with top padding to account for fixed header */}
-          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-4xl w-full flex-1 overflow-y-auto" style={{ marginTop: '100px' }}>
+          <div className="bg-white rounded-2xl shadow-2xl p-5 sm:p-8 max-w-4xl w-full flex-1 overflow-y-auto" style={{ marginTop: '116px' }}>
             <div className="text-center mb-6">
               <div className="bg-gradient-to-br from-green-100 to-emerald-100 rounded-xl p-6 border-2 border-green-300 inline-block">
                 <div className="text-5xl font-bold text-green-700 mb-2">{gameEndData.score}</div>
@@ -478,10 +478,10 @@ function Game({ onLogout }) {
       <div className="min-h-screen w-full relative overflow-hidden" style={{
         background: 'linear-gradient(180deg, #B6E2F2 0%, #D6F0C4 48%, #A9DE84 100%)'
       }}>
-        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center p-8 z-50">
+        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center p-4 sm:p-8 z-50">
           <div className="w-full max-w-5xl">
-            <div className="bg-white rounded-xl shadow-lg p-4 mb-6 flex justify-between items-center">
-              <h2 className="text-3xl font-bold" style={{ color: '#654321' }}>🦕 האוסף שלי</h2>
+            <div className="bg-white rounded-xl shadow-lg p-4 mb-6 flex flex-wrap gap-3 justify-between items-center">
+              <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: '#654321' }}>🦕 האוסף שלי</h2>
               <Button onClick={() => setShowDinosaurGallery(false)}>
                 ← חזור למשחק
               </Button>
@@ -539,10 +539,10 @@ function Game({ onLogout }) {
       <div className="min-h-screen w-full relative overflow-hidden" style={{
         background: 'linear-gradient(180deg, #B6E2F2 0%, #D6F0C4 48%, #A9DE84 100%)'
       }}>
-        <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex flex-col items-center justify-center p-8 z-50">
-          <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl p-8">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-3xl font-bold" style={{ color: '#654321' }}>⚙️ הגדרות משחק</h2>
+        <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex flex-col items-center justify-center p-4 sm:p-8 z-50 overflow-y-auto">
+          <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl p-5 sm:p-8">
+            <div className="flex flex-wrap gap-3 justify-between items-center mb-6">
+              <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: '#654321' }}>⚙️ הגדרות משחק</h2>
               <Button
                 variant="secondary"
                 onClick={() => setShowSettings(false)}
@@ -574,13 +574,13 @@ function Game({ onLogout }) {
       style={{
         display: 'flex',
         flexDirection: 'column',
-        height: '100vh',
+        height: '100dvh',
         background: 'linear-gradient(180deg, #B6E2F2 0%, #D6F0C4 48%, #A9DE84 100%)',
       }}
     >
 
       {/* Top Header */}
-      <header className="flex justify-between items-center z-30" style={{
+      <header className="flex justify-between items-center z-30 tg-game-topbar" style={{
         flex: '0 0 auto',
         margin: '16px 16px 0',
         padding: '10px 16px',
@@ -603,7 +603,7 @@ function Game({ onLogout }) {
             <button key={btn.label} onClick={btn.action} style={gameNavBtnStyle}>{btn.label}</button>
           ))}
         </div>
-        <div style={{ fontFamily: "'Fredoka', sans-serif", fontSize: 26, fontWeight: 700, color: '#4E8C3A', position: 'absolute', left: '50%', transform: 'translateX(-50%)', pointerEvents: 'none' }}>
+        <div className="tg-center-title-lg" style={{ fontFamily: "'Fredoka', sans-serif", fontSize: 26, fontWeight: 700, color: '#4E8C3A', flex: '1 1 auto', minWidth: 0, textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '0 8px', pointerEvents: 'none' }}>
           משחק החשבון
         </div>
         <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
@@ -624,7 +624,7 @@ function Game({ onLogout }) {
 
       {/* Growing Dinosaur Progress Bar - Right Side */}
       {!gameEnded && !showDinosaurSelection && !showTop3Celebration && !showAdvanceDialog && !showSettings && !showDinosaurGallery && !showDinosaurViewOnly && winningScore > 0 && (
-        <div className="absolute right-4 top-1/2 transform -translate-y-1/2 z-25 flex flex-col items-center" style={{ marginTop: '40px' }}>
+        <div className="tg-progress-rail absolute right-4 top-1/2 transform -translate-y-1/2 z-25 flex-col items-center" style={{ marginTop: '40px' }}>
           <div className="relative flex items-end gap-4" style={{ width: '150px', height: '400px' }}>
             {/* Progress Bar Track */}
             <div
@@ -725,7 +725,7 @@ function Game({ onLogout }) {
           marginTop: '2vh',
           marginBottom: '2vh',
           background: 'rgba(255,255,255,0.96)',
-          padding: '28px 32px 32px',
+          padding: 'clamp(18px, 4vw, 28px) clamp(18px, 4vw, 32px) clamp(22px, 4vw, 32px)',
           maxHeight: '90vh',
           borderRadius: 40,
           boxShadow: '0 22px 48px rgba(110,170,90,.24), 0 8px 20px rgba(0,0,0,.06)',
@@ -782,8 +782,32 @@ function Game({ onLogout }) {
             </div>
           </div>
 
+          {/* Compact progress (shown on tablet/mobile, where the side rail is hidden) */}
+          {winningScore > 0 && (
+            <div className="tg-progress-compact relative z-10" style={{ alignItems: 'center', gap: 10, justifyContent: 'center', marginBottom: 16 }}>
+              <img
+                src="/static/dino_progress.png"
+                alt=""
+                style={{ height: 'clamp(34px, 9vw, 48px)', width: 'auto', objectFit: 'contain', flexShrink: 0 }}
+                onError={e => { e.target.style.display = 'none' }}
+              />
+              <div style={{ flex: 1, maxWidth: 240, height: 14, background: '#E8F5DB', border: '2px solid #CDE8A8', borderRadius: 999, overflow: 'hidden' }}>
+                <div style={{
+                  height: '100%',
+                  width: `${Math.min(Math.max((score / winningScore) * 100, 0), 100)}%`,
+                  background: 'linear-gradient(90deg, #90D060, #4E8C3A)',
+                  borderRadius: 999,
+                  transition: 'width .5s ease',
+                }} />
+              </div>
+              <div style={{ fontFamily: "'Fredoka', sans-serif", fontSize: 15, fontWeight: 700, color: '#4E8C3A', whiteSpace: 'nowrap' }}>
+                {score}/{winningScore}
+              </div>
+            </div>
+          )}
+
           {/* Input + Submit */}
-          <form onSubmit={handleSubmitAnswer} style={{ display: 'flex', gap: 12, justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
+          <form onSubmit={handleSubmitAnswer} style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
             <input
               type="number"
               id="answer"
@@ -907,11 +931,11 @@ function Game({ onLogout }) {
 
       </main>
 
-      {/* Dinosaur strip - fixed flex area at bottom */}
+      {/* Dinosaur strip - responsive flex area at bottom */}
       <div style={{
         flex: '0 0 auto',
-        minHeight: 140,
-        height: 170,
+        minHeight: 0,
+        height: 'clamp(96px, 18vh, 170px)',
         display: 'flex',
         alignItems: 'flex-end',
         justifyContent: 'center',
@@ -932,8 +956,9 @@ function Game({ onLogout }) {
               alt={dino.name}
               className={showCelebration ? 'animate-bounce' : ''}
               style={{
-                height: size,
-                width: size * 0.8,
+                height: `clamp(70px, 13vh, ${size}px)`,
+                width: 'auto',
+                maxWidth: size * 0.8,
                 objectFit: 'contain',
                 flexShrink: 0,
                 filter: 'drop-shadow(3px 3px 6px rgba(0,0,0,0.25))',

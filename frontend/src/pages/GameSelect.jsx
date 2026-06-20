@@ -70,7 +70,7 @@ function GameSelect({ onLogout }) {
         position: 'relative',
         width: '100%',
         minHeight: '100vh',
-        overflow: 'hidden',
+        overflowX: 'hidden',
         fontFamily: "'Varela Round', 'Heebo', sans-serif",
         background: 'linear-gradient(180deg, #CDEBFF 0%, #EAF7FF 42%, #FFF1F7 100%)',
       }}
@@ -167,12 +167,25 @@ function GameSelect({ onLogout }) {
         </p>
       </div>
 
-      {/* Cards */}
+      {/* Cards - horizontal swipe carousel: scales as more games are added,
+          snaps card-by-card on touch, and stays centered on wide screens. */}
       <div style={{
         position: 'relative', zIndex: 4,
-        display: 'flex', justifyContent: 'center', alignItems: 'flex-start',
-        gap: 36, marginTop: 30, padding: '0 24px 32px', flexWrap: 'wrap',
+        marginTop: 30,
+        overflowX: 'auto',
+        WebkitOverflowScrolling: 'touch',
+        scrollSnapType: 'x mandatory',
+        scrollPaddingInline: 24,
       }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: 36,
+          width: 'max-content',
+          maxWidth: '100%',
+          margin: '0 auto',
+          padding: '4px 24px 32px',
+        }}>
 
         {/* Numbers game - Pink card */}
         <GameCard
@@ -212,12 +225,13 @@ function GameSelect({ onLogout }) {
           decorColor="rgba(110,160,80,.5)"
         />
 
+        </div>
       </div>
 
       {/* Parent note */}
       <div style={{
         position: 'relative', zIndex: 4,
-        margin: '0 auto 200px',
+        margin: '0 auto clamp(48px, 14vh, 160px)',
         maxWidth: 720,
         padding: '18px 28px',
         background: 'rgba(255,255,255,0.62)',
@@ -248,7 +262,9 @@ function GameCard({ onClick, headerGradient, shadow, decorLeft, decorRight, masc
       style={{
         all: 'unset',
         cursor: 'pointer',
-        width: 300,
+        width: 'min(320px, 80vw)',
+        flex: '0 0 auto',
+        scrollSnapAlign: 'center',
         background: '#fff',
         borderRadius: 40,
         overflow: 'hidden',

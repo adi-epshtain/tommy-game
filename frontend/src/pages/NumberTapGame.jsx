@@ -148,7 +148,8 @@ export default function NumberTapGame({ onLogout = () => {} }) {
           background: 'rgba(255,255,255,0.85)',
           backdropFilter: 'blur(8px)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          padding: 24,
+          padding: 'clamp(12px, 4vw, 24px)',
+          overflowY: 'auto',
           zIndex: 10,
         }}>
           <div style={{ maxWidth: 600, width: '100%' }}>
@@ -168,7 +169,7 @@ export default function NumberTapGame({ onLogout = () => {} }) {
       dir="rtl"
       style={{
         width: '100%',
-        height: '100vh',
+        height: '100dvh',
         overflow: 'hidden',
         background: 'linear-gradient(180deg, #FFD9E8 0%, #FFE9F2 38%, #F1E7FF 100%)',
         fontFamily: "'Varela Round', 'Heebo', sans-serif",
@@ -198,7 +199,7 @@ export default function NumberTapGame({ onLogout = () => {} }) {
       ))}
 
       {/* Top bar - frosted glass pill */}
-      <header style={{
+      <header className="tg-game-topbar" style={{
         flex: '0 0 auto',
         display: 'flex',
         justifyContent: 'space-between',
@@ -224,8 +225,8 @@ export default function NumberTapGame({ onLogout = () => {} }) {
           ))}
         </div>
 
-        {/* Center: title */}
-        <div style={{
+        {/* Center: title (hidden on small screens to avoid overlapping nav) */}
+        <div className="tg-center-title" style={{
           fontFamily: "'Fredoka', sans-serif",
           fontSize: 26,
           fontWeight: 700,
@@ -277,13 +278,13 @@ export default function NumberTapGame({ onLogout = () => {} }) {
           maxWidth: 420,
           background: 'rgba(255,255,255,0.92)',
           borderRadius: 32,
-          padding: '28px 24px 32px',
+          padding: 'clamp(16px, 4vw, 28px) clamp(16px, 4vw, 24px)',
           boxSizing: 'border-box',
           boxShadow: '0 12px 40px rgba(155,61,122,0.12), 0 4px 12px rgba(0,0,0,0.06)',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: 20,
+          gap: 'clamp(12px, 2.5vh, 20px)',
           position: 'relative',
           zIndex: 1,
         }}>
@@ -294,7 +295,7 @@ export default function NumberTapGame({ onLogout = () => {} }) {
 
           {/* Target number display */}
           <div style={{
-            width: 140, height: 140,
+            width: 'clamp(100px, 28vw, 140px)', height: 'clamp(100px, 28vw, 140px)',
             background: 'linear-gradient(135deg, #FFE4EF 0%, #F5D0FF 100%)',
             borderRadius: 28,
             display: 'flex',
@@ -306,7 +307,7 @@ export default function NumberTapGame({ onLogout = () => {} }) {
           }}>
             <span style={{
               fontFamily: "'Fredoka', sans-serif",
-              fontSize: 96,
+              fontSize: 'clamp(64px, 18vw, 96px)',
               lineHeight: 1,
               color: '#7B2A8E',
               fontWeight: 700,
@@ -346,9 +347,9 @@ export default function NumberTapGame({ onLogout = () => {} }) {
                   onClick={() => handleChoice(n, i)}
                   className={isWrong ? 'shake' : ''}
                   style={{
-                    height: 110,
+                    height: 'clamp(80px, 15vw, 110px)',
                     fontFamily: "'Fredoka', sans-serif",
-                    fontSize: 60,
+                    fontSize: 'clamp(40px, 11vw, 60px)',
                     fontWeight: 700,
                     color: col.text,
                     background: isWrong ? '#FF4444' : col.bg,

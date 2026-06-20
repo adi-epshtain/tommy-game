@@ -86,7 +86,7 @@ function PlayerStats() {
         position: 'sticky', top: 16, zIndex: 10,
       }}>
         <button onClick={() => navigate('/game')} style={navBtn}>🎮 חזרה</button>
-        <div style={{ fontFamily: "'Fredoka', sans-serif", fontSize: 24, fontWeight: 700, color: '#4E8C3A', position: 'absolute', left: '50%', transform: 'translateX(-50%)', pointerEvents: 'none', whiteSpace: 'nowrap' }}>
+        <div className="tg-center-title" style={{ fontFamily: "'Fredoka', sans-serif", fontSize: 24, fontWeight: 700, color: '#4E8C3A', position: 'absolute', left: '50%', transform: 'translateX(-50%)', pointerEvents: 'none', whiteSpace: 'nowrap' }}>
           📊 סטטיסטיקות
         </div>
         <div style={{ fontFamily: "'Fredoka', sans-serif", fontSize: 16, fontWeight: 700, color: '#4E8C3A' }}>

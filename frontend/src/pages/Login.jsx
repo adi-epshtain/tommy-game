@@ -61,10 +61,11 @@ function Login({ onLogin }) {
         minHeight: '100vh',
         width: '100%',
         position: 'relative',
-        overflow: 'hidden',
+        overflowX: 'hidden',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
+        padding: '24px 0',
         fontFamily: "'Varela Round', 'Heebo', sans-serif",
         background: 'linear-gradient(180deg, #CDEBFF 0%, #DDF3D4 52%, #A9DE84 100%)',
       }}
@@ -103,10 +104,10 @@ function Login({ onLogin }) {
       }}/>
 
       {/* Dinosaurs at bottom */}
-      <img src="/static/dino_1.png" alt="" style={{ position: 'absolute', bottom: 30, left: 16, height: 175, objectFit: 'contain', filter: 'drop-shadow(3px 6px 8px rgba(0,0,0,0.22))', pointerEvents: 'none', zIndex: 3 }} onError={e => { e.target.style.display = 'none' }} />
-      <img src="/static/dino_2.png" alt="" style={{ position: 'absolute', bottom: 30, left: 175, height: 150, objectFit: 'contain', filter: 'drop-shadow(3px 6px 8px rgba(0,0,0,0.22))', pointerEvents: 'none', zIndex: 3 }} onError={e => { e.target.style.display = 'none' }} />
-      <img src="/static/dino_3.png" alt="" style={{ position: 'absolute', bottom: 30, right: 175, height: 150, objectFit: 'contain', filter: 'drop-shadow(3px 6px 8px rgba(0,0,0,0.22))', pointerEvents: 'none', zIndex: 3 }} onError={e => { e.target.style.display = 'none' }} />
-      <img src="/static/dino_4.png" alt="" style={{ position: 'absolute', bottom: 30, right: 16, height: 175, objectFit: 'contain', filter: 'drop-shadow(3px 6px 8px rgba(0,0,0,0.22))', pointerEvents: 'none', zIndex: 3 }} onError={e => { e.target.style.display = 'none' }} />
+      <img src="/static/dino_1.png" alt="" className="tg-deco-dino" style={{ position: 'absolute', bottom: 30, left: 16, height: 'clamp(120px, 18vw, 175px)', objectFit: 'contain', filter: 'drop-shadow(3px 6px 8px rgba(0,0,0,0.22))', pointerEvents: 'none', zIndex: 3 }} onError={e => { e.target.style.display = 'none' }} />
+      <img src="/static/dino_2.png" alt="" className="tg-deco-dino" style={{ position: 'absolute', bottom: 30, left: 175, height: 'clamp(105px, 16vw, 150px)', objectFit: 'contain', filter: 'drop-shadow(3px 6px 8px rgba(0,0,0,0.22))', pointerEvents: 'none', zIndex: 3 }} onError={e => { e.target.style.display = 'none' }} />
+      <img src="/static/dino_3.png" alt="" className="tg-deco-dino" style={{ position: 'absolute', bottom: 30, right: 175, height: 'clamp(105px, 16vw, 150px)', objectFit: 'contain', filter: 'drop-shadow(3px 6px 8px rgba(0,0,0,0.22))', pointerEvents: 'none', zIndex: 3 }} onError={e => { e.target.style.display = 'none' }} />
+      <img src="/static/dino_4.png" alt="" className="tg-deco-dino" style={{ position: 'absolute', bottom: 30, right: 16, height: 'clamp(120px, 18vw, 175px)', objectFit: 'contain', filter: 'drop-shadow(3px 6px 8px rgba(0,0,0,0.22))', pointerEvents: 'none', zIndex: 3 }} onError={e => { e.target.style.display = 'none' }} />
 
       {/* Card area */}
       <div style={{
@@ -181,6 +182,7 @@ function Login({ onLogin }) {
                   fontFamily: "'Varela Round', sans-serif",
                   boxShadow: 'inset 0 2px 4px rgba(110,170,90,.08)',
                   transition: 'border-color .15s',
+                  boxSizing: 'border-box',
                 }}
                 onFocus={e => { e.target.style.borderColor = '#6AB840' }}
                 onBlur={e => { e.target.style.borderColor = '#CDE8A8' }}

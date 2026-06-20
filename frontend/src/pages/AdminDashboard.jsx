@@ -272,7 +272,7 @@ function AdminDashboard() {
         <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center p-8 z-10">
           <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-6xl w-full max-h-[90vh] overflow-y-auto relative">
             <div className="sticky top-0 bg-white z-20 pb-4 mb-4 border-b-2 border-gray-200">
-              <div className="flex justify-between items-center mb-4">
+              <div className="flex flex-wrap gap-3 justify-between items-center mb-4">
                 <h1 className="text-3xl font-bold" style={{ color: '#654321' }}>סטטיסטיקות שחקן</h1>
                 <div className="flex gap-2">
                   <Button 
@@ -530,7 +530,7 @@ function AdminDashboard() {
         <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center p-8 z-10">
           <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-6xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white z-20 pb-4 mb-4 border-b-2 border-gray-200">
-              <div className="flex justify-between items-center mb-4">
+              <div className="flex flex-wrap gap-3 justify-between items-center mb-4">
                 <h1 className="text-3xl font-bold" style={{ color: '#654321' }}>🏆 לוח התוצאות</h1>
                 <div className="flex gap-2">
                   <Button onClick={() => {
@@ -632,10 +632,10 @@ function AdminDashboard() {
                   key={player.id}
                   className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg p-4 border-2 border-blue-200 hover:shadow-lg transition-all"
                 >
-                  <div className="flex justify-between items-center">
-                    <div 
+                  <div className="flex flex-wrap gap-3 justify-between items-center">
+                    <div
                       onClick={() => handlePlayerClick(player.id)}
-                      className="flex-1 cursor-pointer hover:scale-[1.02] transition-transform"
+                      className="flex-1 min-w-[180px] cursor-pointer hover:scale-[1.02] transition-transform"
                     >
                       <div className="text-xl font-bold" style={{ color: '#654321' }}>
                         👤 {player.name}

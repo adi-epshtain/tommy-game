@@ -3,24 +3,35 @@
 @tailwind utilities;
 
 /* === עיצוב בסיסי לכל הדפים === */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   font-family: 'Varela Round', 'Heebo', Arial, sans-serif;
   direction: rtl;
   margin: 0;
   padding: 0;
+  -webkit-text-size-adjust: 100%;
 }
 
 #root {
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
+img { max-width: 100%; }
+
 h1 {
-  font-size: 48px;
+  font-size: clamp(28px, 6vw, 48px);
   color: #2c7a7b;
 }
 
 h2 {
-  font-size: 32px;
+  font-size: clamp(22px, 4vw, 32px);
   margin-top: 20px;
   color: #285e61;
   text-align: center;
@@ -30,7 +41,7 @@ h2 {
 input, button {
   font-size: 18px;
   padding: 8px 16px;
-  margin: 5px;
+  margin: 0;
   border-radius: 12px;
   border: 1px solid #2c7a7b;
 }
@@ -91,26 +102,10 @@ button:disabled {
   box-shadow: 0 0 15px rgba(0,0,0,0.3);
 }
 
-form {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: 30px;
-}
-
-form div {
-  display: grid;
-  grid-template-columns: 80px 1fr;
-  align-items: center;
-  margin-bottom: 8px;
-  max-width: 350px;
-}
-
-form input {
-  padding: 4px;
-  box-sizing: border-box;
-  width: 100%;
-}
+/* NOTE: Legacy global `form`, `form div`, `form input` rules were removed.
+   They forced every React form's children into an 80px/1fr grid and leaked
+   fixed widths into modern components (broke the password field layout).
+   All current forms style themselves explicitly. */
 
 p {
   text-align: center;
@@ -263,4 +258,67 @@ p {
 .tg-wob { animation: tg-wob 0.5s ease-in-out; }
 .tg-hop { animation: tg-hop 0.6s cubic-bezier(0.36, 0.07, 0.19, 0.97); }
 .tg-rise { animation: tg-rise 0.4s ease-out forwards; }
+
+/* ===================================================================
+   Responsive helpers (mobile-first)
+   Breakpoints: <=640 phone, <=767 phone/landscape, <=1023 tablet
+   =================================================================== */
+/* Tall side progress rail: shown on desktop. The compact in-card progress is
+   hidden on desktop and swapped in on smaller screens (see media query below). */
+.tg-progress-rail { display: flex; }
+.tg-progress-compact { display: none; }
+
+/* Phones + portrait tablets (and any narrow viewport): condense the layout so
+   no absolutely-positioned element overlaps the interactive content. */
+@media (max-width: 820px) {
+  /* Game top bars: let the action groups wrap onto centered rows so nothing
+     (e.g. the logout button) is pushed off-screen. */
+  .tg-game-topbar {
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    row-gap: 8px;
+  }
+  /* The centered game title would collide with the wrapped nav — hide it; the
+     screen background/cards already make the current game obvious. */
+  .tg-center-title,
+  .tg-center-title-lg {
+    display: none !important;
+  }
+  /* The tall side progress rail is absolutely positioned and overlaps the game
+     card on narrow screens. Hide it and show the compact progress instead. */
+  .tg-progress-rail { display: none !important; }
+  .tg-progress-compact { display: flex !important; }
+  /* Decorative corner dinosaurs on the auth screens overlap the card. */
+  .tg-deco-dino { display: none !important; }
+}
+
+/* Larger, easier tap targets for children on touch devices */
+@media (pointer: coarse) {
+  button { min-height: 44px; }
+}
+
+/* Absolutely-centered header titles overlap the side nav buttons on
+   narrow screens — hide them there (the buttons keep the context). */
+@media (max-width: 640px) {
+  .tg-center-title { display: none !important; }
+}
+/* Wider variant: header has many nav buttons (math game) that cross the
+   centre below desktop, so hide the centred title up to tablet width. */
+@media (max-width: 1023px) {
+  .tg-center-title-lg { display: none !important; }
+}
+
+/* Tall vertical progress rail (math game) only fits beside the card on
+   wide screens. Below tablet width, hide it and show a compact inline one. */
+.tg-progress-rail { display: flex; }
+.tg-progress-compact { display: none; }
+@media (max-width: 1023px) {
+  .tg-progress-rail { display: none !important; }
+  .tg-progress-compact { display: flex !important; }
+}
+
+/* Decorative dinosaurs on the auth screens crowd the form on phones. */
+@media (max-width: 767px) {
+  .tg-deco-dino { display: none !important; }
+}
 
