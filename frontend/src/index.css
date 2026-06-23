@@ -287,6 +287,8 @@ p {
   .tg-center-title-lg {
     display: none !important;
   }
+  /* Drop the "שלום <name>" greeting on phones to save vertical room for play. */
+  .tg-greeting { display: none !important; }
   /* The tall side progress rail is absolutely positioned and overlaps the game
      card on narrow screens. Hide it and show the compact progress instead. */
   .tg-progress-rail { display: none !important; }

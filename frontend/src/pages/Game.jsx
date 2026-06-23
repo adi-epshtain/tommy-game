@@ -742,7 +742,7 @@ function Game({ onLogout }) {
           
           {/* Player Greeting */}
           {playerName && (
-            <h2 className="text-2xl md:text-3xl mb-3 text-center relative z-10 font-bold" style={{
+            <h2 className="tg-greeting text-2xl md:text-3xl mb-3 text-center relative z-10 font-bold" style={{
               color: '#4E8C3A',
               fontFamily: "'Fredoka', 'Varela Round', sans-serif",
             }}>
@@ -841,7 +841,7 @@ function Game({ onLogout }) {
                 boxSizing: 'border-box',
               }}
             />
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, width: '100%', maxWidth: 260 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, width: '100%', maxWidth: 260, direction: 'ltr' }}>
               {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(d => (
                 <button type="button" key={d} onClick={() => setAnswer(prev => (String(prev) + d).slice(0, 3))} style={keypadBtnStyle}>{d}</button>
               ))}
@@ -986,8 +986,8 @@ const gameNavBtnStyle = {
 
 // Compact on-screen number pad key — small so the pad doesn't dominate the card.
 const keypadBtnStyle = {
-  height: 'clamp(36px, 5.5vh, 48px)',
-  fontSize: 'clamp(18px, 4.5vw, 24px)',
+  height: 'clamp(32px, 5vh, 44px)',
+  fontSize: 'clamp(17px, 4vw, 22px)',
   fontWeight: 700,
   borderRadius: 14,
   border: '2px solid #CDE8A8',
