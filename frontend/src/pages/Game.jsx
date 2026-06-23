@@ -751,7 +751,7 @@ function Game({ onLogout }) {
           )}
           
           {/* Question Display */}
-          <div className="relative z-10 mb-4" style={{
+          <div className="tg-question-box relative z-10 mb-4" style={{
             background: 'linear-gradient(135deg, #D4F4E0 0%, #C2EEF2 100%)',
             padding: '20px 24px',
             borderRadius: 24,
@@ -772,8 +772,8 @@ function Game({ onLogout }) {
             </h2>
           </div>
 
-          {/* Stage */}
-          <div className="flex justify-center gap-4 mb-4 relative z-10">
+          {/* Stage (standalone row — hidden on phones, where it's shown inline in the progress row) */}
+          <div className="tg-stage-row flex justify-center gap-4 mb-4 relative z-10">
             <div id="stage" style={{
               display: 'inline-block',
               padding: '6px 20px',
@@ -809,13 +809,16 @@ function Game({ onLogout }) {
               <div style={{ fontFamily: "'Fredoka', sans-serif", fontSize: 15, fontWeight: 700, color: '#4E8C3A', whiteSpace: 'nowrap' }}>
                 {score}/{winningScore}
               </div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#4E8C3A', background: '#E8F5DB', border: '2px solid #CDE8A8', borderRadius: 999, padding: '3px 10px', whiteSpace: 'nowrap' }}>
+                🎯 {stage}
+              </div>
             </div>
           )}
 
           {/* Answer entry: built-in on-screen number pad so the phone's native
               keyboard never opens (inputMode="none"). Physical typing still
               works on desktop. */}
-          <form onSubmit={handleSubmitAnswer} style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center', marginBottom: 16 }}>
+          <form onSubmit={handleSubmitAnswer} style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center', marginBottom: 10 }}>
             <input
               type="text"
               inputMode="none"
@@ -841,8 +844,8 @@ function Game({ onLogout }) {
                 boxSizing: 'border-box',
               }}
             />
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, width: '100%', maxWidth: 260, direction: 'ltr' }}>
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(d => (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, width: '100%', maxWidth: 260, direction: 'ltr' }}>
+              {[7, 8, 9, 4, 5, 6, 1, 2, 3].map(d => (
                 <button type="button" key={d} onClick={() => setAnswer(prev => (String(prev) + d).slice(0, 3))} style={keypadBtnStyle}>{d}</button>
               ))}
               <button type="button" onClick={() => setAnswer(prev => String(prev).slice(0, -1))} style={keypadBtnStyle} aria-label="מחק">⌫</button>
@@ -986,8 +989,8 @@ const gameNavBtnStyle = {
 
 // Compact on-screen number pad key — small so the pad doesn't dominate the card.
 const keypadBtnStyle = {
-  height: 'clamp(32px, 5vh, 44px)',
-  fontSize: 'clamp(17px, 4vw, 22px)',
+  height: 'clamp(30px, 4.3vh, 40px)',
+  fontSize: 'clamp(16px, 3.8vw, 21px)',
   fontWeight: 700,
   borderRadius: 14,
   border: '2px solid #CDE8A8',
