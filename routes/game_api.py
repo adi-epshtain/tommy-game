@@ -285,4 +285,22 @@ async def set_game_settings(
     await update_session_winning_score(session=db, player_session=player_session,
                                        new_winning_score=req.winning_score)
 
-    return {"message": "Settings updated successfully"}
+    # Changing the stage mid-game must immediately swap to a question that
+    # matches the new stage, instead of leaving the old-stage question on screen.
+    new_question: Optional[Question] = await get_random_question_by_game(
+        db, player_session.game_id, player_session.id
+    )
+    if not new_question:
+        try:
+            await insert_math_stock_questions(db, filename=MATH_QUESTIONS_FILE, game_name=GameInfo.MATH_GAME.name)
+        except Exception as e:
+            log.error(f"Insert math stock questions failed with error: {e}")
+        new_question = await get_random_question_by_game(db, player_session.game_id, player_session.id)
+
+    return {
+        "message": "Settings updated successfully",
+        "stage": player_session.stage,
+        "winning_score": player_session.winning_score or 2,
+        "question": new_question.text if new_question else None,
+        "question_id": new_question.id if new_question else None,
+    }

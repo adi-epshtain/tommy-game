@@ -555,12 +555,20 @@ function Game({ onLogout }) {
                 ← חזור למשחק (ללא שמירה)
               </Button>
             </div>
-            <Settings onSettingsSaved={async () => {
+            <Settings onSettingsSaved={async (data) => {
               // Update stage and winning score after settings are saved
               try {
                 const state = await api.getCurrentGameState()
                 setStage(state.current_stage)
                 setWinningScore(state.winning_score)
+                // Swap to a fresh question matching the (possibly new) stage,
+                // so changing the level mid-game doesn't leave the old question.
+                if (data && data.question) {
+                  setQuestion(data.question)
+                  setCurrentQuestionId(data.question_id)
+                  setAnswer('')
+                  setResult('')
+                }
                 // Close settings screen after successful save
                 setShowSettings(false)
               } catch (err) {

@@ -27,9 +27,9 @@ function Settings({ onSettingsSaved }) {
     setLoading(true)
     setMessage('')
     try {
-      await api.saveSettings(1, winningScore, currentStage)
+      const res = await api.saveSettings(1, winningScore, currentStage)
       setMessage('✅ ההגדרות נשמרו!')
-      if (onSettingsSaved) await onSettingsSaved()
+      if (onSettingsSaved) await onSettingsSaved(res)
     } catch {
       setMessage('שגיאה בשמירת ההגדרות')
     } finally {
