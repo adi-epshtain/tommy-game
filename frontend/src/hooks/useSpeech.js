@@ -45,6 +45,36 @@ export function useSpeech(isMuted = false) {
     return () => synth.removeEventListener('voiceschanged', pickVoice)
   }, [])
 
+  // Mobile browsers (iOS Safari / Android Chrome) block speech that isn't
+  // triggered directly by a user gesture. We "unlock" the engine on the very
+  // first tap/keypress with a silent utterance — after that, programmatic
+  // speech (even from timers) is allowed for the rest of the session.
+  useEffect(() => {
+    const synth = typeof window !== 'undefined' && window.speechSynthesis
+    if (!synth) return
+
+    const unlock = () => {
+      try {
+        const primer = new SpeechSynthesisUtterance(' ')
+        primer.volume = 0 // silent — just to satisfy the gesture requirement
+        synth.speak(primer)
+        synth.resume()
+      } catch {
+        /* ignore */
+      }
+      remove()
+    }
+    const remove = () => {
+      document.removeEventListener('pointerdown', unlock)
+      document.removeEventListener('touchend', unlock)
+      document.removeEventListener('keydown', unlock)
+    }
+    document.addEventListener('pointerdown', unlock)
+    document.addEventListener('touchend', unlock)
+    document.addEventListener('keydown', unlock)
+    return remove
+  }, [])
+
   const speak = useCallback((text) => {
     if (mutedRef.current) return
     const synth = typeof window !== 'undefined' && window.speechSynthesis
@@ -56,6 +86,7 @@ export function useSpeech(isMuted = false) {
       if (voiceRef.current) utter.voice = voiceRef.current
       utter.rate = 0.85 // קצת לאט — ברור יותר לילד
       utter.pitch = 1.1
+      synth.resume() // iOS/Android: ודא שהמנוע לא במצב מושהה
       synth.speak(utter)
     } catch {
       /* דיבור לא זמין — מתעלמים בשקט */

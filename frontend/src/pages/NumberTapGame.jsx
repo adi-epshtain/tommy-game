@@ -69,7 +69,9 @@ export default function NumberTapGame({ onLogout = () => {} }) {
   const [wrongId, setWrongId] = useState(null)
   const [score, setScore] = useState(0)
   const [particles, setParticles] = useState([])
-  const [isMuted, setIsMuted] = useState(false)
+  // Mute is shared across games and remembered between sessions, so turning
+  // sound off in one game keeps it off everywhere until explicitly turned on.
+  const [isMuted, setIsMuted] = useState(() => localStorage.getItem('tommy_muted') === '1')
   const [allDinos, setAllDinos] = useState([])
   const [collectedDinos, setCollectedDinos] = useState([])
   const [pressedIdx, setPressedIdx] = useState(null)
@@ -108,6 +110,11 @@ export default function NumberTapGame({ onLogout = () => {} }) {
   useEffect(() => {
     if (target != null) speakNumber(target)
   }, [target, speakNumber])
+
+  // Remember the mute choice across games and reloads.
+  useEffect(() => {
+    localStorage.setItem('tommy_muted', isMuted ? '1' : '0')
+  }, [isMuted])
 
   useEffect(() => {
     const onKey = (e) => {
@@ -342,14 +349,6 @@ export default function NumberTapGame({ onLogout = () => {} }) {
               textShadow: '0 2px 4px rgba(0,0,0,0.15)',
             }}>
               {target}
-            </span>
-            {/* Speaker hint badge */}
-            <span style={{
-              position: 'absolute', bottom: 6, left: 6,
-              fontSize: 18, lineHeight: 1, opacity: 0.85,
-              filter: 'drop-shadow(0 1px 1px rgba(0,0,0,0.25))',
-            }}>
-              🔊
             </span>
           </div>
 

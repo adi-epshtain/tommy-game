@@ -34,9 +34,14 @@ function Game({ onLogout }) {
   const [playerDinosaurs, setPlayerDinosaurs] = useState([]) // All dinosaurs in player's collection
   const [showDinosaurGallery, setShowDinosaurGallery] = useState(false) // Gallery view
   const [showDinosaurViewOnly, setShowDinosaurViewOnly] = useState(false) // View-only mode (browse all dinosaurs)
-  const [isMuted, setIsMuted] = useState(false) // Mute state for sound effects
+  // Mute is shared across games and remembered between sessions.
+  const [isMuted, setIsMuted] = useState(() => localStorage.getItem('tommy_muted') === '1')
   const navigate = useNavigate()
   const { playCelebrationSound, playErrorSound, playTop3VictorySound } = useSounds(isMuted)
+
+  useEffect(() => {
+    localStorage.setItem('tommy_muted', isMuted ? '1' : '0')
+  }, [isMuted])
 
 
 
@@ -807,19 +812,21 @@ function Game({ onLogout }) {
             </div>
           )}
 
-          {/* Input + Submit */}
-          <form className="tg-answer-form" onSubmit={handleSubmitAnswer} style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
+          {/* Answer entry: built-in on-screen number pad so the phone's native
+              keyboard never opens (inputMode="none"). Physical typing still
+              works on desktop. */}
+          <form onSubmit={handleSubmitAnswer} style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center', marginBottom: 16 }}>
             <input
-              type="number"
+              type="text"
+              inputMode="none"
               id="answer"
               value={answer}
-              onChange={(e) => setAnswer(e.target.value)}
+              onChange={(e) => setAnswer(e.target.value.replace(/[^0-9]/g, '').slice(0, 3))}
               placeholder="תשובה"
               required
-              autoFocus
               style={{
-                flex: 1,
-                maxWidth: 200,
+                width: '100%',
+                maxWidth: 220,
                 padding: '12px 20px',
                 fontSize: 28,
                 fontWeight: 700,
@@ -831,29 +838,17 @@ function Game({ onLogout }) {
                 outline: 'none',
                 boxShadow: 'inset 0 2px 6px rgba(110,170,90,.12)',
                 fontFamily: "'Fredoka', sans-serif",
+                boxSizing: 'border-box',
               }}
             />
-            <button
-              type="submit"
-              style={{
-                padding: '12px 28px',
-                fontSize: 18,
-                fontWeight: 700,
-                borderRadius: 999,
-                border: '2px solid #CDE8A8',
-                background: '#fff',
-                color: '#4E8C3A',
-                cursor: 'pointer',
-                boxShadow: '0 7px 0 #CDE8A8',
-                fontFamily: "'Varela Round', sans-serif",
-                transition: 'transform .1s, box-shadow .1s',
-              }}
-              onMouseDown={e => { e.currentTarget.style.transform = 'translateY(4px)'; e.currentTarget.style.boxShadow = '0 3px 0 #CDE8A8' }}
-              onMouseUp={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 7px 0 #CDE8A8' }}
-              onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 7px 0 #CDE8A8' }}
-            >
-              🔥 שלח
-            </button>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, width: '100%', maxWidth: 260 }}>
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(d => (
+                <button type="button" key={d} onClick={() => setAnswer(prev => (String(prev) + d).slice(0, 3))} style={keypadBtnStyle}>{d}</button>
+              ))}
+              <button type="button" onClick={() => setAnswer(prev => String(prev).slice(0, -1))} style={keypadBtnStyle} aria-label="מחק">⌫</button>
+              <button type="button" onClick={() => setAnswer(prev => (String(prev) + '0').slice(0, 3))} style={keypadBtnStyle}>0</button>
+              <button type="submit" style={{ ...keypadBtnStyle, background: '#52C36E', color: '#fff', border: '2px solid #36A452', boxShadow: '0 4px 0 #36A452' }} aria-label="שלח">🔥</button>
+            </div>
           </form>
 
           {/* Result Feedback */}
@@ -987,5 +982,23 @@ const gameNavBtnStyle = {
   boxShadow: '0 4px 0 #CDE8A8',
   fontFamily: "'Varela Round', sans-serif",
   whiteSpace: 'nowrap',
+}
+
+// Compact on-screen number pad key — small so the pad doesn't dominate the card.
+const keypadBtnStyle = {
+  height: 'clamp(36px, 5.5vh, 48px)',
+  fontSize: 'clamp(18px, 4.5vw, 24px)',
+  fontWeight: 700,
+  borderRadius: 14,
+  border: '2px solid #CDE8A8',
+  background: '#fff',
+  color: '#1E6B4A',
+  cursor: 'pointer',
+  boxShadow: '0 3px 0 #CDE8A8',
+  fontFamily: "'Fredoka', sans-serif",
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: 0,
 }
 
