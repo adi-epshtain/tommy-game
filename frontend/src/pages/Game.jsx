@@ -841,12 +841,12 @@ function Game({ onLogout }) {
               required
               style={{
                 width: '100%',
-                maxWidth: 220,
-                padding: '12px 20px',
-                fontSize: 28,
+                maxWidth: 200,
+                padding: 'clamp(6px, 1.2vh, 12px) 16px',
+                fontSize: 'clamp(22px, 5vw, 28px)',
                 fontWeight: 700,
                 textAlign: 'center',
-                borderRadius: 20,
+                borderRadius: 16,
                 border: '2.5px solid #CDE8A8',
                 background: '#F4FFF4',
                 color: '#1E6B4A',
@@ -990,8 +990,8 @@ const gameNavBtnStyle = {
 
 // Compact on-screen number pad key — small so the pad doesn't dominate the card.
 const keypadBtnStyle = {
-  height: 'clamp(30px, 4.3vh, 40px)',
-  fontSize: 'clamp(16px, 3.8vw, 21px)',
+  height: 'clamp(28px, 3.8vh, 40px)',
+  fontSize: 'clamp(16px, 3.6vw, 21px)',
   fontWeight: 700,
   borderRadius: 14,
   border: '2px solid #CDE8A8',

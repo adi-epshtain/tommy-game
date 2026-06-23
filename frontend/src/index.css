@@ -293,9 +293,12 @@ p {
      and the redundant "advanced to stage N" banner. */
   .tg-stage-row,
   .tg-stage-banner { display: none !important; }
-  /* Shrink the exercise box on phones so the whole keypad fits without scrolling. */
-  .tg-question-box { padding: 12px 16px !important; margin-bottom: 10px !important; }
-  .tg-question-box .question { font-size: 30px !important; }
+  /* Shrink the exercise box, feedback line and spacing on phones so the whole
+     keypad fits without scrolling. */
+  .tg-question-box { padding: 10px 14px !important; margin-bottom: 8px !important; }
+  .tg-question-box .question { font-size: 26px !important; }
+  .result { font-size: 14px !important; margin-bottom: 6px !important; }
+  .tg-progress-compact { margin-bottom: 8px !important; }
   /* The tall side progress rail is absolutely positioned and overlaps the game
      card on narrow screens. Hide it and show the compact progress instead. */
   .tg-progress-rail { display: none !important; }
