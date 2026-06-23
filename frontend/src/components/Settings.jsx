@@ -70,40 +70,40 @@ function Settings({ onSettingsSaved }) {
         {/* Stage */}
         <div style={{ background: '#F4FFF4', borderRadius: 18, padding: '18px 22px', border: '1.5px solid #CDE8A8' }}>
           <label style={{ display: 'block', fontSize: 16, fontWeight: 700, color: '#4E8C3A', marginBottom: 10, textAlign: 'center' }}>
-            🎯 רמה נוכחית
+            🎯 רמה נוכחית <span style={{ fontSize: 13, color: '#7AB85A', fontWeight: 700 }}>(1-5)</span>
           </label>
           <input
             type="number"
             min="1"
             max="5"
             value={currentStage}
-            onChange={(e) => setCurrentStage(parseInt(e.target.value))}
+            onChange={(e) => setCurrentStage(Math.min(5, Math.max(1, parseInt(e.target.value) || 1)))}
             style={fieldStyle}
             onFocus={e => { e.target.style.borderColor = '#6AB840' }}
             onBlur={e => { e.target.style.borderColor = '#CDE8A8' }}
           />
           <p style={{ textAlign: 'center', fontSize: 13, color: '#7AB85A', marginTop: 8 }}>
-            1 - קל, 5 - מאתגר
+            מותר 1-5 · 1 קל, 5 מאתגר
           </p>
         </div>
 
         {/* Winning score */}
         <div style={{ background: '#F4FFF4', borderRadius: 18, padding: '18px 22px', border: '1.5px solid #CDE8A8' }}>
           <label style={{ display: 'block', fontSize: 16, fontWeight: 700, color: '#4E8C3A', marginBottom: 10, textAlign: 'center' }}>
-            🏆 ניקוד לניצחון
+            🏆 ניקוד לניצחון <span style={{ fontSize: 13, color: '#7AB85A', fontWeight: 700 }}>(1-10)</span>
           </label>
           <input
             type="number"
-            min="2"
-            max="20"
+            min="1"
+            max="10"
             value={winningScore}
-            onChange={(e) => setWinningScore(parseInt(e.target.value))}
+            onChange={(e) => setWinningScore(Math.min(10, Math.max(1, parseInt(e.target.value) || 1)))}
             style={fieldStyle}
             onFocus={e => { e.target.style.borderColor = '#6AB840' }}
             onBlur={e => { e.target.style.borderColor = '#CDE8A8' }}
           />
           <p style={{ textAlign: 'center', fontSize: 13, color: '#7AB85A', marginTop: 8 }}>
-            כמה נקודות נדרשות לניצחון
+            מותר 1-10 · כמה נקודות נדרשות לניצחון
           </p>
         </div>
 

@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from starlette.responses import JSONResponse
 from sqlalchemy.orm import Session
 from enum import Enum
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from auth_utils import get_current_player
 from dal.game_dal import get_game_by_name, create_game
 from dal.player_answer_dal import get_wrong_questions, update_player_answer, \
@@ -231,9 +231,9 @@ async def get_top_players_api(
 
 
 class GameSettingsRequest(BaseModel):
-    difficulty: int = 1
-    winning_score: int = 5
-    current_stage: Optional[int] = None
+    difficulty: int = Field(default=1, ge=1, le=5)
+    winning_score: int = Field(default=5, ge=1, le=10)
+    current_stage: Optional[int] = Field(default=None, ge=1, le=5)
 
 
 @router.get("/api/current_game_state", tags=["Game"])
