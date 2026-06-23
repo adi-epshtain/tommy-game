@@ -172,6 +172,7 @@ function Login({ onLogin }) {
                 disabled={loading}
                 style={{
                   flex: 1,
+                  minWidth: 0,
                   padding: '12px 16px',
                   fontSize: 19,
                   border: '3px solid #CDE8A8',
@@ -195,7 +196,7 @@ function Login({ onLogin }) {
                 fontWeight: 700, fontSize: 18, color: '#4E8C3A',
                 width: 68, flexShrink: 0, textAlign: 'right',
               }}>סיסמא:</label>
-              <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', maxWidth: 'none' }}>
+              <div style={{ flex: 1, minWidth: 0, position: 'relative', display: 'flex', alignItems: 'center', maxWidth: 'none' }}>
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}

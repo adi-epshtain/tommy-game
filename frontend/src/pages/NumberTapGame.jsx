@@ -2,16 +2,24 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api, removeToken } from '../services/api'
 import { useSounds } from '../hooks/useSounds'
+import { useSpeech } from '../hooks/useSpeech'
 import DinosaurSelection from '../components/DinosaurSelection'
 
 function shuffle(arr) {
   return [...arr].sort(() => Math.random() - 0.5)
 }
 
+// Range 1-5 for toddlers (Noya, age 2): a small, learnable set of numbers.
+const MAX_NUMBER = 5
+
+// Cute, kid-friendly pictures shown as the "quantity" so the number is
+// concrete (e.g. 3 -> 🍭🍭🍭). One is chosen per round.
+const ANIMALS = ['🍬', '🍭', '🍦', '🧁', '🍓', '🐶', '🐱', '🐰', '🦄', '🌸']
+
 function generateChoices(target) {
   const pool = new Set()
   while (pool.size < 3) {
-    const n = Math.floor(Math.random() * 9) + 1
+    const n = Math.floor(Math.random() * MAX_NUMBER) + 1
     if (n !== target) pool.add(n)
   }
   return shuffle([target, ...pool])
@@ -66,8 +74,10 @@ export default function NumberTapGame({ onLogout = () => {} }) {
   const [collectedDinos, setCollectedDinos] = useState([])
   const [pressedIdx, setPressedIdx] = useState(null)
   const [showDinosaurViewOnly, setShowDinosaurViewOnly] = useState(false)
+  const [roundEmoji, setRoundEmoji] = useState(ANIMALS[0])
   const particleId = useRef(0)
   const { playCelebrationSound, playErrorSound } = useSounds(isMuted)
+  const { speakNumber } = useSpeech(isMuted)
 
   const handleLogout = () => {
     removeToken()
@@ -82,9 +92,10 @@ export default function NumberTapGame({ onLogout = () => {} }) {
   }, [])
 
   const nextRound = useCallback(() => {
-    const t = Math.floor(Math.random() * 9) + 1
+    const t = Math.floor(Math.random() * MAX_NUMBER) + 1
     setTarget(t)
     setChoices(generateChoices(t))
+    setRoundEmoji(ANIMALS[Math.floor(Math.random() * ANIMALS.length)])
     setCelebrating(false)
     setWrongId(null)
     setParticles([])
@@ -92,6 +103,11 @@ export default function NumberTapGame({ onLogout = () => {} }) {
   }, [])
 
   useEffect(() => { nextRound() }, [nextRound])
+
+  // Speak the target number aloud (in Hebrew) whenever a new one appears.
+  useEffect(() => {
+    if (target != null) speakNumber(target)
+  }, [target, speakNumber])
 
   useEffect(() => {
     const onKey = (e) => {
@@ -280,7 +296,7 @@ export default function NumberTapGame({ onLogout = () => {} }) {
         {/* Central panel */}
         <div style={{
           width: '100%',
-          maxWidth: 420,
+          maxWidth: 460,
           background: 'rgba(255,255,255,0.92)',
           borderRadius: 32,
           padding: 'clamp(16px, 4vw, 28px) clamp(16px, 4vw, 24px)',
@@ -298,21 +314,28 @@ export default function NumberTapGame({ onLogout = () => {} }) {
             לחצו על המספר:
           </p>
 
-          {/* Target number display - colored to match its correct button */}
-          <div style={{
-            width: 'clamp(100px, 28vw, 140px)', height: 'clamp(100px, 28vw, 140px)',
-            background: `linear-gradient(135deg, ${correctColor.bg} 0%, ${correctColor.dark} 100%)`,
-            borderRadius: 28,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: `0 6px 0 ${correctColor.dark}, 0 8px 20px rgba(0,0,0,0.15)`,
-            transform: celebrating ? 'scale(1.12)' : 'scale(1)',
-            transition: 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.3s ease',
-          }}>
+          {/* Target number display - colored to match its correct button.
+              Tapping it repeats the number aloud (and helps unlock audio on
+              browsers that require a first user gesture). */}
+          <div
+            onClick={() => target != null && speakNumber(target)}
+            title="הקש כדי לשמוע שוב"
+            style={{
+              position: 'relative',
+              width: 'clamp(110px, 30vw, 160px)', height: 'clamp(110px, 30vw, 160px)',
+              background: `linear-gradient(135deg, ${correctColor.bg} 0%, ${correctColor.dark} 100%)`,
+              borderRadius: 28,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: `0 6px 0 ${correctColor.dark}, 0 8px 20px rgba(0,0,0,0.15)`,
+              transform: celebrating ? 'scale(1.12)' : 'scale(1)',
+              transition: 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.3s ease',
+              cursor: 'pointer',
+            }}>
             <span style={{
               fontFamily: "'Fredoka', sans-serif",
-              fontSize: 'clamp(64px, 18vw, 96px)',
+              fontSize: 'clamp(72px, 20vw, 110px)',
               lineHeight: 1,
               color: '#fff',
               fontWeight: 700,
@@ -320,6 +343,30 @@ export default function NumberTapGame({ onLogout = () => {} }) {
             }}>
               {target}
             </span>
+            {/* Speaker hint badge */}
+            <span style={{
+              position: 'absolute', bottom: 6, left: 6,
+              fontSize: 18, lineHeight: 1, opacity: 0.85,
+              filter: 'drop-shadow(0 1px 1px rgba(0,0,0,0.25))',
+            }}>
+              🔊
+            </span>
+          </div>
+
+          {/* Quantity pictures: shows the number as that many animals so a
+              toddler connects the digit to a real count (e.g. 3 -> 🐶🐶🐶). */}
+          <div style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: 'clamp(2px, 1vw, 6px)',
+            maxWidth: '100%',
+            lineHeight: 1,
+          }}>
+            {Array.from({ length: target || 0 }).map((_, i) => (
+              <span key={i} style={{ fontSize: 'clamp(26px, 7vw, 40px)' }}>{roundEmoji}</span>
+            ))}
           </div>
 
           {/* Celebrating message or spacer */}
@@ -353,9 +400,9 @@ export default function NumberTapGame({ onLogout = () => {} }) {
                   onClick={() => handleChoice(n, i)}
                   className={isWrong ? 'shake' : ''}
                   style={{
-                    height: 'clamp(80px, 15vw, 110px)',
+                    height: 'clamp(80px, 14vh, 130px)',
                     fontFamily: "'Fredoka', sans-serif",
-                    fontSize: 'clamp(40px, 11vw, 60px)',
+                    fontSize: 'clamp(42px, 11vw, 60px)',
                     fontWeight: 700,
                     color: col.text,
                     background: isWrong ? '#FF4444' : col.bg,
@@ -397,7 +444,7 @@ export default function NumberTapGame({ onLogout = () => {} }) {
 
       {/* Collected dinosaurs strip at the bottom */}
       {collectedDinos.length > 0 && (
-        <div style={{
+        <div className="tg-dino-strip" style={{
           flex: '0 0 auto',
           height: dinoSize + 12,
           display: 'flex',
@@ -414,7 +461,7 @@ export default function NumberTapGame({ onLogout = () => {} }) {
               key={dino.key}
               src={dino.image_path}
               alt={dino.name}
-              className={celebrating && index === collectedDinos.length - 1 ? 'tg-hop' : ''}
+              className={`tg-dino-strip-img ${celebrating && index === collectedDinos.length - 1 ? 'tg-hop' : ''}`}
               style={{
                 height: dinoSize,
                 width: dinoSize * 0.8,
