@@ -134,6 +134,11 @@ export default function NumberTapGame({ onLogout = () => {} }) {
 
   const dinoSize = Math.max(72, 160 - collectedDinos.length * 7)
 
+  // Color the target number to match its correct button, so a toddler can
+  // succeed by matching the COLOR (a skill they have well before recognizing
+  // digits) while still being exposed to the number.
+  const correctColor = BTN_COLORS[choices.indexOf(target)] || BTN_COLORS[3]
+
   if (showDinosaurViewOnly) {
     return (
       <div dir="rtl" style={{
@@ -216,7 +221,7 @@ export default function NumberTapGame({ onLogout = () => {} }) {
         zIndex: 10,
       }}>
         {/* Right side: nav buttons */}
-        <div style={{ display: 'flex', gap: 6, flexShrink: 0, flexWrap: 'wrap' }}>
+        <div className="tg-topbar-group" style={{ display: 'flex', gap: 6, flexShrink: 0, flexWrap: 'wrap' }}>
           {[
             { label: '🎮 חזרה', action: () => navigate('/game-select') },
             { label: '👀 דינוזאורים', action: () => setShowDinosaurViewOnly(true) },
@@ -241,7 +246,7 @@ export default function NumberTapGame({ onLogout = () => {} }) {
         </div>
 
         {/* Left side: score + sound + logout */}
-        <div style={{ display: 'flex', gap: 8, flexShrink: 0, alignItems: 'center' }}>
+        <div className="tg-topbar-group" style={{ display: 'flex', gap: 8, flexShrink: 0, alignItems: 'center' }}>
           <div style={{
             ...pinkNavBtnStyle,
             cursor: 'default',
@@ -293,24 +298,25 @@ export default function NumberTapGame({ onLogout = () => {} }) {
             לחצו על המספר:
           </p>
 
-          {/* Target number display */}
+          {/* Target number display - colored to match its correct button */}
           <div style={{
             width: 'clamp(100px, 28vw, 140px)', height: 'clamp(100px, 28vw, 140px)',
-            background: 'linear-gradient(135deg, #FFE4EF 0%, #F5D0FF 100%)',
+            background: `linear-gradient(135deg, ${correctColor.bg} 0%, ${correctColor.dark} 100%)`,
             borderRadius: 28,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 6px 0 #E5B0D0, 0 8px 20px rgba(155,61,122,0.15)',
+            boxShadow: `0 6px 0 ${correctColor.dark}, 0 8px 20px rgba(0,0,0,0.15)`,
             transform: celebrating ? 'scale(1.12)' : 'scale(1)',
-            transition: 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+            transition: 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.3s ease',
           }}>
             <span style={{
               fontFamily: "'Fredoka', sans-serif",
               fontSize: 'clamp(64px, 18vw, 96px)',
               lineHeight: 1,
-              color: '#7B2A8E',
+              color: '#fff',
               fontWeight: 700,
+              textShadow: '0 2px 4px rgba(0,0,0,0.15)',
             }}>
               {target}
             </span>

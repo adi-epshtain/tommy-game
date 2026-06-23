@@ -591,7 +591,7 @@ function Game({ onLogout }) {
         boxShadow: '0 10px 28px rgba(110,170,90,.28)',
         fontFamily: "'Varela Round', 'Heebo', sans-serif",
       }}>
-        <div style={{ display: 'flex', gap: 6, flexShrink: 0, flexWrap: 'wrap' }}>
+        <div className="tg-topbar-group" style={{ display: 'flex', gap: 6, flexShrink: 0, flexWrap: 'wrap' }}>
           {[
             { label: '🎮 חזרה', action: () => navigate('/game-select') },
             { label: '⚙️ הגדרות', action: () => setShowSettings(!showSettings) },
@@ -606,7 +606,7 @@ function Game({ onLogout }) {
         <div className="tg-center-title-lg" style={{ fontFamily: "'Fredoka', sans-serif", fontSize: 26, fontWeight: 700, color: '#4E8C3A', flex: '1 1 auto', minWidth: 0, textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '0 8px', pointerEvents: 'none' }}>
           משחק החשבון
         </div>
-        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+        <div className="tg-topbar-group" style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
           <button
             onClick={() => setIsMuted(!isMuted)}
             title={isMuted ? 'בטל השתקה' : 'השתק'}
@@ -731,7 +731,8 @@ function Game({ onLogout }) {
           boxShadow: '0 22px 48px rgba(110,170,90,.24), 0 8px 20px rgba(0,0,0,.06)',
           border: '2px solid rgba(255,255,255,.9)',
           position: 'relative',
-          overflow: 'hidden'
+          overflowY: 'auto',
+          overflowX: 'hidden'
         }}>
           
           {/* Player Greeting */}
@@ -807,7 +808,7 @@ function Game({ onLogout }) {
           )}
 
           {/* Input + Submit */}
-          <form onSubmit={handleSubmitAnswer} style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
+          <form className="tg-answer-form" onSubmit={handleSubmitAnswer} style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
             <input
               type="number"
               id="answer"
@@ -932,7 +933,7 @@ function Game({ onLogout }) {
       </main>
 
       {/* Dinosaur strip - responsive flex area at bottom */}
-      <div style={{
+      <div className="tg-dino-strip" style={{
         flex: '0 0 auto',
         minHeight: 0,
         height: 'clamp(96px, 18vh, 170px)',
@@ -954,7 +955,7 @@ function Game({ onLogout }) {
               key={dino.id}
               src={dino.image_path}
               alt={dino.name}
-              className={showCelebration ? 'animate-bounce' : ''}
+              className={`tg-dino-strip-img ${showCelebration ? 'animate-bounce' : ''}`}
               style={{
                 height: `clamp(70px, 13vh, ${size}px)`,
                 width: 'auto',

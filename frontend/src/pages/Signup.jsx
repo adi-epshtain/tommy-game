@@ -67,6 +67,8 @@ function Signup() {
 
   const fieldStyle = {
     flex: 1,
+    minWidth: 0,
+    boxSizing: 'border-box',
     padding: '11px 16px',
     fontSize: 18,
     border: '3px solid #CDE8A8',

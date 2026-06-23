@@ -290,6 +290,31 @@ p {
   .tg-progress-compact { display: flex !important; }
   /* Decorative corner dinosaurs on the auth screens overlap the card. */
   .tg-deco-dino { display: none !important; }
+  /* Each top-bar button group takes a full centered row so all buttons wrap
+     into view instead of overflowing off the right edge. */
+  .tg-topbar-group {
+    flex-basis: 100% !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+  }
+  /* The bottom collected-dino strip is cramped on phones. Instead of squeezing
+     every dino into the width (tiny + clipped), make it a low, horizontally
+     swipeable row: dinos keep a consistent readable size and all stay reachable
+     by scrolling, without stealing the vertical room the answer/submit needs. */
+  .tg-dino-strip {
+    height: 84px !important;
+    justify-content: flex-start !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    pointer-events: auto !important;        /* allow touch-scroll (was none) */
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+  }
+  .tg-dino-strip-img {
+    height: 64px !important;                 /* uniform, readable size */
+    max-width: none !important;
+    scroll-snap-align: center;
+  }
 }
 
 /* Larger, easier tap targets for children on touch devices */
@@ -320,5 +345,13 @@ p {
 /* Decorative dinosaurs on the auth screens crowd the form on phones. */
 @media (max-width: 767px) {
   .tg-deco-dino { display: none !important; }
+}
+
+/* Answer input + submit: stack vertically (submit BELOW the answer, not beside
+   it) on tablets and phones — clearer and a bigger tap target for kids. */
+@media (max-width: 1023px) {
+  .tg-answer-form { flex-direction: column !important; }
+  .tg-answer-form > input { flex: none !important; width: 100% !important; max-width: 240px !important; }
+  .tg-answer-form > button { width: 100% !important; max-width: 240px !important; }
 }
 
