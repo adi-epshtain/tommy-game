@@ -772,6 +772,18 @@ function Game({ onLogout }) {
             </h2>
           </div>
 
+          {/* Result Feedback - kept directly under the exercise so it's always
+              visible on phones (the keypad below can push lower content off-screen). */}
+          {result && (
+            <div className="result text-lg md:text-xl font-bold text-center mb-3 relative z-10" style={{
+              color: result.includes('✅') || result.includes('🎉') || result.includes('🌟') || result.includes('🏆') || result.includes('🔥') ? '#22c55e' : '#ef4444',
+              textShadow: '1px 1px 2px rgba(0,0,0,0.3)',
+              animation: showCelebration ? 'bounce 0.6s ease-in-out 2' : 'none'
+            }}>
+              {result}
+            </div>
+          )}
+
           {/* Stage (standalone row — hidden on phones, where it's shown inline in the progress row) */}
           <div className="tg-stage-row flex justify-center gap-4 mb-4 relative z-10">
             <div id="stage" style={{
@@ -854,17 +866,6 @@ function Game({ onLogout }) {
             </div>
           </form>
 
-          {/* Result Feedback */}
-          {result && (
-            <div className="result text-lg md:text-xl font-bold text-center mb-3 relative z-10" style={{
-              color: result.includes('✅') || result.includes('🎉') || result.includes('🌟') || result.includes('🏆') || result.includes('🔥') ? '#22c55e' : '#ef4444',
-              textShadow: '1px 1px 2px rgba(0,0,0,0.3)',
-              animation: showCelebration ? 'bounce 0.6s ease-in-out 2' : 'none'
-            }}>
-              {result}
-            </div>
-          )}
-
           {/* Celebration Effect - Sparkles/Glitter */}
           {showCelebration && (
             <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden" style={{ top: 0, left: 0, right: 0, bottom: 0 }}>
@@ -904,7 +905,7 @@ function Game({ onLogout }) {
 
           {/* Stage Progress Indicator */}
           {stage > 1 && (
-            <div className="mb-4 text-center relative z-10">
+            <div className="tg-stage-banner mb-4 text-center relative z-10">
               <div style={{ display: 'inline-block', background: '#E8F5DB', borderRadius: 999, padding: '8px 24px', border: '2px solid #CDE8A8', boxShadow: '0 4px 0 #CDE8A8' }}>
                 <span style={{ fontSize: 16, fontWeight: 700, color: '#4E8C3A' }}>
                   🎯 עלית לשלב {stage}! כל הכבוד!

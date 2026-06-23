@@ -289,8 +289,10 @@ p {
   }
   /* Drop the "שלום <name>" greeting on phones to save vertical room for play. */
   .tg-greeting { display: none !important; }
-  /* Stage shows inline in the progress row on phones, so hide the standalone row. */
-  .tg-stage-row { display: none !important; }
+  /* Stage shows inline in the progress row on phones, so hide the standalone row
+     and the redundant "advanced to stage N" banner. */
+  .tg-stage-row,
+  .tg-stage-banner { display: none !important; }
   /* Shrink the exercise box on phones so the whole keypad fits without scrolling. */
   .tg-question-box { padding: 12px 16px !important; margin-bottom: 10px !important; }
   .tg-question-box .question { font-size: 30px !important; }
